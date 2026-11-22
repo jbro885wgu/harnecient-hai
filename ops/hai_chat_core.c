@@ -1,7 +1,10 @@
 /* hai_chat_core.c - see hai_chat_core.h.
- * Ledger row: TURN|unix|input|concept|reply|state_after|action|typed_name
- * Replay: state starts at "start"; each TURN row sets state_after, and store_name sets the name.
- * Rows are split keeping EMPTY fields (strtok drops them and shifts columns). */
+ * Rows are split keeping EMPTY fields (strtok drops them and shifts columns).
+ * Learning: a grade adds reward/punish from RULE rows (grade_<g>_reward / grade_<g>_punish) into the
+ * GRADE row itself, so the ledger alone decides the weights (rules changing later do not rewrite history).
+ * Use of weights: (1) the concept with the most matched words wins, and ties go to the HIGHER weight,
+ * then to file order; (2) the fallback options are listed by concept weight, highest first.
+ * Replies are never rewritten by learning: weights only choose among what was written. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,10 +15,12 @@
 #define MAXC 64
 #define MAXW 16
 #define LINE 2048
+#define MAXL 256
 
 typedef struct { char id[64], words[MAXW][64]; int nw; char reply[64], label[64]; } concept_t;
 typedef struct { char from[32], concept[64], to[32], action[32]; } next_t;
 typedef struct { char id[64], text[512]; } reply_t;
+typedef struct { char id[64]; double r, p; } count_t;
 
 /* Split a '|' row in place, keeping empty fields; trims spaces and the line end. */
 static int split_keep(char *line, char **f, int max) {
@@ -34,16 +39,18 @@ static int split_keep(char *line, char **f, int max) {
     return n;
 }
 
+static int rule_found = 0;
 static long rule_long(const char *dir, const char *key, long dflt) {
     char path[1024], line[LINE];
     snprintf(path, sizeof path, "%s/chat_rules.pdl", dir);
     FILE *f = fopen(path, "r");
+    rule_found = 0;
     if (!f) return dflt;
     while (fgets(line, sizeof line, f)) {
         char k[128]; long v;
         if (sscanf(line, "RULE | %127[^|] | %ld", k, &v) == 2) {
             for (char *p = k; *p; p++) if (*p == ' ') { *p = 0; break; }
-            if (strcmp(k, key) == 0) { fclose(f); return v; }
+            if (strcmp(k, key) == 0) { fclose(f); rule_found = 1; return v; }
         }
     }
     fclose(f);
@@ -109,19 +116,59 @@ static int load_next(const char *dir, next_t *ns, int max) {
     return n;
 }
 
-/* Replay the ledger: state and name come from the TURN rows, never from memory. */
-static void replay(const char *ledger, char *state, size_t sn, char *name, size_t nn) {
-    snprintf(state, sn, "start"); name[0] = 0;
+/* Everything the ledger says, replayed in one pass. */
+typedef struct {
+    char state[32], name[64];
+    int turns, grades_today;
+    char last_concept[64], last_reply[64];
+    int last_graded_turn;
+    count_t concepts[MAXC]; int nconcepts;
+    count_t replies[MAXC];  int nreplies;
+} ledger_t;
+
+static count_t *count_for(count_t *arr, int *n, int max, const char *id) {
+    for (int i = 0; i < *n; i++) if (strcmp(arr[i].id, id) == 0) return &arr[i];
+    if (*n >= max) return NULL;
+    snprintf(arr[*n].id, sizeof arr[*n].id, "%s", id);
+    arr[*n].r = 0; arr[*n].p = 0;
+    return &arr[(*n)++];
+}
+
+static void replay(const char *ledger, long today, ledger_t *L) {
+    memset(L, 0, sizeof *L);
+    snprintf(L->state, sizeof L->state, "start");
+    L->last_graded_turn = -1;
     FILE *f = fopen(ledger, "r"); if (!f) return;
     char line[LINE];
     while (fgets(line, sizeof line, f)) {
-        if (strncmp(line, "TURN|", 5) != 0) continue;
-        char *fld[9]; int nf = split_keep(line, fld, 9);
-        if (nf < 8) continue;
-        snprintf(state, sn, "%s", fld[5]);
-        if (strcmp(fld[6], "store_name") == 0) snprintf(name, nn, "%s", fld[7]);
+        if (strncmp(line, "TURN|", 5) == 0) {
+            char *fld[9]; int nf = split_keep(line, fld, 9);
+            if (nf < 8) continue;
+            L->turns++;
+            snprintf(L->state, sizeof L->state, "%s", fld[5]);
+            snprintf(L->last_concept, sizeof L->last_concept, "%s", fld[3]);
+            snprintf(L->last_reply, sizeof L->last_reply, "%s", fld[4]);
+            if (strcmp(fld[6], "store_name") == 0) snprintf(L->name, sizeof L->name, "%s", fld[7]);
+        } else if (strncmp(line, "GRADE|", 6) == 0) {
+            char *fld[9]; int nf = split_keep(line, fld, 9);
+            if (nf < 9) continue;
+            long day = atol(fld[8]);
+            if (day == today) L->grades_today++;
+            L->last_graded_turn = atoi(fld[2]);
+            double rw = atof(fld[6]), pu = atof(fld[7]);
+            count_t *c = count_for(L->concepts, &L->nconcepts, MAXC, fld[3]);
+            if (c) { c->r += rw; c->p += pu; }
+            count_t *r = count_for(L->replies, &L->nreplies, MAXC, fld[4]);
+            if (r) { r->r += rw; r->p += pu; }
+        }
     }
     fclose(f);
+}
+
+static double weight_of(const count_t *arr, int n, const char *id) {
+    for (int i = 0; i < n; i++) if (strcmp(arr[i].id, id) == 0)
+        return (arr[i].r + 1.0) / (arr[i].r + arr[i].p + 2.0);
+    return 0.5;
 }
 
 /* Lowercase alphanumeric tokens. Returns the token count. */
@@ -140,6 +187,7 @@ static int tokens(const char *in, char toks[][64], int max) {
 
 int hai_chat_turn(const char *datadir, const char *ledger, const char *input, char *out, size_t out_len) {
     static concept_t cs[MAXC]; static reply_t rs[MAXC]; static next_t ns[64];
+    static ledger_t L;
     int nc = load_concepts(datadir, cs, MAXC), nr = load_replies(datadir, rs, MAXC), nn = load_next(datadir, ns, 64);
     if (nc < 0 || nr < 0 || nn < 0) { snprintf(out, out_len, "setup missing under %s", datadir); return 2; }
     long input_max = rule_long(datadir, "input_max", 0), options_max = rule_long(datadir, "options_max", 0);
@@ -150,42 +198,40 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
     for (char *p = clean; *p; p++) if (*p == '|' || *p == '\n' || *p == '\r') *p = ' ';
     if ((long)strlen(clean) > input_max) clean[input_max] = 0;
 
-    char state[32], name[64];
-    replay(ledger, state, sizeof state, name, sizeof name);
+    replay(ledger, 0, &L);
 
-    /* classify: the concept with the most matched tokens wins; ties go to file order */
+    /* classify: most matched tokens wins; a tie goes to the higher weight, then to file order */
     static char toks[64][64];
     int nt = tokens(clean, toks, 64);
-    int best = -1, best_hits = 0;
+    int best = -1, best_hits = 0; double best_w = -1;
     for (int c = 0; c < nc; c++) {
         int hits = 0;
         for (int t = 0; t < nt; t++)
             for (int w = 0; w < cs[c].nw; w++)
                 if (strcmp(toks[t], cs[c].words[w]) == 0) { hits++; break; }
-        if (hits > best_hits) { best_hits = hits; best = c; }
+        double w = weight_of(L.concepts, L.nconcepts, cs[c].id);
+        if (hits > best_hits || (hits == best_hits && hits > 0 && w > best_w)) { best_hits = hits; best = c; best_w = w; }
     }
     const char *concept = best >= 0 ? cs[best].id : "none";
 
     /* FSM: the first NEXT row for this state and concept (or *) wins */
     char to[32] = "", action[32] = "none";
     for (int i = 0; i < nn; i++) {
-        if (strcmp(ns[i].from, state) != 0) continue;
+        if (strcmp(ns[i].from, L.state) != 0) continue;
         if (strcmp(ns[i].concept, "*") != 0 && strcmp(ns[i].concept, concept) != 0) continue;
         snprintf(to, sizeof to, "%s", ns[i].to);
         snprintf(action, sizeof action, "%s", ns[i].action);
         break;
     }
-    if (!to[0]) snprintf(to, sizeof to, "%s", state);
+    if (!to[0]) snprintf(to, sizeof to, "%s", L.state);
 
-    /* the typed name: first token of the input, stored only on store_name */
     char typed[64] = "";
     if (strcmp(action, "store_name") == 0 && nt > 0) snprintf(typed, sizeof typed, "%s", toks[0]);
 
-    /* reply: concept's reply, or the fallback with options */
     char reply_id[64] = "r_fallback";
     if (best >= 0) snprintf(reply_id, sizeof reply_id, "%s", cs[best].reply);
-    if (strcmp(state, "await_name") == 0 && strcmp(action, "store_name") == 0) snprintf(reply_id, sizeof reply_id, "r_named");
-    if (strcmp(state, "done") == 0) snprintf(reply_id, sizeof reply_id, "r_done");
+    if (strcmp(L.state, "await_name") == 0 && strcmp(action, "store_name") == 0) snprintf(reply_id, sizeof reply_id, "r_named");
+    if (strcmp(L.state, "done") == 0) snprintf(reply_id, sizeof reply_id, "r_done");
 
     char text[512] = "";
     for (int i = 0; i < nr; i++) if (strcmp(rs[i].id, reply_id) == 0) { snprintf(text, sizeof text, "%s", rs[i].text); break; }
@@ -195,16 +241,23 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
     if (nm) {
         char who[64];
         if (strcmp(action, "store_name") == 0) snprintf(who, sizeof who, "%s", typed);
-        else snprintf(who, sizeof who, "%s", name);
+        else snprintf(who, sizeof who, "%s", L.name);
         char tmp[512]; size_t pre = (size_t)(nm - text);
         snprintf(tmp, sizeof tmp, "%.*s%s%s", (int)pre, text, who, nm + 6);
         snprintf(text, sizeof text, "%s", tmp);
     }
 
     if (strcmp(reply_id, "r_fallback") == 0) {
+        /* options: concepts by weight, highest first; ties keep file order */
+        int order[MAXC]; for (int i = 0; i < nc; i++) order[i] = i;
+        for (int i = 1; i < nc; i++) {                     /* stable insertion sort, by weight */
+            int v = order[i]; double wv = weight_of(L.concepts, L.nconcepts, cs[v].id); int j = i - 1;
+            while (j >= 0 && weight_of(L.concepts, L.nconcepts, cs[order[j]].id) < wv) { order[j + 1] = order[j]; j--; }
+            order[j + 1] = v;
+        }
         char opts[256] = ""; int shown = 0;
-        for (int c = 0; c < nc && shown < options_max; c++) {
-            char piece[96]; snprintf(piece, sizeof piece, "%s[%d] %s", shown ? " " : "", shown + 1, cs[c].label);
+        for (int k = 0; k < nc && shown < options_max; k++) {
+            char piece[96]; snprintf(piece, sizeof piece, "%s[%d] %s", shown ? " " : "", shown + 1, cs[order[k]].label);
             strncat(opts, piece, sizeof opts - strlen(opts) - 1);
             shown++;
         }
@@ -218,13 +271,58 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
     fclose(f);
 
     snprintf(out, out_len, "%s", text);
-    if (strcmp(to, "done") == 0 && strcmp(state, "done") != 0) return 1;
+    if (strcmp(to, "done") == 0 && strcmp(L.state, "done") != 0) return 1;
+    return 0;
+}
+
+int hai_chat_grade(const char *datadir, const char *ledger, int grade, long now, char *out, size_t out_len) {
+    if (grade < 0 || grade > 4) { snprintf(out, out_len, "grade must be 0 to 4"); return 4; }
+    char key[64], path[1024];
+    long cap = rule_long(datadir, "grade_daily_cap", 0);
+    if (cap <= 0) { snprintf(out, out_len, "setup missing rule grade_daily_cap"); return 2; }
+    snprintf(key, sizeof key, "grade_%d_reward", grade);
+    long reward = rule_long(datadir, key, -1); if (!rule_found) { snprintf(out, out_len, "setup missing rule %s", key); return 2; }
+    snprintf(key, sizeof key, "grade_%d_punish", grade);
+    long punish = rule_long(datadir, key, -1); if (!rule_found) { snprintf(out, out_len, "setup missing rule %s", key); return 2; }
+    (void)path;
+
+    long day = now / 86400;
+    ledger_t L; replay(ledger, day, &L);
+    if (L.turns == 0 || L.last_concept[0] == 0) { snprintf(out, out_len, "no reply to grade yet"); return 5; }
+    if (L.last_graded_turn == L.turns) { snprintf(out, out_len, "this reply is already graded"); return 7; }
+    if (L.grades_today >= cap) { snprintf(out, out_len, "daily grade limit reached (%ld)", cap); return 6; }
+
+    FILE *f = fopen(ledger, "a");
+    if (!f) { snprintf(out, out_len, "cannot write chat ledger"); return 3; }
+    fprintf(f, "GRADE|%ld|%d|%s|%s|%d|%ld|%ld|%ld\n", now, L.turns, L.last_concept, L.last_reply, grade, reward, punish, day);
+    fclose(f);
+
+    /* the new weight of the reply, after this grade */
+    replay(ledger, day, &L);
+    double w = weight_of(L.replies, L.nreplies, L.last_reply);
+    snprintf(out, out_len, "OK grade %d for %s weight=%.4f", grade, L.last_reply, w);
+    return 0;
+}
+
+int hai_chat_stats(const char *datadir, const char *ledger, char *out, size_t out_len) {
+    static concept_t cs[MAXC];
+    int nc = load_concepts(datadir, cs, MAXC);
+    if (nc < 0) { snprintf(out, out_len, "setup missing under %s", datadir); return 2; }
+    ledger_t L; replay(ledger, 0, &L);
+    out[0] = 0;
+    char line[256];
+    for (int c = 0; c < nc; c++) {
+        const count_t *k = NULL;
+        for (int i = 0; i < L.nconcepts; i++) if (strcmp(L.concepts[i].id, cs[c].id) == 0) k = &L.concepts[i];
+        double r = k ? k->r : 0, p = k ? k->p : 0;
+        snprintf(line, sizeof line, "concept %.60s reward=%.0f punish=%.0f weight=%.4f\n", cs[c].id, r, p, (r + 1.0) / (r + p + 2.0));
+        strncat(out, line, out_len - strlen(out) - 1);
+    }
     return 0;
 }
 
 int hai_chat_state(const char *ledger, char *out, size_t out_len) {
-    char state[32], name[64];
-    replay(ledger, state, sizeof state, name, sizeof name);
-    snprintf(out, out_len, "state=%s name=%s", state, name);
+    ledger_t L; replay(ledger, 0, &L);
+    snprintf(out, out_len, "state=%s name=%s", L.state, L.name);
     return 0;
 }

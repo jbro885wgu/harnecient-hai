@@ -21,6 +21,9 @@
   form { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid #2a2a2a; }
   input { flex: 1; background: #101010; color: #eee; border: 1px solid #3a3a3a; padding: 8px; font: inherit; }
   .go { background: #2f5f8f; color: #fff; border: 0; padding: 8px 14px; font: inherit; cursor: pointer; }
+  .grade { margin: 4px 0 14px; } .grade button { margin-right: 4px; background: #232323; color: #ddd; border: 1px solid #3a3a3a; padding: 2px 9px; font: inherit; cursor: pointer; }
+  .grade button:hover { background: #2f5f8f; color: #fff; }
+  #note { color: #8a8a8a; font-size: 13px; min-height: 18px; margin-top: 6px; }
   details { margin-top: 18px; color: #8a8a8a; font-size: 13px; }
   code { background: #101010; padding: 2px 5px; }
   aside code { word-break: break-all; white-space: normal; display: inline-block; max-width: 100%; }
@@ -43,8 +46,21 @@
     <details open>
       <summary>Install (planned)</summary>
       <p>The installer is a stub right now. The real one is a milestone not yet built, so this command installs nothing yet:</p>
-      <p><code>curl -fsSL https://raw.githubusercontent.com/jbro885wgu/harnecient-hai/main/install.sh | sh -s -- hai</code></p>
+      <p><code>curl -fsSL https://raw.githubusercontent.com/jbro885wgu/harnecient-hai/hai/install.sh | sh -s -- hai</code></p>
       <p>To try it today, clone the repo and follow <code>book/04-hai-model/1.hai-user-tutorial.md</code>.</p>
+    </details>
+    <div id="note"></div>
+    <details>
+      <summary>What this demo can not do (the full app can)</summary>
+      <ul>
+        <li>Typing in a window, and a real desktop window: the full app.</li>
+        <li>Linking your own documents so it learns them at once: the full app (design stage).</li>
+        <li>Watching other models and learning from them: the full app (design stage).</li>
+        <li>Tool calls (open a page, list pages): the full app (milestone M4).</li>
+        <li>Learning here is only the grade counts. It never rewrites its replies.</li>
+        <li>Your account and ledger stay in this browser only. The full app keeps them on your machine.</li>
+      </ul>
+      <p>If one of these blocks you, say so: that limit is a desk to fix, not a reason to stop.</p>
     </details>
     <details>
       <summary>How this works</summary>
@@ -76,6 +92,7 @@
   function paint() {
     var l = ledger(), st = HaiEngine.replay(l);
     stateEl.textContent = "state=" + st.state + " name=" + st.name;
+    st.lastGraded = st.lastGradedTurn === st.turns;
     var texts = JSON.parse(localStorage.getItem(KEY + ".text") || "[]");
     feed.innerHTML = "";
     l.forEach(function (row, i) {
@@ -84,7 +101,30 @@
       var hai = document.createElement("div"); hai.className = "hai"; hai.textContent = "hai> " + (texts[i] || f[4]);
       feed.appendChild(you); feed.appendChild(hai);
     });
+    if (l.length && !st.lastGraded) {
+      var bar = document.createElement("div"); bar.className = "grade";
+      var lbl = document.createElement("span"); lbl.className = "quiet"; lbl.textContent = "grade this reply: ";
+      bar.appendChild(lbl);
+      for (var g = 0; g <= 4; g++) {
+        (function (val) {
+          var b = document.createElement("button"); b.type = "button"; b.textContent = String(val);
+          b.title = ["0 bad", "1 good", "2 better", "3 better", "4 best"][val];
+          b.addEventListener("click", function () { grade(val); });
+          bar.appendChild(b);
+        })(g);
+      }
+      feed.appendChild(bar);
+    }
     feed.scrollTop = feed.scrollHeight;
+  }
+
+  function grade(val) {
+    if (!data) return;
+    var l = ledger();
+    var r = HaiEngine.grade(data, l, val, Math.floor(Date.now() / 1000));
+    save(l);
+    var note = document.getElementById("note"); if (note) note.textContent = r.text;
+    paint();
   }
 
   function say(text) {

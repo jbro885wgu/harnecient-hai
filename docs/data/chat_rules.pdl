@@ -1,3 +1,16 @@
 # hai chat numbers (house rule D92: numbers in rows, never in C)
 RULE | input_max | 200
 RULE | options_max | 3
+# grades 0 bad, 1 good, 2 to 4 better. reward/punish are written into each GRADE row.
+RULE | grade_0_reward | 0
+RULE | grade_0_punish | 1
+RULE | grade_1_reward | 1
+RULE | grade_1_punish | 0
+RULE | grade_2_reward | 2
+RULE | grade_2_punish | 0
+RULE | grade_3_reward | 3
+RULE | grade_3_punish | 0
+RULE | grade_4_reward | 4
+RULE | grade_4_punish | 0
+# at most this many grades per ledger per day (one person repeating a grade cannot dominate)
+RULE | grade_daily_cap | 10

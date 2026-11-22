@@ -1,0 +1,58 @@
+# hai_learn (M5, 2026-11-22): grades 0 to 4 move Laplace weights; weights reorder the options and break ties.
+# Each check can FAIL. Built from source in a scratch dir. Negatives: grade before any reply, grade out of range,
+# a second grade on the same reply, the daily cap. Expected numbers are worked out by hand (see the comments).
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_learn.txt
+ENV | LC_ALL | C
+
+CASE    | learn
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | the-engine-builds-from-source
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+EXPECT_EXIT | 5 | grade-before-any-reply-refused
+EXPECT_OUT  | no reply to grade yet | refusal-says-why
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 9
+EXPECT_EXIT | 4 | grade-out-of-range-refused
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+EXPECT_EXIT | 0 | good-grade-accepted
+EXPECT_OUT  | OK grade 1 for r_greet weight=0.6667 | weight-1-of-0-plus-1-over-0-plus-2
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 0
+EXPECT_EXIT | 7 | second-grade-on-same-reply-refused
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 0
+EXPECT_OUT  | OK grade 0 for r_greet weight=0.5000 | 1-good-1-bad-is-half
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 0
+EXPECT_OUT  | OK grade 0 for r_greet weight=0.4000 | 1-good-2-bad-is-2-of-5
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | weather
+EXPECT_OUT  | Did you mean: [1] help [2] account [3] nav? | bad-greet-drops-out-of-the-first-option
+RUN | $T/hai_chat | stats | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l
+EXPECT_OUT  | concept greet reward=1 punish=2 weight=0.4000 | the-concept-counts-are-in-the-ledger
+RUN | $T/hai_chat | state | $T/l
+EXPECT_OUT  | state=idle | the-learning-rows-do-not-move-the-chat-state
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 4
+EXPECT_OUT  | OK grade 4 for r_greet weight=0.6667 | grade-4-is-reward-4-so-1-plus-4-over-1-plus-2-plus-4-plus-2
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | weather
+EXPECT_OUT  | Did you mean: [1] say hi [2] help [3] account? | a-good-enough-concept-climbs-back-to-first
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 1
+EXPECT_EXIT | 6 | the-daily-cap-of-10-grades-refuses-the-11th
+EXPECT_OUT  | daily grade limit reached | cap-says-why
+CLEAN
