@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hai: demo</title>
+<style>
+  body { margin: 0; background: #161616; color: #e8e8e8; font: 15px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  header { padding: 14px 18px; border-bottom: 1px solid #333; }
+  header h1 { font-size: 18px; margin: 0; }
+  header p { margin: 4px 0 0; color: #8a8a8a; font-size: 13px; }
+  main { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 80px); }
+  aside { background: #181818; border-right: 1px solid #2a2a2a; padding: 14px; }
+  .quiet { color: #8a8a8a; }
+  .menu button, .reset { display: block; width: 100%; text-align: left; margin: 6px 0; padding: 8px 10px;
+    background: #232323; color: #ddd; border: 1px solid #3a3a3a; border-radius: 3px; font: inherit; cursor: pointer; }
+  .menu button:hover, .reset:hover { background: #2f5f8f; color: #fff; }
+  .reset { background: #3a1e1e; border-color: #6b2b2b; color: #ffdede; }
+  #feed { padding: 14px 18px; overflow-y: auto; max-height: calc(100vh - 170px); }
+  .you { color: #9fd0ff; } .hai { color: #e8e8e8; margin-bottom: 10px; }
+  form { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid #2a2a2a; }
+  input { flex: 1; background: #101010; color: #eee; border: 1px solid #3a3a3a; padding: 8px; font: inherit; }
+  .go { background: #2f5f8f; color: #fff; border: 0; padding: 8px 14px; font: inherit; cursor: pointer; }
+  details { margin-top: 18px; color: #8a8a8a; font-size: 13px; }
+  code { background: #101010; padding: 2px 5px; }
+  aside code { word-break: break-all; white-space: normal; display: inline-block; max-width: 100%; }
+  @media (max-width: 720px) { main { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>hai</h1>
+  <p>A small, private chat that learns from what you teach it. No language model: it follows rules and counts. This demo runs the same rules as the command line.</p>
+</header>
+<main>
+  <aside>
+    <div class="quiet" id="state">state=start name=</div>
+    <div class="menu">
+      <button data-say="help">[1] Help</button>
+      <button data-say="bye">[2] Quit</button>
+    </div>
+    <button class="reset" id="reset">Start over (clears this browser's ledger)</button>
+    <details open>
+      <summary>Install (planned)</summary>
+      <p>The installer is a stub right now. The real one is a milestone not yet built, so this command installs nothing yet:</p>
+      <p><code>curl -fsSL https://raw.githubusercontent.com/jbro885wgu/harnecient-hai/main/install.sh | sh -s -- hai</code></p>
+      <p>To try it today, clone the repo and follow <code>book/04-hai-model/1.hai-user-tutorial.md</code>.</p>
+    </details>
+    <details>
+      <summary>How this works</summary>
+      <p>Every message adds a row (a <code>TURN</code>) to a ledger kept in this browser. The state and your name are rebuilt from those rows each time, so a reload keeps the chat where it was.</p>
+      <p>Learning from your grades (0 to 4) and from linked documents is not built yet, so this demo does not get better yet.</p>
+    </details>
+  </aside>
+  <section>
+    <div id="feed" aria-live="polite"></div>
+    <form id="say">
+      <input id="msg" autocomplete="off" placeholder="type a word, or a number from the menu" aria-label="message">
+      <button class="go" type="submit">Send</button>
+    </form>
+  </section>
+</main>
+<script src="engine.js"></script>
+<script>
+(function () {
+  var KEY = "hai.demo.ledger.v1";
+  var feed = document.getElementById("feed");
+  var stateEl = document.getElementById("state");
+  var msg = document.getElementById("msg");
+  var data = null;
+
+  function load(name) { return fetch("data/" + name).then(function (r) { if (!r.ok) throw new Error(name + " " + r.status); return r.text(); }); }
+  function ledger() { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { return []; } }
+  function save(l) { localStorage.setItem(KEY, JSON.stringify(l)); }
+
+  function paint() {
+    var l = ledger(), st = HaiEngine.replay(l);
+    stateEl.textContent = "state=" + st.state + " name=" + st.name;
+    var texts = JSON.parse(localStorage.getItem(KEY + ".text") || "[]");
+    feed.innerHTML = "";
+    l.forEach(function (row, i) {
+      var f = row.split("|");
+      var you = document.createElement("div"); you.className = "you"; you.textContent = "you> " + f[2];
+      var hai = document.createElement("div"); hai.className = "hai"; hai.textContent = "hai> " + (texts[i] || f[4]);
+      feed.appendChild(you); feed.appendChild(hai);
+    });
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function say(text) {
+    if (!data) return;
+    var l = ledger();
+    var r = HaiEngine.turn(data, l, text, Math.floor(Date.now() / 1000));
+    save(l);
+    var stored = JSON.parse(localStorage.getItem(KEY + ".text") || "[]");
+    stored.push(r.text); localStorage.setItem(KEY + ".text", JSON.stringify(stored));
+    paint();
+    if (r.code === 1) msg.disabled = true;
+  }
+
+  document.getElementById("say").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var t = msg.value.trim();
+    if (!t) return;
+    msg.value = ""; say(t);
+  });
+  document.querySelectorAll("[data-say]").forEach(function (b) {
+    b.addEventListener("click", function () { say(b.getAttribute("data-say")); });
+  });
+  document.getElementById("reset").addEventListener("click", function () {
+    localStorage.removeItem(KEY); localStorage.removeItem(KEY + ".text"); msg.disabled = false; paint();
+  });
+
+  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl")])
+    .then(function (t) {
+      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3] });
+      paint();
+      if (!ledger().length) { say("hi"); }
+    })
+    .catch(function (err) { feed.textContent = "Could not load the rules: " + err.message; });
+})();
+</script>
+</body>
+</html>

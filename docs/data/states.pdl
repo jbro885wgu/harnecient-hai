@@ -1,0 +1,8 @@
+# NEXT | from state | concept (or *) | to state | action
+# First matching row wins, so specific rows go first. action: none | store_name (first word of the input)
+NEXT | start | * | idle | none
+NEXT | await_name | * | idle | store_name
+NEXT | idle | account | await_name | none
+NEXT | idle | bye | done | none
+NEXT | done | * | done | none
+NEXT | idle | * | idle | none
