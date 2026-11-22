@@ -1,7 +1,7 @@
-<!-- hai.xhtpm - W0 window: the hai chat transcript and state, read-only. The module is the compiled
+<!-- hai.xhtpm - hai-cli window (W1): the hai chat transcript and state, plus a typed composer (cli_io) that runs bin/hai_send. The module is the compiled
      hai_manager (publishes state/ui.txt from the chat ledger through the engine). Built from the
      _template-hq shape: sidebar + panel (chrome and taskbar entry), database-window (persistent). -->
-<window label="hai" class="hai database-window" vars="state/ui.txt">
+<window label="hai-cli" class="hai database-window" vars="state/ui.txt">
   <module id="manager" src="bin/hai_manager"/>
   <page name="main">
     <sidebar id="sidebar" class="sidebar">
@@ -12,13 +12,14 @@
         <repeat count="${rows_count}" bind="row">
           <item id="row${row.#}" class="data-item" label="${row.text}"/>
         </repeat>
-        <text label="(no turns yet: type in the CLI, the window follows the ledger)" class="quiet" show="${no_rows}"/>
+        <text label="(no turns yet: type below)" class="quiet" show="${no_rows}"/>
       </scrolllist>
     </sidebar>
     <panel id="detail" class="settings-block">
-      <text label="hai window, W0 (read-only)" class="block-title"/>
-      <text label="Each row is one turn from the chat ledger: what was typed, and the reply id." class="quiet"/>
-      <text label="Typing in the window comes next (W1, needs a renderer change: approval first)." class="quiet"/>
+      <text label="hai-cli (W1)" class="block-title"/>
+      <text label="Type a line and press Enter: one chat turn. Type /grade 0..4 to grade the last reply." class="quiet"/>
+      <text label="Each row is one ledger line: what you typed, the reply id and the confidence, or a grade." class="quiet"/>
+      <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>
     </panel>
   </page>
 </window>

@@ -1,0 +1,22 @@
+SECTION | KEY | VALUE
+------------------------------
+# hai-window-type.pdl - the hai-cli window typed through the REAL relay like a person (2026-11-22). Needs a FRESH window with an EMPTY window/state/chat.ledger.
+# Run: relay_drive.+x <renderer pid> run <this file> <window id>      (pid: &.hq-apps/hai-cli/state/renderer.pid, id: relay_drive.+x findwin 784 504)
+# What it proves: a click on the composer by id, typed characters and Enter reach hai_send, the LEDGER gets the TURN row, and the window's own projection (state/ui.txt) shows it.
+# Path note: the ledger and ui.txt are outside the house tree, so the paths below are absolute (a DEBT shared with the hai cases; edit HAI_HOME if the repo moves).
+STEP | tapid | composer
+STEP | type | hi
+STEP | key | enter
+STEP | expect | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/state/chat.ledger | contains | r_greet | 8
+STEP | expect | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/state/ui.txt | contains | you: hi  ->  r_greet  (83%) | 8
+STEP | expect | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/state/ui.txt | contains | turns=1 | 3
+STEP | shot | /tmp/hai-window-type-1-turn.png
+STEP | type | /grade 4
+STEP | key | enter
+STEP | expect | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/state/chat.ledger | contains | GRADE | 8
+STEP | expect | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/state/ui.txt | contains | graded 4 | 8
+STEP | type | weather
+STEP | key | enter
+STEP | expect | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/state/ui.txt | contains | you: weather  ->  r_fallback  (0%) | 8
+STEP | expect | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/state/ui.txt | absent | PWNED | 1
+STEP | shot | /tmp/hai-window-type-3-rows.png

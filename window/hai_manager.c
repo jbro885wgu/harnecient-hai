@@ -1,4 +1,4 @@
-/* hai_manager - the <module> behind the hai window (W0, read-only).
+/* hai_manager - the <module> behind the hai-cli window (W1: it publishes; typing goes through hai_send).
  * The renderer execs this with argv: <house_root> <package_dir>. It loops, reads the chat
  * ledger through the SAME engine the CLI uses (hai_chat_state), and publishes state/ui.txt
  * (key=value lines, read by hai.xhtpm through vars=). It never draws; the renderer does.
@@ -24,18 +24,26 @@ static void publish(const char *pkg) {
     hai_chat_state(ledger, state, sizeof state);            /* "state=... name=..." */
 
     FILE *f = fopen(ledger, "r");
-    char rows[8][256]; int nrows = 0;
+    char rows[8][256]; int nrows = 0, nturns = 0;
     if (f) {
         char line[2048];
         while (fgets(line, sizeof line, f)) {
-            if (strncmp(line, "TURN|", 5) != 0) continue;
+            int is_turn = strncmp(line, "TURN|", 5) == 0, is_grade = strncmp(line, "GRADE|", 6) == 0;
+            if (!is_turn && !is_grade) continue;
             line[strcspn(line, "\r\n")] = 0;
-            char *fld[8]; int n = 0; char *p = line;
+            char *fld[12]; int n = 0; char *p = line;
             fld[n++] = p;
-            while (*p && n < 8) { if (*p == '|') { *p = 0; fld[n++] = p + 1; } p++; }
-            if (n < 5) continue;
-            snprintf(rows[nrows % 8], sizeof rows[0], "you: %s  ->  %s", fld[2], fld[4]);
-            nrows++;
+            while (*p && n < 12) { if (*p == '|') { *p = 0; fld[n++] = p + 1; } p++; }
+            if (is_turn && n >= 5) {
+                /* TURN|ts|input|concept|reply|state_after|action|typed_name|confidence (the confidence field is missing on older rows) */
+                if (n >= 9 && fld[8][0]) snprintf(rows[nrows % 8], sizeof rows[0], "you: %s  ->  %s  (%s%%)", fld[2], fld[4], fld[8]);
+                else snprintf(rows[nrows % 8], sizeof rows[0], "you: %s  ->  %s", fld[2], fld[4]);
+                nrows++; nturns++;
+            } else if (is_grade && n >= 6) {
+                /* GRADE|ts|turn_no|concept|reply|grade|reward|punish|day */
+                snprintf(rows[nrows % 8], sizeof rows[0], "    graded %s  (%s)", fld[5], fld[4]);
+                nrows++;
+            }
         }
         fclose(f);
     }
@@ -44,7 +52,7 @@ static void publish(const char *pkg) {
     char stamp[32]; time_t now = time(NULL); strftime(stamp, sizeof stamp, "%H:%M:%S", localtime(&now));
     fprintf(o, "stamp=%s\n%s\n", stamp, state);
     int shown = nrows < 8 ? nrows : 8;
-    fprintf(o, "turns=%d\n", nrows);
+    fprintf(o, "turns=%d\n", nturns);
     for (int i = 0; i < shown; i++) {
         int idx = nrows < 8 ? i : (nrows - 8 + i) % 8;
         fprintf(o, "row_%d_text=%s\n", i, rows[idx]);
@@ -60,7 +68,7 @@ int main(int argc, char **argv) {
     signal(SIGTERM, on_term); signal(SIGINT, on_term); signal(SIGHUP, on_term);
     while (!stop) {
         publish(pkg);
-        sleep(2);
+        sleep(1);
     }
     return 0;
 }

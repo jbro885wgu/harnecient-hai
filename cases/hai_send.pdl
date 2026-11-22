@@ -1,0 +1,38 @@
+# hai_send (2026-11-22): the op behind the hai-cli window's typed composer (W1). Typed text = one chat turn, "/grade N" = a grade, nothing else is stored.
+# The window runs it as: hai_send <package_dir> <house_root> <text>; the ledger is <package_dir>/state/chat.ledger and the data is <package_dir>/../chat/data.
+# Layout built in the scratch dir: $T/window/{bin,state} and $T/chat/data (a copy of the real data).
+# The same op is also driven through the REAL window by relay injection: window/tests/hai-window-type.pdl (live, see window/tests/README.md).
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_send.txt
+ENV | LC_ALL | C
+
+CASE    | typed-turn-and-grade
+SCRATCH |
+MKDIR | window/bin
+MKDIR | window/state
+MKDIR | chat
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat/data
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -I/home/no/Desktop/github/work/#.hai/harnecient-hai/ops | -o | $T/window/bin/hai_send | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/hai_send.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | hai_send-builds-from-source
+RUN | $T/window/bin/hai_send | $T/window | /nohouse | hi
+EXPECT_EXIT | 0 | a-typed-line-is-one-turn
+EXPECT_HAS | window/state/chat.ledger | hi\pgreet\pr_greet\pidle\pnone\p\p83 | the-turn-row-keeps-reply-and-confidence
+RUN | $T/window/bin/hai_send | $T/window | /nohouse | /grade 4
+EXPECT_EXIT | 0 | a-grade-of-the-last-reply
+EXPECT_HAS | window/state/chat.ledger | GRADE\p | a-grade-row-was-written
+RUN | $T/window/bin/hai_send | $T/window | /nohouse | /grade 4
+EXPECT_EXIT | 7 | the-same-reply-cannot-be-graded-twice
+RUN | $T/window/bin/hai_send | $T/window | /nohouse | /grade 9
+EXPECT_EXIT | 4 | a-grade-above-4-is-refused
+RUN | $T/window/bin/hai_send | $T/window | /nohouse | /grade x
+EXPECT_EXIT | 4 | a-grade-that-is-not-a-number-is-refused
+RUN | $T/window/bin/hai_send | $T/window | /nohouse |
+EXPECT_EXIT | 0 | empty-text-is-ignored
+RUN | grep | -c | ^ | $T/window/state/chat.ledger
+EXPECT_OUT | 2 | only-the-turn-and-the-grade-are-in-the-ledger
+RUN | $T/window/bin/hai_send | $T/window | /nohouse | hi; touch $T/PWNED
+EXPECT_EXIT | 0 | shell-characters-are-just-text
+EXPECT_NOFILE | PWNED | no-shell-runs-the-typed-text
+RUN | $T/window/bin/hai_send | $T/nowhere | /nohouse | hi
+EXPECT_EXIT | 2 | a-missing-package-folder-is-a-setup-error
+CLEAN |

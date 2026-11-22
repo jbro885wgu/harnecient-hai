@@ -47,3 +47,9 @@ Sources: `44.xyz.01.00/041.pal-chain⛓️/` (ops, pal, wallets), `16.game/WALLE
   Hostile sender: exit 1, marker **absent**. Honest sender `alice` to `bob`: "Sent 10 millicones", exit 0.
 - **Not yet done:** the fix is NOT applied to the house file (`041.pal-chain⛓️/ops/chain_send.c` is on the house repo, a live money path, with concurrent agents). A stronger agent or the owner applies it, then adds the hostile-id case to the house harness.
 - Caveat: the balance was a stub. The real `chain_balance` was not run.
+
+## 6. Gap 4 FIXED (2026-11-22, Sonnet, owner said "do it")
+- Applied to the house file `041.pal-chain⛓️/ops/chain_send.c`: the sender id now gets the same `valid_wallet_id` check as the recipient, before the signing block and before the balance call (it also guards `wallet_pubkey`, which builds a path from it). House commit `16a0fc2b6` on `claude` (not pushed).
+- Harness `chain_send_hostile` (house, `harness/cases/chain_send_hostile.pdl`): 7 checks with the REAL `chain_balance` copied in (no stub this time): honest alice to bob sends (positive control); sender `x;touch FILE`, sender `$(touch FILE)` and sender `../alice` are each refused with exit 1 and no marker file appears. Against the OLD binary 2 checks fail (the marker appears), against the new one all 7 pass. `chain_signed`, `chain_escrow_signed`, `ev_chain` still 0 FAIL.
+- Not covered: other ops that take a wallet id from argv (`chain_balance` itself, `chain_escrow`, `chain_faucet`) were not audited here. Next audit: grep every `popen` and `system` in `041.pal-chain⛓️/ops/` for an argv value.
+- The harness README row for the case is not written yet (README has another agent's uncommitted hunks).
