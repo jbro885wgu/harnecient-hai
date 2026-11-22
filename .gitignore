@@ -5,3 +5,5 @@ results/
 ops/hai_chat
 window/bin/
 window/state/
+window/kh_focus_debug.log
+window/module_parent.pid
