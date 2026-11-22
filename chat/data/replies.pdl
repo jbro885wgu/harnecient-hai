@@ -1,0 +1,9 @@
+# REPLY | id | text. {name} is filled from the account name stored in the chat ledger.
+REPLY | r_greet | Hi. I can chat with fixed replies for now. Type help.
+REPLY | r_help | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit.
+REPLY | r_ask_name | What name should I use for you?
+REPLY | r_named | Nice to meet you, {name}.
+REPLY | r_nav | Navigation lives in the menu. Full nav comes with the window (M8).
+REPLY | r_bye | bye
+REPLY | r_fallback | I don't know that yet.
+REPLY | r_done | The chat is closed. Start hai again to talk.

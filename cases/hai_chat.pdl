@@ -1,0 +1,39 @@
+# hai_chat (M3, 2026-11-22): the FSM chat, fixed replies, options on a miss. Built from source in a scratch dir.
+# Each check can FAIL. Negatives: unknown words give the fallback, not a guess; a closed chat refuses; an empty ledger has no name.
+# State is replayed from the ledger on every run (a new process proves it is not held in memory).
+# DEBT: the case names the hai repo by absolute path (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_chat.txt
+ENV | LC_ALL | C
+
+CASE    | chat
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | the-chat-builds-from-source
+RUN | $T/hai_chat | state | $T/chat.ledger
+EXPECT_OUT  | state=start name= | empty-ledger-starts-with-no-name
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | hi
+EXPECT_EXIT | 0 | greet-accepted
+EXPECT_OUT  | Hi. I can chat | greet-replies
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | weather forecast tomorrow
+EXPECT_EXIT | 0 | unknown-words-accepted
+EXPECT_OUT  | I don't know that yet. Did you mean: [1] | unknown-gives-options-not-a-guess
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | account
+EXPECT_OUT  | What name should I use | account-asks-the-name
+RUN | $T/hai_chat | state | $T/chat.ledger
+EXPECT_OUT  | state=await_name name= | fsm-moved-to-await-name-from-the-ledger
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | bo
+EXPECT_OUT  | Nice to meet you, bo. | name-is-stored-and-used
+RUN | $T/hai_chat | state | $T/chat.ledger
+EXPECT_OUT  | state=idle name=bo | restart-replays-the-name-from-the-ledger
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | 1
+EXPECT_OUT  | I know: hi, help | number-1-is-help
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | bye
+EXPECT_EXIT | 1 | bye-ends-the-chat-with-rc-1
+EXPECT_OUT  | bye | bye-replies
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | hi again
+EXPECT_OUT  | The chat is closed | a-closed-chat-refuses
+EXPECT_HAS  | $T/chat.ledger | \pstore_name\p | the-name-row-is-in-the-ledger
+EXPECT_HAS  | $T/chat.ledger | store_name\pbo | the-typed-name-is-kept-in-the-row
+RUN | $T/hai_chat | turn | $T/no-such-dir | $T/chat.ledger | hi
+EXPECT_EXIT | 2 | missing-setup-refuses
+CLEAN

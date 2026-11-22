@@ -1,0 +1,3 @@
+# hai chat numbers (house rule D92: numbers in rows, never in C)
+RULE | input_max | 200
+RULE | options_max | 3

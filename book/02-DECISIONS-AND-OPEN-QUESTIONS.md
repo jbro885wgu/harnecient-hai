@@ -81,3 +81,20 @@
 3. Case labels: the case op labels every check by the CASE name, so the 17 checks all print `build/...`. Cosmetic; one CASE row per group would fix it.
 4. `results/` is gitignored. The verdict file path for an absolute `RESULTS` is broken (`$cdir//abs`); not hit by the real case, which uses a relative path.
 5. Not yet: the M3 chat, the window, the installer.
+
+## 11. M3 built 2026-11-22: FSM chat, data-driven, state replayed from the ledger
+- Engine: `ops/hai_chat_core.c` (used by the CLI `ops/hai.c` and the op `ops/hai_chat.c`). Data in `chat/data/`: `concepts.pdl` (words to reply, with the option label), `replies.pdl`, `states.pdl` (FSM rows `NEXT | from | concept | to | action`, first match wins), `chat_rules.pdl` (input_max 200, options_max 3).
+- Ledger row `TURN|unix|input|concept|reply|state_after|action|typed_name`. State and name are REPLAYED from these rows on every call. Nothing is held in memory.
+- Classification: the concept with the most matched word tokens wins (ties by file order). No match goes to the fallback, which offers options instead of a guess. Numbers 1 and 2 are words of the help and bye concepts, so the nav standard works in the chat too.
+- Case: `cases/hai_chat.pdl`, 17 checks, `VERDICT|PASS|passed=17|failed=0`. It covers the greet, unknown words getting options, the account asking for a name, the name stored and used, restart replaying the name, number 1, bye (exit 1), a closed chat refusing, the name row in the ledger, and missing setup refusing (exit 2).
+- Negative control: a copy of the engine that ignores the ledger (compiles, skips the replay) turns 7 checks red: the state, name, restart, closed-chat and ledger-row checks.
+- Piped session: `printf 'hi\naccount\nbo\nweather\n2\n' | ./ops/hai data ledger` gives the expected replies, and a restart keeps the chat closed.
+
+### Honest limits (say these in the UI and the docs)
+- Option labels come in file order, not by relevance. They are not yet ranked by weight. That is M4 (tool ranking) and M5 (learning).
+- In the name state, any word becomes the name, including "help". Acceptable for now; a guard row is owed.
+- Replies are fixed rows. There is no free text, by design.
+
+### Debts
+- Absolute repo paths in the case (the same debt as M2).
+- The mutation pass is one mutant (ledger ignored). Owed: a second mutant on the FSM rows, so a wrong transition is also caught.

@@ -1,0 +1,6 @@
+# CONCEPT | id | words (comma separated, lowercase) | reply id | option label (shown in a fallback)
+CONCEPT | greet | hi,hello,hey,hiya | r_greet | say hi
+CONCEPT | help | help,1,menu,what,can | r_help | help
+CONCEPT | account | account,name,login,passphrase,create | r_ask_name | account
+CONCEPT | nav | nav,navigate,page,pages,navigation | r_nav | nav
+CONCEPT | bye | bye,quit,exit,goodbye,2 | r_bye | quit
