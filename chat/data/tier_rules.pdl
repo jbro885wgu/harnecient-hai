@@ -1,0 +1,7 @@
+# tier_rules.pdl - who may publish a user's chain, and what it costs (hai_tier). Every number here is a RULE row.
+# Owner (2026-11-22): free tier = public chain; paid tier = private chain; price is 0.00 cones for now.
+# Prices are in millicones (1 cone = 1000 millicones), the unit chain_send uses. 0 = free.
+RULE | tier_free_visibility         | public
+RULE | tier_free_price_millicones   | 0
+RULE | tier_paid_visibility         | private
+RULE | tier_paid_price_millicones   | 0

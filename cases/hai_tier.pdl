@@ -1,0 +1,29 @@
+# hai_tier (2026-11-22): free tier = public chain, paid tier = private chain, price 0 millicones for now (owner).
+# Each check can FAIL. Built from source in a scratch dir. Mutant: visibility check removed (must go red).
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_tier.txt
+ENV | LC_ALL | C
+
+CASE    | tier
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_tier | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_tier.c | -lcrypto
+EXPECT_EXIT | 0 | the-op-builds-from-source
+RUN | $T/hai_tier | check | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data/tier_rules.pdl | free | public
+EXPECT_EXIT | 0 | free-public-allowed
+EXPECT_OUT  | OK tier=free visibility=public price_millicones=0 | free-is-public-and-free
+RUN | $T/hai_tier | check | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data/tier_rules.pdl | free | private
+EXPECT_EXIT | 4 | free-private-refused
+RUN | $T/hai_tier | check | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data/tier_rules.pdl | paid | private
+EXPECT_EXIT | 0 | paid-private-allowed
+RUN | $T/hai_tier | check | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data/tier_rules.pdl | paid | public
+EXPECT_EXIT | 4 | paid-public-refused
+RUN | $T/hai_tier | check | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data/tier_rules.pdl | vip | public
+EXPECT_EXIT | 2 | unknown-tier-refused
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/d
+WRITE   | d/ledger.txt | TURN|1|hi|greet|r_greet|idle|none||83\n
+RUN | $T/hai_tier | pack | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data/tier_rules.pdl | free | $T/d/ledger.txt | $T/pub
+EXPECT_EXIT | 0 | free-chain-packs
+EXPECT_HAS  | $T/pub/pack.pdl | visibility=public | pack-says-public
+RUN | $T/hai_tier | pack | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data/tier_rules.pdl | paid | $T/d/ledger.txt | $T/priv
+EXPECT_EXIT | 4 | paid-chain-never-packed
+CLEAN
