@@ -1,0 +1,14 @@
+# hai_core (M1, moved into the house harness 2026-11-22): the CLI reply core and its 8 checks.
+# The test binary is built from source in a scratch dir; EXPECT_OUT reads the checks it prints.
+RESULTS | ../results/hai_core.txt
+ENV | LC_ALL | C
+
+CASE    | core
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/test_hai | /home/no/Desktop/github/work/#.hai/harnecient-hai/tests/test_hai.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_core.c
+EXPECT_EXIT | 0 | the-core-test-builds-from-source
+RUN | $T/test_hai
+EXPECT_EXIT | 0 | all-core-checks-pass
+EXPECT_OUT  | SUMMARY\pfail=0 | summary-has-zero-failures
+EXPECT_OUT  | PASS\pnumber 2 picks quit | the-number-row-is-checked
+CLEAN

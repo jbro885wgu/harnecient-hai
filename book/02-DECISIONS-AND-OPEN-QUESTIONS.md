@@ -66,9 +66,18 @@
 - **Build started:** M0 (repo skeleton) in `#.hai/harnecient-hai/` (clone of `jbro885wgu/harnecient-hai`). Nothing committed or pushed yet.
 - **Licence:** still pending the owner's choice of wording (PolyForm NC proposed). The LICENSE file is not written until he confirms.
 
-## 9. M1 built 2026-11-22: CLI first, window later (decided by Claude, owner asked for CLI option)
-- Chose CLI for M1 over the X11-HQ window: the window draws through the house's live renderer and taskbar, so an installable hai would need the whole house desktop; a window can only be checked by screenshot. The window becomes a skin later (M8).
-- Nav standard followed: numbered menu rows (`[1] Help`, `[2] Quit`), a number picks the row, typed words are cli input, the menu comes from one function (`hai_menu`), never drawn by hand. Source: `1.TPMOS_c_+rmmp.0103.0001` README section 7 (`<button onClick="KEY:n">`, `<cli_io>`), and `DYNAMIC_SUBMENUS_FUNCTIONAL_STD.md`.
-- Built: `ops/hai_core.c` (pure reply logic), `ops/hai.c` (loop), `tests/test_hai.c` (8 checks).
-- Observed: `tests/test_hai` 8/8 PASS; a mutant that quits on help turns it red (7 FAIL, exit 1).
-- Debt: the test is plain C, not the house pal + case harness. Move it to a harness case before M2.
+## 10. M2 built 2026-11-22: instant local account, self-building case
+- Op: `ops/hai_account.c` (`create` / `login`). Passphrase: PBKDF2-HMAC-SHA256 via OpenSSL, random 16-byte salt. Ledger row `CREATE|name|salt|hash|iter|unix`, append-only, each row keeps its own iteration count so raising the cost later keeps old accounts valid. Numbers live in `rules/hai_rules.pdl` (name 3-24, pass 8-128, 100000 iterations), never in C; a missing rule exits 9.
+- Case: `cases/hai_account.pdl`, run by the house harness. It builds the op from source in a scratch dir, then runs 17 checks, each able to fail: duplicate name, wrong passphrase, unknown account, short name, short passphrase, missing rule, ledger holds the row, ledger keeps its iteration count, and no plaintext passphrase in the ledger.
+- Observed: `harness_verdict_op` → `VERDICT|PASS|passed=17|failed=0`.
+- Negative control: a copy of the op with the wrong-passphrase check removed turns `login-wrong-passphrase-refused` and `wrong-says-why` red (run output, FAIL rows).
+- M1 core test moved into the house harness: `cases/hai_core.pdl`, `VERDICT|PASS|passed=4|failed=0`. Its checks run the 8-check binary built from source.
+- Self-building: the case compiles the op and the test from source in its scratch dir, so one harness run is the build plus the test.
+- SELF-REPAIR, honest status: NOT built. A verdict names the failing check, and that is the input a repair would need. Auto-applying a code change is refused: house rule (auto-promotion is never built; a person reviews). What exists is the failing-check name and the red verdict.
+
+### Debts (open)
+1. Passphrase is on the command line, visible in `ps`, until a prompt verb exists (M2b).
+2. The cases name the hai repo by absolute path, because the case op expands only `$T` and `$HOUSE`. Fix: give the case op an env var for an external repo, or move hai into a house path. Owner decision.
+3. Case labels: the case op labels every check by the CASE name, so the 17 checks all print `build/...`. Cosmetic; one CASE row per group would fix it.
+4. `results/` is gitignored. The verdict file path for an absolute `RESULTS` is broken (`$cdir//abs`); not hit by the real case, which uses a relative path.
+5. Not yet: the M3 chat, the window, the installer.

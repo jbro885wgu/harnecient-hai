@@ -1,0 +1,37 @@
+# hai_account (M2, 2026-11-22): the local account op, built from source in a scratch dir, then run.
+# Each check can FAIL. Negatives: wrong passphrase, duplicate name, unknown account, short name, short passphrase, missing rule.
+# DEBT: this case names the hai repo by absolute path (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_account.txt
+ENV | LC_ALL | C
+
+CASE    | build
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_account | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_account.c | -lcrypto
+EXPECT_EXIT | 0 | the-account-op-builds-from-source
+WRITE   | norules.pdl | # no rules on purpose\n
+
+RUN | $T/hai_account | create | /home/no/Desktop/github/work/#.hai/harnecient-hai/rules/hai_rules.pdl | $T/ledger.txt | alice | correct horse 1
+EXPECT_EXIT | 0 | create-alice-accepted
+EXPECT_OUT  | OK create alice | create-says-ok
+RUN | $T/hai_account | create | /home/no/Desktop/github/work/#.hai/harnecient-hai/rules/hai_rules.pdl | $T/ledger.txt | alice | correct horse 1
+EXPECT_EXIT | 1 | duplicate-name-refused
+EXPECT_OUT  | name already taken | duplicate-says-why
+RUN | $T/hai_account | login | /home/no/Desktop/github/work/#.hai/harnecient-hai/rules/hai_rules.pdl | $T/ledger.txt | alice | correct horse 1
+EXPECT_EXIT | 0 | login-right-passphrase-accepted
+EXPECT_OUT  | OK login alice | login-says-ok
+RUN | $T/hai_account | login | /home/no/Desktop/github/work/#.hai/harnecient-hai/rules/hai_rules.pdl | $T/ledger.txt | alice | wrong pass 123
+EXPECT_EXIT | 1 | login-wrong-passphrase-refused
+EXPECT_OUT  | wrong passphrase | wrong-says-why
+RUN | $T/hai_account | login | /home/no/Desktop/github/work/#.hai/harnecient-hai/rules/hai_rules.pdl | $T/ledger.txt | nobody | correct horse 1
+EXPECT_EXIT | 1 | unknown-account-refused
+EXPECT_OUT  | no such account | unknown-says-why
+RUN | $T/hai_account | create | /home/no/Desktop/github/work/#.hai/harnecient-hai/rules/hai_rules.pdl | $T/ledger.txt | al | long enough pass
+EXPECT_EXIT | 1 | short-name-refused
+RUN | $T/hai_account | create | /home/no/Desktop/github/work/#.hai/harnecient-hai/rules/hai_rules.pdl | $T/ledger.txt | carl | short
+EXPECT_EXIT | 1 | short-passphrase-refused
+RUN | $T/hai_account | create | $T/norules.pdl | $T/ledger.txt | bo | long enough pass
+EXPECT_EXIT | 9 | missing-rule-refuses-not-defaults
+EXPECT_HAS  | $T/ledger.txt | CREATE\palice\p | ledger-holds-the-account-row
+EXPECT_HAS  | $T/ledger.txt | \p100000\p | ledger-keeps-its-own-iteration-count
+EXPECT_LACKS | $T/ledger.txt | correct horse | no-plaintext-passphrase-in-ledger
+CLEAN

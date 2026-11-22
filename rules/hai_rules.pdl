@@ -1,0 +1,6 @@
+# hai numbers. Every number the account op uses lives here (house rule D92), never in C.
+RULE | name_min | 3
+RULE | name_max | 24
+RULE | pass_min | 8
+RULE | pass_max | 128
+RULE | pbkdf2_iter | 100000
