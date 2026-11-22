@@ -32,3 +32,4 @@ Copies also live in `XO/%.HARNECIENT/hai-user-dox/` (docs only). This book is th
 - `09-event-pages.md`: E1, the event interpreter (fixed row set), C op and JS port, parity on 4 runs, harness 12/12, mutant red. Gaps listed.
 - `10-bundle-export.md`: E2, export and reload of a ledger as pdl or csv; round trip byte-identical; harness 10/10; mutant red; gaps listed (no row checksum yet).
 - `11-progress-and-roadmap.md`: progress report (what is built, what is pets, known problems) and the roadmap in order. Copies in XO %.calendar/nov-22.
+- `docs/vision.html`: a toy that runs the real engine over a simulated month (knobs, weight chart, option table, worked example). Linked from the demo page.

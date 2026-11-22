@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hai: vision toy (what long-term use looks like)</title>
+<style>
+  body { margin: 0; background: #161616; color: #e8e8e8; font: 15px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  header, section { padding: 14px 18px; border-bottom: 1px solid #2a2a2a; }
+  h1 { font-size: 18px; margin: 0 0 4px; } h2 { font-size: 15px; margin: 0 0 8px; color: #9fd0ff; }
+  .quiet { color: #8a8a8a; font-size: 13px; }
+  label { display: inline-block; margin-right: 18px; }
+  input[type=range] { vertical-align: middle; width: 180px; }
+  button { background: #2f5f8f; color: #fff; border: 0; padding: 8px 14px; font: inherit; cursor: pointer; margin-right: 8px; }
+  canvas { width: 100%; max-width: 900px; height: 300px; background: #101010; border: 1px solid #2a2a2a; }
+  table { border-collapse: collapse; font-size: 13px; } td, th { border: 1px solid #2a2a2a; padding: 3px 8px; text-align: left; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border: 1px solid #3a3a3a; color: #bbb; margin-left: 6px; }
+  ol li, ul li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>hai: what long-term use looks like <span class="tag">toy</span></h1>
+  <p class="quiet">This runs the real hai engine (the same rules as the CLI and the demo) over a simulated month of use. The user is scripted, not a prediction of real people. Change the sliders and watch what the rules do over time.</p>
+</header>
+
+<section>
+  <h2>1. The knobs</h2>
+  <label>days <input type="range" id="days" min="7" max="60" value="30"> <span id="days-v">30</span></label>
+  <label>grades a day <input type="range" id="gpd" min="0" max="10" value="4"> <span id="gpd-v">4</span></label>
+  <label>share of good grades <input type="range" id="good" min="0" max="100" value="70"> <span id="good-v">70</span>%</label>
+  <p><button id="run">Run the month</button><span id="status" class="quiet"></span></p>
+  <p class="quiet">Grades: 0 bad, 1 good, 2 to 4 better. The daily cap (10) and one grade per reply are the real rules; the slider can't go past them.</p>
+</section>
+
+<section>
+  <h2>2. How the weights move (each line is one concept; 0.5 is where every concept starts)</h2>
+  <canvas id="chart" width="900" height="300"></canvas>
+  <p class="quiet" id="legend"></p>
+</section>
+
+<section>
+  <h2>3. What the user sees: the first option, day by day</h2>
+  <p class="quiet">When hai does not know a phrase, it offers the top three concepts by weight. Watch the first option change as the rules learn.</p>
+  <table id="opts"></table>
+</section>
+
+<section>
+  <h2>4. Example: the same question on day 1 and on the last day</h2>
+  <div id="example" class="quiet">Run the month to see it.</div>
+</section>
+
+<section>
+  <h2>5. How it works, in order</h2>
+  <ol>
+    <li><b>Reply.</b> A word matches a concept (the one with the most matching words wins). Ties go to the higher weight.</li>
+    <li><b>Grade.</b> The user grades the last reply. A grade adds reward or punish counts from rules (grade 0 = one punish, grade 1 = one reward, grade 2 to 4 = more reward).</li>
+    <li><b>Weight.</b> Each concept's weight is (reward+1)/(reward+punish+2). It starts at 0.5, moves up with good grades and down with bad ones, and never reaches 0 or 1.</li>
+    <li><b>Options.</b> When nothing matches, the bot lists the top three concepts by weight. So learning changes what it offers, not what the replies say.</li>
+    <li><b>Limits.</b> Replies never change, so learning cannot invent new answers. The daily cap stops one person from forcing a result in one day.</li>
+    <li><b>Memory.</b> Everything above is replayed from the ledger, so a restart gives the same weights.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>6. What long-term use means, in three steps (the vision)</h2>
+  <ul>
+    <li><b>Now (built):</b> a chat that learns which concepts a person finds useful, from grades, with replies fixed and checked.</li>
+    <li><b>Next (planned):</b> a haibot: a chat agent with a party of six, a PC box, elements, faint and healing, and battles that test what it learned. Each part is a ledger row, so the same save file reloads anywhere.</li>
+    <li><b>Later (planned):</b> tools, linked documents, observed models (with a person in the loop), and a viewer that shows progress. See the roadmap in the repo book, section 11.</li>
+  </ul>
+  <p class="quiet">The toy only shows the first step. The rest is design and is labelled as such everywhere.</p>
+</section>
+
+<script src="engine.js"></script>
+<script>
+(function () {
+  var CONCEPTS = ["greet", "help", "account", "nav", "bye"];
+  var COLOURS = ["#ff8a65", "#9fd0ff", "#c5e1a5", "#ce93d8", "#ffe082"];
+  // "bye" and "quit" are left out on purpose: after a goodbye the chat is closed for good (a real rule), so a month without them keeps learning.
+  var USER_LINES = ["hi", "help", "account", "nav", "weather", "hello there", "what can you do", "pages", "login"];
+  var data = null;
+
+  function load(name) { return fetch("data/" + name).then(function (r) { if (!r.ok) throw new Error(name); return r.text(); }); }
+  function set(id, fn) { var el = document.getElementById(id); el.addEventListener("input", function () { document.getElementById(id + "-v").textContent = el.value; }); }
+  set("days"); set("gpd"); set("good");
+  document.getElementById("good").addEventListener("input", function () { document.getElementById("good-v").textContent = this.value; });
+
+  // A fixed pseudo-random sequence, so the same knobs always give the same month.
+  function rng(seed) { var s = seed >>> 0; return function () { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+
+  function simulate(days, gpd, goodShare) {
+    var ledger = [], r = rng(20261122), history = [], optionsByDay = [], first = null, last = null;
+    for (var d = 0; d < days; d++) {
+      var now = d * 86400 + 3600;
+      var graded = 0;
+      for (var i = 0; i < 6; i++) {
+        var line = USER_LINES[Math.floor(r() * USER_LINES.length)];
+        var res = HaiEngine.turn(data, ledger, line, now + i);
+        if (graded < gpd) {
+          var roll = r();
+          var g = roll < goodShare / 100 ? (r() < 0.5 ? 1 : 2 + Math.floor(r() * 3)) : 0;
+          var gr = HaiEngine.grade(data, ledger, g, now + i);
+          if (gr.code === 0) graded++;
+        }
+        if (res.text.indexOf("Did you mean") >= 0 && first === null) first = { day: d + 1, text: res.text, line: line };
+      }
+      var st = HaiEngine.replay(ledger, 0);
+      var w = {};
+      CONCEPTS.forEach(function (c) { var k = st.concepts[c] || { r: 0, p: 0 }; w[c] = (k.r + 1) / (k.r + k.p + 2); });
+      history.push(w);
+      var order = data.concepts.map(function (c, k) { return { id: c.id, label: c.label, w: w[c.id] !== undefined ? w[c.id] : 0.5, k: k }; });
+      order.sort(function (a, b) { return (b.w - a.w) || (a.k - b.k); });
+      optionsByDay.push(order.slice(0, 3));
+      if (d === days - 1) last = { day: d + 1, text: HaiEngine.turn(data, ledger, "weather", now + 9).text };
+    }
+    return { history: history, options: optionsByDay, first: first, last: last, ledger: ledger.length };
+  }
+
+  function draw(sim) {
+    var c = document.getElementById("chart"), g = c.getContext("2d"), W = c.width, H = c.height, pad = 36;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = "#2a2a2a"; g.fillStyle = "#8a8a8a"; g.font = "12px monospace";
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+      var y = H - pad - v * (H - 2 * pad);
+      g.beginPath(); g.moveTo(pad, y); g.lineTo(W - 10, y); g.stroke();
+      g.fillText(v.toFixed(2), 2, y + 4);
+    });
+    var n = sim.history.length;
+    CONCEPTS.forEach(function (cn, idx) {
+      g.strokeStyle = COLOURS[idx]; g.lineWidth = 2; g.beginPath();
+      sim.history.forEach(function (w, d) {
+        var x = pad + (n === 1 ? 0 : d / (n - 1)) * (W - pad - 10);
+        var y = H - pad - w[cn] * (H - 2 * pad);
+        if (d === 0) g.moveTo(x, y); else g.lineTo(x, y);
+      });
+      g.stroke();
+    });
+    g.fillStyle = "#8a8a8a";
+    g.fillText("day 1", pad, H - 10); g.fillText("day " + n, W - 60, H - 10);
+    document.getElementById("legend").innerHTML = CONCEPTS.map(function (cn, i) {
+      return '<span style="color:' + COLOURS[i] + '">■ ' + cn + '</span>';
+    }).join("&nbsp;&nbsp;");
+  }
+
+  function table(sim) {
+    var t = document.getElementById("opts"), rows = "<tr><th>day</th><th>option 1</th><th>option 2</th><th>option 3</th></tr>";
+    var step = Math.max(1, Math.ceil(sim.options.length / 12));
+    sim.options.forEach(function (o, d) {
+      if (d % step !== 0 && d !== sim.options.length - 1) return;
+      rows += "<tr><td>" + (d + 1) + "</td>" + o.map(function (x) { return "<td>" + x.label + " " + x.w.toFixed(2) + "</td>"; }).join("") + "</tr>";
+    });
+    t.innerHTML = rows;
+  }
+
+  function example(sim) {
+    var first = sim.first ? ("day " + sim.first.day + ": you typed <b>" + sim.first.line + "</b>, hai said: " + sim.first.text) : "no unknown phrase in this month";
+    var last = sim.last ? ("day " + sim.last.day + ": you type <b>weather</b>, hai says: " + sim.last.text) : "";
+    var w = sim.history[sim.history.length - 1];
+    var lead = CONCEPTS.slice().sort(function (a, b) { return w[b] - w[a]; })[0];
+    document.getElementById("example").innerHTML = first + "<br>" + last +
+      "<br>After " + sim.history.length + " days the highest weight is <b>" + lead + "</b> (" + w[lead].toFixed(2) + "). The replies themselves did not change: only the order of the options and the tie-breaks did." +
+      "<br><span class='quiet'>ledger rows written: " + sim.ledger + "</span>";
+  }
+
+  function run() {
+    var days = +document.getElementById("days").value, gpd = +document.getElementById("gpd").value, good = +document.getElementById("good").value;
+    var sim = simulate(days, gpd, good);
+    draw(sim); table(sim); example(sim);
+    document.getElementById("status").textContent = "ran " + days + " days, " + gpd + " grades a day, " + good + "% good (real engine, fixed seed).";
+  }
+
+  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl")])
+    .then(function (t) {
+      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3] });
+      document.getElementById("run").addEventListener("click", run);
+      run();
+    })
+    .catch(function (e) { document.getElementById("status").textContent = "could not load: " + e.message; });
+})();
+</script>
+</body>
+</html>
