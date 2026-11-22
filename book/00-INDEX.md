@@ -28,3 +28,4 @@ Copies also live in `XO/%.HARNECIENT/hai-user-dox/` (docs only). This book is th
 - `06-viewer-tools-links-watch-battle-p2p.md`: gamified viewer, hangman battle with ELO, examples, p2p with an authentication stop.
 - `07-haibot-party-pc-elements.md`: haibot_<pid>, party of 6, PC box, body and armour, elemental magic (heal or harm by rows), per-haibot ELO. Copies in XO hai-user-dox.
 - `08-events-export-element-faint-credits-armour.md`: shared event pages for C and JS, export and reload (pdl or csv), element pick, faint and healing, fake credits with a test faucet, armour by research and model proposal (rules set numbers, human review). Copy in XO hai-user-dox.
+- `haibot/data/elements.pdl`, `haibot/hai_elements.c`, `cases/hai_elements.pdl`: the ten Terumon elements from the owner's card (8/8 PASS).

@@ -57,8 +57,26 @@ Labels: **BUILT** · **HOUSE** (in the house, checked by reading) · **DESIGN** 
 | E6 | research and armour proposals (fixed lines, rules set numbers, human review) | a proposal with an unknown element refused; a number in the proposal is ignored (rules win) |
 
 ## 8. Decisions (OWNER answered some; the rest OPEN)
-- Element names (OPEN: the owner will pick later).
+- Element names: DONE (section 9, the card).
 - Credit price list and rest turns (OPEN: placeholder RULE values until tuned).
 - Shared haibot files: copy only (default) or transfer (OPEN).
 - The model for armour (OPEN: local Gemma on the Mac by default).
 - Whether the chat-side hai-model may use a model later (default: no).
+
+## 9. The ten elements (SAID 2026-11-22: the Terumon periodic table card)
+Source: the owner's card "Tear-it co : Centroid University ; Periodic table of Terumon" (`/media/.../TEAR_IT.co/TERUMON/ZX9pa.jpg`, read 2026-11-22 by opening the picture). Data: `haibot/data/elements.pdl`, checked by `haibot/hai_elements.c` and harness `cases/hai_elements.pdl` (8/8 PASS, two negatives that can fail).
+
+| id | symbol | name | colour | meaning on the card |
+|---|---|---|---|---|
+| ignis | Ig | IGNIS | red | fire |
+| sol | So | SOL | orange | sun |
+| lux | Lu | LUX | yellow | lightning |
+| vita | Vi | VITA | green | life, plants |
+| aqua | Aq | AQUA | blue | water |
+| nebula | Ne | NEBULA | purple | space, dust |
+| amor | Am | AMOR | pink | love, care |
+| nihil | Ni | NIHIL | black | void |
+| tear | Te | TEAR | white | tears, grief |
+| geo | Ge | GEO | brown | earth, stone |
+
+The card's atomic numbers and weights are decoration. No rule uses them. Section 3 (element pick) now uses these names; the placeholder `el_01 ... el_10` is retired.

@@ -1,0 +1,27 @@
+# hai_elements (2026-11-22): the ten Terumon elements, validated. Each check can FAIL.
+# Negatives: a duplicate id, nine elements, a short row. The table is the card's ten: ignis, sol, lux, vita,
+# aqua, nebula, amor, nihil, tear, geo.
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_elements.txt
+ENV | LC_ALL | C
+
+CASE    | elements
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_elements | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/hai_elements.c
+EXPECT_EXIT | 0 | the-validator-builds-from-source
+RUN | $T/hai_elements | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/data/elements.pdl
+EXPECT_EXIT | 0 | the-real-table-passes
+EXPECT_OUT  | ELEMENTS n=10 ok | ten-elements-counted
+RUN | cp | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/data/elements.pdl | $T/copy.pdl
+EXPECT_EXIT | 0 | the-copy-is-the-same-file
+WRITE   | dup.pdl | ELEMENT\p ignis\p Ig\p IGNIS\p red\p fire\nELEMENT\p ignis\p Ig\p IGNIS\p red\p fire\n
+RUN | $T/hai_elements | $T/dup.pdl
+EXPECT_EXIT | 1 | duplicate-id-refused
+EXPECT_OUT  | duplicate id ignis | duplicate-named
+WRITE   | nine.pdl | ELEMENT\p ignis\p Ig\p IGNIS\p red\p fire\n
+RUN | $T/hai_elements | $T/nine.pdl
+EXPECT_EXIT | 1 | nine-elements-refused
+WRITE   | short.pdl | ELEMENT\p a\p Ig\p A\p red\n
+RUN | $T/hai_elements | $T/short.pdl
+EXPECT_EXIT | 1 | short-row-refused
+CLEAN
