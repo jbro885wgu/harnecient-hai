@@ -1,5 +1,6 @@
 /* hai_chat - the FSM chat as a command. The engine is hai_chat_core (shared with hai and the window).
- * Usage: hai_chat turn  <datadir> <ledger> <input...>
+ * Usage: hai_chat calib <datadir> <ledger>
+ *        hai_chat turn  <datadir> <ledger> <input...>
  *        hai_chat grade <datadir> <ledger> <0-4>
  *        hai_chat state <ledger>
  *        hai_chat stats <datadir> <ledger>
@@ -39,6 +40,11 @@ int main(int argc, char **argv) {
     }
     if (argc == 4 && strcmp(argv[1], "stats") == 0) {
         int rc = hai_chat_stats(argv[2], argv[3], out, sizeof out);
+        printf("%s", out);
+        return rc;
+    }
+    if (argc == 4 && strcmp(argv[1], "calib") == 0) {
+        int rc = hai_chat_calibration(argv[2], argv[3], out, sizeof out);
         printf("%s", out);
         return rc;
     }

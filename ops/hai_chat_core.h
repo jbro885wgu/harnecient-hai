@@ -17,5 +17,7 @@ int hai_chat_state(const char *ledger, char *out, size_t out_len);
 int hai_chat_grade(const char *datadir, const char *ledger, int grade, long now, char *out, size_t out_len);
 /* Prints one line per learned item: "concept <id> reward=R punish=P weight=W" and "reply ...". */
 int hai_chat_stats(const char *datadir, const char *ledger, char *out, size_t out_len);
+/* Calibration of stated confidence against grades (see hai_chat_core.c). 0 ok, 2 setup missing. */
+int hai_chat_calibration(const char *datadir, const char *ledger, char *out, size_t out_len);
 
 #endif

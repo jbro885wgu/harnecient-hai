@@ -34,3 +34,4 @@ Copies also live in `XO/%.HARNECIENT/hai-user-dox/` (docs only). This book is th
 - `11-progress-and-roadmap.md`: progress report (what is built, what is pets, known problems) and the roadmap in order. Copies in XO %.calendar/nov-22.
 - `docs/vision.html`: a toy that runs the real engine over a simulated month (knobs, weight chart, option table, worked example). Linked from the demo page.
 - `12-seeds-confidence-display.md`: hand-set seeds (chat/data/seeds.pdl), confidence per reply (in the row and the text), display fix for grade rows, harness 11/11 for confidence with a weight mutant red.
+- `13-tomom-parts-as-ops-and-events.md`: tomom parts (attention, FF, backprop, optimizer, MoE, meta-RL) as ops with harness checks and event pages; the CALL row needed; build order. Plan only.

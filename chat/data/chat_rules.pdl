@@ -14,3 +14,6 @@ RULE | grade_4_reward | 4
 RULE | grade_4_punish | 0
 # at most this many grades per ledger per day (one person repeating a grade cannot dominate)
 RULE | grade_daily_cap | 10
+# calibration (hai_chat calib): bins of stated confidence, and what counts as a good grade
+RULE | calib_bin_width | 10
+RULE | good_min_grade | 1

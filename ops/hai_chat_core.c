@@ -357,3 +357,56 @@ int hai_chat_state(const char *ledger, char *out, size_t out_len) {
     snprintf(out, out_len, "state=%s name=%s", L.state, L.name);
     return 0;
 }
+
+/* Calibration: does a stated confidence match how often the reply was graded good?
+ * Joins each GRADE row to its TURN row by turn number and reads the confidence the turn stored (9th field).
+ * Bins of width calib_bin_width (RULE row). A grade counts as good when grade >= good_min_grade (RULE row).
+ * ECE = sum over bins of (n_bin / N) * |good rate in bin - mean stated confidence in bin| (0 = perfectly calibrated).
+ * Output: "BIN lo=L hi=H n=N good=G rate=R mean_conf=C" per non-empty bin, then "ECE=E graded=N". */
+#define MAXT 4096
+#define MAXB 101
+int hai_chat_calibration(const char *datadir, const char *ledger, char *out, size_t out_len) {
+    long width = rule_long(datadir, "calib_bin_width", 0);
+    if (width <= 0 || width > 100) { snprintf(out, out_len, "setup missing or bad rule calib_bin_width"); return 2; }
+    long good_min = rule_long(datadir, "good_min_grade", -1);
+    if (!rule_found) { snprintf(out, out_len, "setup missing rule good_min_grade"); return 2; }
+    static int conf[MAXT]; for (int i = 0; i < MAXT; i++) conf[i] = -1;
+    int turns = 0;
+    static int bn[MAXB], bg[MAXB]; static double bsum[MAXB];
+    memset(bn, 0, sizeof bn); memset(bg, 0, sizeof bg); memset(bsum, 0, sizeof bsum);
+    FILE *f = fopen(ledger, "r");
+    if (f) {
+        char line[LINE];
+        while (fgets(line, sizeof line, f)) {
+            if (strncmp(line, "TURN|", 5) == 0) {
+                char *fld[10]; int nf = split_keep(line, fld, 10);
+                if (nf < 9) continue;                       /* 8-field rows from before confidence carry none */
+                if (turns < MAXT) conf[turns] = atoi(fld[8]);
+                turns++;
+            } else if (strncmp(line, "GRADE|", 6) == 0) {
+                char *fld[9]; int nf = split_keep(line, fld, 9);
+                if (nf < 9) continue;
+                int t = atoi(fld[2]), g = atoi(fld[5]);
+                if (t < 1 || t > MAXT || conf[t - 1] < 0) continue;
+                int c = conf[t - 1];
+                int b = c / (int)width; if (b >= MAXB) b = MAXB - 1;
+                bn[b]++; bsum[b] += c; if (g >= good_min) bg[b]++;
+            }
+        }
+        fclose(f);
+    }
+    int total = 0; for (int b = 0; b < MAXB; b++) total += bn[b];
+    double ece = 0;
+    char line[160]; out[0] = 0;
+    for (int b = 0; b < MAXB; b++) {
+        if (bn[b] == 0) continue;
+        int lo = b * (int)width, hi = lo + (int)width - 1; if (hi > 100) hi = 100;
+        double rate = (double)bg[b] / bn[b], meanc = bsum[b] / bn[b] / 100.0;
+        ece += ((double)bn[b] / total) * (rate > meanc ? rate - meanc : meanc - rate);
+        snprintf(line, sizeof line, "BIN lo=%d hi=%d n=%d good=%d rate=%.4f mean_conf=%.4f\n", lo, hi, bn[b], bg[b], rate, meanc);
+        strncat(out, line, out_len - strlen(out) - 1);
+    }
+    snprintf(line, sizeof line, "ECE=%.4f graded=%d\n", ece, total);
+    strncat(out, line, out_len - strlen(out) - 1);
+    return 0;
+}

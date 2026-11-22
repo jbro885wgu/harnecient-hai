@@ -161,7 +161,42 @@
     }).join("\n") + "\n";
   }
 
-  var api = { parseData: parseData, turn: turn, grade: grade, stats: stats, replay: replay, tokens: tokens };
+  // Calibration: JS port of hai_chat_calibration in C (same bins, same rule rows, same output text).
+  function calibration(data, ledger) {
+    var width = data.rules.calib_bin_width, goodMin = data.rules.good_min_grade;
+    if (!width || width > 100) return { code: 2, text: "setup missing or bad rule calib_bin_width" };
+    if (goodMin === undefined) return { code: 2, text: "setup missing rule good_min_grade" };
+    var conf = [], turns = 0, bn = [], bg = [], bsum = [], b, i;
+    for (b = 0; b < 101; b++) { bn.push(0); bg.push(0); bsum.push(0); }
+    ledger.forEach(function (line) {
+      if (line.indexOf("TURN|") === 0) {
+        var f = splitKeep(line);
+        if (f.length < 9) return;
+        conf[turns] = parseInt(f[8], 10); turns++;
+      } else if (line.indexOf("GRADE|") === 0) {
+        var g = splitKeep(line);
+        if (g.length < 9) return;
+        var t = parseInt(g[2], 10), gr = parseInt(g[5], 10);
+        if (t < 1 || t > 4096 || conf[t - 1] === undefined) return;
+        var c = conf[t - 1];
+        var bin = Math.min(100, Math.floor(c / width));
+        bn[bin]++; bsum[bin] += c; if (gr >= goodMin) bg[bin]++;
+      }
+    });
+    var total = 0; for (i = 0; i < 101; i++) total += bn[i];
+    var ece = 0, out = "";
+    for (b = 0; b < 101; b++) {
+      if (bn[b] === 0) continue;
+      var lo = b * width, hi = Math.min(100, lo + width - 1);
+      var rate = bg[b] / bn[b], meanc = bsum[b] / bn[b] / 100;
+      ece += (bn[b] / total) * (rate > meanc ? rate - meanc : meanc - rate);
+      out += "BIN lo=" + lo + " hi=" + hi + " n=" + bn[b] + " good=" + bg[b] + " rate=" + rate.toFixed(4) + " mean_conf=" + meanc.toFixed(4) + "\n";
+    }
+    out += "ECE=" + ece.toFixed(4) + " graded=" + total + "\n";
+    return { code: 0, text: out };
+  }
+
+  var api = { parseData: parseData, turn: turn, grade: grade, stats: stats, calibration: calibration, replay: replay, tokens: tokens };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.HaiEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -1,0 +1,29 @@
+# hai_calibration (2026-11-22): does stated confidence match how often replies are graded good?
+# Built from source in a scratch dir. Hand-computed: hi at 83% graded good; hi at 86% graded bad;
+# weather at 0% graded bad. Bin 80-89: n=2, good=1, rate 0.5, mean confidence 0.845.
+# ECE = (2/3) x |0.5 - 0.845| = 0.2300. Bin 0-9: n=1, rate 0, mean 0.
+# Negatives: a missing rule is refused. Mutant (ECE unweighted) must turn the case red.
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_calibration.txt
+ENV | LC_ALL | C
+
+CASE    | calibration
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | the-engine-builds-from-source
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/d
+RUN | $T/hai_chat | turn | $T/d | $T/l | hi
+RUN | $T/hai_chat | grade | $T/d | $T/l | 1
+RUN | $T/hai_chat | turn | $T/d | $T/l | hi
+RUN | $T/hai_chat | grade | $T/d | $T/l | 0
+RUN | $T/hai_chat | turn | $T/d | $T/l | weather
+RUN | $T/hai_chat | grade | $T/d | $T/l | 0
+RUN | $T/hai_chat | calib | $T/d | $T/l
+EXPECT_EXIT | 0 | calibration-runs
+EXPECT_OUT  | BIN lo=80 hi=89 n=2 good=1 rate=0.5000 mean_conf=0.8450 | the-80s-bin-by-hand
+EXPECT_OUT  | BIN lo=0 hi=9 n=1 good=0 rate=0.0000 mean_conf=0.0000 | the-zero-bin-by-hand
+EXPECT_OUT  | ECE=0.2300 graded=3 | ece-by-hand
+WRITE   | norule.pdl | RULE\p calib_bin_width\p 10\n
+RUN | $T/hai_chat | calib | $T/norule.pdl | $T/l
+EXPECT_EXIT | 2 | a-missing-rule-is-refused
+CLEAN
