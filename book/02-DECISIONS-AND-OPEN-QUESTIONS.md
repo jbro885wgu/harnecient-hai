@@ -65,3 +65,10 @@
 - **Window: reuse the X11-HQ window for MVP**, and make it friendlier than a raw terminal (labelled buttons for the common actions, the nav menu visible, a plain-language help line). Owner: "x11 window is great for now, reuse hai but make it user friendly".
 - **Build started:** M0 (repo skeleton) in `#.hai/harnecient-hai/` (clone of `jbro885wgu/harnecient-hai`). Nothing committed or pushed yet.
 - **Licence:** still pending the owner's choice of wording (PolyForm NC proposed). The LICENSE file is not written until he confirms.
+
+## 9. M1 built 2026-11-22: CLI first, window later (decided by Claude, owner asked for CLI option)
+- Chose CLI for M1 over the X11-HQ window: the window draws through the house's live renderer and taskbar, so an installable hai would need the whole house desktop; a window can only be checked by screenshot. The window becomes a skin later (M8).
+- Nav standard followed: numbered menu rows (`[1] Help`, `[2] Quit`), a number picks the row, typed words are cli input, the menu comes from one function (`hai_menu`), never drawn by hand. Source: `1.TPMOS_c_+rmmp.0103.0001` README section 7 (`<button onClick="KEY:n">`, `<cli_io>`), and `DYNAMIC_SUBMENUS_FUNCTIONAL_STD.md`.
+- Built: `ops/hai_core.c` (pure reply logic), `ops/hai.c` (loop), `tests/test_hai.c` (8 checks).
+- Observed: `tests/test_hai` 8/8 PASS; a mutant that quits on help turns it red (7 FAIL, exit 1).
+- Debt: the test is plain C, not the house pal + case harness. Move it to a harness case before M2.
