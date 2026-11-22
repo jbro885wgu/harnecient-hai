@@ -3,3 +3,5 @@ tests/test_hai
 ops/hai_account
 results/
 ops/hai_chat
+window/bin/
+window/state/

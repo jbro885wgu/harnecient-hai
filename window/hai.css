@@ -1,0 +1,6 @@
+/* hai.css - colours only (the renderer owns geometry). Same palette as the house -hq windows. */
+.sidebar        { background-color: #161616; border-color: #333333; }
+.settings-block { background-color: #181818; border: 1px solid #2a2a2a; }
+.block-title    { color: #e8e8e8; }
+.quiet          { color: #8a8a8a; }
+.data-item.active { background-color: #2f5f8f; color: #ffffff; }
