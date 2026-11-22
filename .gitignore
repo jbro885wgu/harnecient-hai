@@ -10,3 +10,5 @@ window/module_parent.pid
 haibot/hai_elements
 haibot/hai_event
 haibot/hai_elements
+window/.hq_manager/
+window/cli_io_state.txt
