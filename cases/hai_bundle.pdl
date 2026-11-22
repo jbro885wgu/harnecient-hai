@@ -1,0 +1,38 @@
+# hai_bundle (E2, 2026-11-22): export and reload a haibot ledger. Each check can FAIL.
+# Round trip: a real chat ledger (with a comma in the input) exported as csv, imported into a new ledger,
+# exported as pdl again: the file must be BYTE IDENTICAL to the first pdl export.
+# Negatives: a non-empty target ledger, a row kind that is not allowed (a stat), a csv row whose n does not match.
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_bundle.txt
+ENV | LC_ALL | C
+
+CASE    | bundle
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_bundle | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/hai_bundle.c
+EXPECT_EXIT | 0 | the-bundle-op-builds-from-source
+RUN | gcc | -std=gnu11 | -O2 | -w | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | the-chat-engine-builds-for-the-ledger
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/data
+RUN | $T/hai_chat | turn | $T/data | $T/l.ledger | hi, there
+RUN | $T/hai_chat | turn | $T/data | $T/l.ledger | account
+RUN | $T/hai_chat | turn | $T/data | $T/l.ledger | bo, the builder
+RUN | $T/hai_chat | grade | $T/data | $T/l.ledger | 2
+RUN | $T/hai_bundle | export | $T/l.ledger | pdl | $T/a.pdl
+EXPECT_OUT  | OK export rows=4 format=pdl | export-pdl-counts-four-rows
+RUN | $T/hai_bundle | export | $T/l.ledger | csv | $T/a.csv
+EXPECT_OUT  | OK export rows=4 format=csv | export-csv-counts-four-rows
+RUN | $T/hai_bundle | import | $T/a.csv | $T/l2.ledger
+EXPECT_OUT  | OK import rows=4 | import-into-a-new-ledger
+RUN | $T/hai_bundle | export | $T/l2.ledger | pdl | $T/b.pdl
+RUN | cmp | -s | $T/a.pdl | $T/b.pdl
+EXPECT_EXIT | 0 | round-trip-csv-is-byte-identical
+RUN | $T/hai_bundle | import | $T/a.csv | $T/l2.ledger
+EXPECT_EXIT | 5 | non-empty-ledger-refused
+WRITE   | stat.pdl | # bundle v1\nSTAT\p hp\p 999\n
+RUN | $T/hai_bundle | check | $T/stat.pdl
+EXPECT_EXIT | 4 | a-stat-row-is-not-allowed-in-a-bundle
+EXPECT_OUT  | ERR line 2 | refusal-names-the-line
+WRITE   | badn.csv | kind,n,f1,f2\nTURN,8,x,y\n
+RUN | $T/hai_bundle | check | $T/badn.csv
+EXPECT_EXIT | 4 | csv-n-that-does-not-match-the-cells-refused
+CLEAN
