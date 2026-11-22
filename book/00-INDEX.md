@@ -23,3 +23,7 @@ ADMIN; checked 2026-11-22 with `gh repo view`). Local folder: `#.hai/`.
 - `1.hai-user-tutorial.md`: the CLI and the window, step by step, what to check.
 - `2.teach-the-hai-model.md`: how to teach concepts and replies, grades, RL, linked documents, observed models, distillation (optional).
 Copies also live in `XO/%.HARNECIENT/hai-user-dox/` (docs only). This book is the authority.
+
+## 06 and 07 (2026-11-22)
+- `06-viewer-tools-links-watch-battle-p2p.md`: gamified viewer, hangman battle with ELO, examples, p2p with an authentication stop.
+- `07-haibot-party-pc-elements.md`: haibot_<pid>, party of 6, PC box, body and armour, elemental magic (heal or harm by rows), per-haibot ELO. Copies in XO hai-user-dox.
