@@ -36,3 +36,4 @@ Copies also live in `XO/%.HARNECIENT/hai-user-dox/` (docs only). This book is th
 - `12-seeds-confidence-display.md`: hand-set seeds (chat/data/seeds.pdl), confidence per reply (in the row and the text), display fix for grade rows, harness 11/11 for confidence with a weight mutant red.
 - `13-tomom-parts-as-ops-and-events.md`: tomom parts (attention, FF, backprop, optimizer, MoE, meta-RL) as ops with harness checks and event pages; the CALL row needed; build order. Plan only.
 - `14-tier-pipeline-and-wallet-gaps.md`: free-tier pipeline (public free, private paid, 0 millicones; hai_tier, harness 10/10, mutant red) and the house wallet gaps with evidence.
+- `15-pal-chain-spec-owner-model-and-status.md`: the PAL-CHAIN spec is recovered from the ZEST copies (md5 b76a9845); the owner model (customer-service reversal, hybrid main chain, rated accounts) as a target; what is built vs not; gaps; hash work moved to the reset-day checklist.
