@@ -1,0 +1,34 @@
+# hai_event (E1, 2026-11-22): the event interpreter on a fixed row set. Each check can FAIL.
+# Built from source in a scratch dir. Negatives: unknown row kind, unknown IF operator, missing rule, missing fact.
+# JS parity is run separately (docs/event.js) and recorded in book/09-event-pages.md; this case covers the C op.
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_event.txt
+ENV | LC_ALL | C
+
+CASE    | event
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_event | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/hai_event.c
+EXPECT_EXIT | 0 | the-interpreter-builds-from-source
+RUN | $T/hai_event | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/heal_by_rest.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/rules.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/facts_rested.pdl | rest
+EXPECT_EXIT | 0 | rested-page-runs
+EXPECT_OUT  | ROW HEAL\ph1\pby=rest | rested-haibot-is-healed-by-rest
+EXPECT_OUT  | FACT fainted=0 | healing-clears-fainted
+RUN | $T/hai_event | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/heal_by_rest.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/rules.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/facts_short.pdl | cast
+EXPECT_OUT  | ROW REFUSE\ph1\pnot enough mp | short-caster-gets-a-refusal-row
+RUN | $T/hai_event | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/heal_by_rest.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/rules.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/facts_rested.pdl | cast
+EXPECT_OUT  | ROW CAST\ph1\pember_spark | caster-with-mp-casts
+EXPECT_OUT  | FACT mp=0 | cast-spends-mp
+WRITE   | bad_row.pdl | PAGE\p x\nWHEN\p rest\nBOGUS\p 1\p 2\n
+RUN | $T/hai_event | $T/bad_row.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/rules.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/facts_rested.pdl | rest
+EXPECT_EXIT | 2 | unknown-row-kind-refused
+EXPECT_OUT  | ERR line 3 | refusal-names-the-line
+WRITE   | bad_op.pdl | PAGE\p x\nWHEN\p rest\nIF\p @mp\p zz\p 1\n
+RUN | $T/hai_event | $T/bad_op.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/rules.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/facts_rested.pdl | rest
+EXPECT_EXIT | 2 | unknown-operator-refused
+WRITE   | norule.pdl | PAGE\p x\nWHEN\p rest\nIF\p @mp\p ge\p $no_such_rule\n
+RUN | $T/hai_event | $T/norule.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/rules.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/facts_rested.pdl | rest
+EXPECT_EXIT | 3 | missing-rule-refused-not-defaulted
+WRITE   | nofact.pdl | PAGE\p x\nWHEN\p rest\nIF\p @ghost\p ge\p 1\n
+RUN | $T/hai_event | $T/nofact.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/rules.pdl | /home/no/Desktop/github/work/#.hai/harnecient-hai/haibot/events/facts_rested.pdl | rest
+EXPECT_EXIT | 3 | missing-fact-refused-not-defaulted
+CLEAN
