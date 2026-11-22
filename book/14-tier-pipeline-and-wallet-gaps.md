@@ -38,3 +38,12 @@ Sources: `44.xyz.01.00/041.pal-chain⛓️/` (ops, pal, wallets), `16.game/WALLE
 3. Recover or write the spec (item 7). Everything else depends on it.
 4. Wire signing (3) and ledgered balance (5), each with a case that can fail.
 5. Wire the tier (6) once 2 to 4 are green.
+
+## 5. Gap 4 reproduced (2026-11-22, by the agent as Haiku; run in a scratch root, live code untouched)
+- Method: a scratch copy of `chain_send.c` with `PRISC_PROJECT_ROOT` pointing to a scratch root whose `chain_balance` stub prints `5000`. Sender id `x;touch <scratch>/PWNED_LIVE`, recipient `bob`.
+- **Live code:** exit 0, the marker file is **PRESENT**. The sender id ran a shell command. **Reproduced.**
+- **One-line fix, on the scratch copy only:** insert before `long balance = current_balance(from);`:
+  `if (!valid_wallet_id(from)) { fprintf(stderr, "Invalid sender wallet_id.\n"); return 1; }`
+  Hostile sender: exit 1, marker **absent**. Honest sender `alice` to `bob`: "Sent 10 millicones", exit 0.
+- **Not yet done:** the fix is NOT applied to the house file (`041.pal-chain⛓️/ops/chain_send.c` is on the house repo, a live money path, with concurrent agents). A stronger agent or the owner applies it, then adds the hostile-id case to the house harness.
+- Caveat: the balance was a stub. The real `chain_balance` was not run.
