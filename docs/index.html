@@ -21,6 +21,9 @@
   form { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid #2a2a2a; }
   input { flex: 1; background: #101010; color: #eee; border: 1px solid #3a3a3a; padding: 8px; font: inherit; }
   .go { background: #2f5f8f; color: #fff; border: 0; padding: 8px 14px; font: inherit; cursor: pointer; }
+  .out { background: #101010; color: #cfcfcf; padding: 8px; white-space: pre-wrap; word-break: break-all; font-size: 12px; min-height: 2em; }
+  input[type=file] { color: #bbb; max-width: 100%; }
+  select { background: #101010; color: #eee; border: 1px solid #3a3a3a; font: inherit; }
   .grade { margin: 4px 0 14px; } .grade button { margin-right: 4px; background: #232323; color: #ddd; border: 1px solid #3a3a3a; padding: 2px 9px; font: inherit; cursor: pointer; }
   .grade button:hover { background: #2f5f8f; color: #fff; }
   #note { color: #8a8a8a; font-size: 13px; min-height: 18px; margin-top: 6px; }
@@ -50,6 +53,26 @@
       <p>To try it today, clone the repo and follow <code>book/04-hai-model/1.hai-user-tutorial.md</code>.</p>
     </details>
     <div id="note"></div>
+    <details id="events-box" open>
+      <summary>Events (the same event pages the full app runs)</summary>
+      <p class="quiet">A haibot reacts to events. These two pages are examples; the facts are sample values.</p>
+      <div class="menu">
+        <button data-event="rest">Event: rest (heal a fainted haibot)</button>
+        <button data-event="cast">Event: cast (spell, refused when MP is short)</button>
+      </div>
+      <p class="quiet">Facts: <select id="facts-pick"><option value="facts_rested.pdl">rested, MP 5</option><option value="facts_short.pdl">short rest, MP 2</option></select></p>
+      <pre id="event-out" class="out"></pre>
+    </details>
+    <details id="export-box" open>
+      <summary>Export and import your ledger</summary>
+      <p class="quiet">Export your chat ledger to download, or import one you exported before (only into an empty ledger, as in the command line).</p>
+      <div class="menu">
+        <button id="exp-pdl">Export .pdl</button>
+        <button id="exp-csv">Export .csv</button>
+      </div>
+      <label class="quiet">Import a .pdl or .csv: <input type="file" id="imp-file" accept=".pdl,.csv,text/plain,text/csv"></label>
+      <p id="bundle-note" class="quiet"></p>
+    </details>
     <details>
       <summary>What this demo can not do (the full app can)</summary>
       <ul>
@@ -61,6 +84,14 @@
         <li>Your account and ledger stay in this browser only. The full app keeps them on your machine.</li>
       </ul>
       <p>If one of these blocks you, say so: that limit is a desk to fix, not a reason to stop.</p>
+    </details>
+    <details id="next-box">
+      <summary>What is coming next (honest status)</summary>
+      <p class="quiet"><b>Built and running here:</b> chat, grades 0 to 4 with learning, events (rest, cast), export and import.</p>
+      <p class="quiet"><b>Next:</b> the haibot party of 6 and PC box; faint and healing as rows; elements picked at start (the ten Terumon elements); hangman battles with ELO per haibot.</p>
+      <p class="quiet"><b>Later:</b> tool calls, linked documents, watching other models, the X11 window with typed input, pairing and two agents over the network, the installer.</p>
+      <p class="quiet"><b>Not decided:</b> credits price list, armour crafted with a model (reviewed by a person before it counts), whether shared files are copied or transferred.</p>
+      <p class="quiet">Full report and roadmap: the repo book, <code>book/11-progress-and-roadmap.md</code>.</p>
     </details>
     <details>
       <summary>How this works</summary>
@@ -77,6 +108,8 @@
   </section>
 </main>
 <script src="engine.js"></script>
+<script src="event.js"></script>
+<script src="bundle.js"></script>
 <script>
 (function () {
   var KEY = "hai.demo.ledger.v1";
@@ -149,6 +182,47 @@
   });
   document.getElementById("reset").addEventListener("click", function () {
     localStorage.removeItem(KEY); localStorage.removeItem(KEY + ".text"); msg.disabled = false; paint();
+  });
+
+  // ---- events: the same pages as haibot/events, run by docs/event.js ----
+  function loadPlain(path) { return fetch(path).then(function (r) { if (!r.ok) throw new Error(path + " " + r.status); return r.text(); }); }
+  document.querySelectorAll("[data-event]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var pick = document.getElementById("facts-pick").value;
+      Promise.all([loadPlain("data/haibot/heal_by_rest.pdl"), loadPlain("data/haibot/rules.pdl"), loadPlain("data/haibot/" + pick)])
+        .then(function (t) {
+          var r = HaiEvent.runEvent(t[0], t[1], t[2], b.getAttribute("data-event"));
+          var out = r.code === 0 ? r.lines.join("\n") : ("refused (exit " + r.code + "): " + r.error);
+          document.getElementById("event-out").textContent = "event: " + b.getAttribute("data-event") + " with " + pick + "\n" + out;
+        })
+        .catch(function (err) { document.getElementById("event-out").textContent = "could not run: " + err.message; });
+    });
+  });
+
+  // ---- export and import: the same bundle rules as haibot/hai_bundle.c ----
+  function download(name, text) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+    a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  }
+  function note(t) { document.getElementById("bundle-note").textContent = t; }
+  document.getElementById("exp-pdl").addEventListener("click", function () {
+    var r = HaiBundle.exportPdl(ledger().join("\n") + "\n"); download("hai-ledger.pdl", r.text); note("exported " + r.rows + " rows (.pdl)");
+  });
+  document.getElementById("exp-csv").addEventListener("click", function () {
+    var r = HaiBundle.exportCsv(ledger().join("\n") + "\n"); download("hai-ledger.csv", r.text); note("exported " + r.rows + " rows (.csv)");
+  });
+  document.getElementById("imp-file").addEventListener("change", function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    if (ledger().length) { note("refused: your ledger is not empty. Start over first, then import."); return; }
+    f.text().then(function (t) {
+      var r = HaiBundle.importText(t);
+      if (r.code) { note("refused: " + r.msg); return; }
+      save(r.ledger.split("\n").filter(function (x) { return x.length; }));
+      localStorage.removeItem(KEY + ".text");
+      note(r.msg + " (replies show their reply ids after an import)");
+      paint();
+    });
   });
 
   Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl")])

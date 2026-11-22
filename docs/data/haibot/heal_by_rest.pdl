@@ -1,0 +1,21 @@
+# A haibot that has rested long enough is healed; a healed one gets its rest counter reset.
+PAGE | heal_by_rest
+WHEN | rest
+IF   | @rest_turns | ge | $rest_turns_to_heal
+IF   | @fainted | eq | 1
+THEN | APPEND | HEAL | @pid | by=rest
+THEN | SET | fainted | 0
+THEN | SET | rest_turns | 0
+
+# A spell is refused when the caster has too little MP. Pure check: no rows written.
+PAGE | cast_guard
+WHEN | cast
+IF   | @mp | lt | $spell_cost
+THEN | APPEND | REFUSE | @pid | not enough mp
+THEN | STOP
+
+PAGE | cast_ok
+WHEN | cast
+IF   | @mp | ge | $spell_cost
+THEN | APPEND | CAST | @pid | @spell
+THEN | SET | mp | 0
