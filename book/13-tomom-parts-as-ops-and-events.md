@@ -64,3 +64,6 @@ Event pages can only write rows and set values (book 09). To call an op they nee
 
 ## 7. Status (observed 2026-11-22)
 Nothing in sections 2 to 5 is built yet. Built this session: calibration (`hai_chat calib`, ECE 0.2300 on the hand-checked ledger; `hai_calibration` 6/6; mutant red; JS port identical).
+
+## 8. Decided 2026-11-22 (the owner asked me to decide)
+D1 softmax first. D2 SGD only. D3 router ranks only. D4 new weights run beside counts, compared on ECE. D5 cosine similarity as one `cosine_op` for corpora and concept banks (not built). D6 ops live in hai. D7 event pages call ops via a whitelisted CALL row. Full reasons and reversal triggers: XO nov-22 `2.architecture-blueprint-2026-11-22.md`.
