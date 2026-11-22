@@ -170,9 +170,9 @@
     document.getElementById("status").textContent = "ran " + days + " days, " + gpd + " grades a day, " + good + "% good (real engine, fixed seed).";
   }
 
-  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl")])
+  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl"), load("seeds.pdl")])
     .then(function (t) {
-      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3] });
+      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3], seeds: t[4] });
       document.getElementById("run").addEventListener("click", run);
       run();
     })

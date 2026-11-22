@@ -27,7 +27,7 @@
     return out;
   }
   function csvCell(s) { return /[,"]/.test(s) ? '"' + s.split('"').join('""') + '"' : s; }
-  function allowed(kind, n) { return (kind === "TURN" && n === 8) || (kind === "GRADE" && n === 9); }
+  function allowed(kind, n) { return (kind === "TURN" && (n === 8 || n === 9)) || (kind === "GRADE" && n === 9); }
   function isLedgerRow(line) { return line.indexOf("TURN|") === 0 || line.indexOf("GRADE|") === 0; }
 
   function exportPdl(ledger) {

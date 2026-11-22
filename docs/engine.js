@@ -32,12 +32,20 @@
       if (f.length < 5) return;
       next.push({ from: f[1], concept: f[2], to: f[3], action: f[4] });
     });
+    var seeds = [];
+    (files.seeds || "").split("\n").forEach(function (line) {
+      if (line[0] === "#" || line.indexOf("SEED") !== 0) return;
+      var f = splitKeep(line);
+      if (f.length !== 4) return;
+      seeds.push({ id: f[1], r: parseFloat(f[2]), p: parseFloat(f[3]) });
+    });
     files.rules.split("\n").forEach(function (line) {
       var m = line.match(/^RULE \| ([^|]+?) \| (\d+)/);
       if (m) rules[m[1].trim()] = parseInt(m[2], 10);
     });
     if (!rules.input_max || !rules.options_max) throw new Error("setup missing rules");
-    return { concepts: concepts, replies: replies, next: next, rules: rules };
+    seeds.forEach(function (sd) { if (!concepts.some(function (c) { return c.id === sd.id; })) throw new Error("seed refers to an unknown concept: " + sd.id); });
+    return { concepts: concepts, replies: replies, next: next, rules: rules, seeds: seeds };
   }
 
   function tokens(s) {
@@ -51,13 +59,14 @@
   }
 
   // One pass over the ledger, like replay() in C.
-  function replay(ledger, today) {
+  function replay(ledger, today, seeds) {
     var st = { state: "start", name: "", turns: 0, gradesToday: 0, lastConcept: "", lastReply: "",
                lastGradedTurn: -1, concepts: {}, replies: {} };
     function add(map, id, rw, pu) {
       if (!map[id]) map[id] = { r: 0, p: 0 };
       map[id].r += rw; map[id].p += pu;
     }
+    (seeds || []).forEach(function (sd) { st.concepts[sd.id] = { r: sd.r, p: sd.p }; });
     ledger.forEach(function (line) {
       if (line.indexOf("TURN|") === 0) {
         var f = splitKeep(line);
@@ -88,7 +97,7 @@
   function turn(data, ledger, input, now) {
     var clean = String(input == null ? "" : input).replace(/[|\r\n]/g, " ");
     if (clean.length > data.rules.input_max) clean = clean.slice(0, data.rules.input_max);
-    var st = replay(ledger, 0);
+    var st = replay(ledger, 0, data.seeds);
     var toks = tokens(clean), best = -1, bestHits = 0, bestW = -1;
     data.concepts.forEach(function (c, i) {
       var hits = toks.filter(function (t) { return c.words.indexOf(t) >= 0; }).length;
@@ -96,6 +105,7 @@
       if (hits > bestHits || (hits === bestHits && hits > 0 && w > bestW)) { bestHits = hits; best = i; bestW = w; }
     });
     var concept = best >= 0 ? data.concepts[best].id : "none";
+    var conf = (toks.length > 0 && bestHits > 0) ? Math.floor((100 * bestHits / toks.length) * bestW + 0.5) : 0;
     var to = "", action = "none";
     for (var i = 0; i < data.next.length; i++) {
       var r = data.next[i];
@@ -120,7 +130,8 @@
       var opts = order.slice(0, data.rules.options_max).map(function (o, n) { return "[" + (n + 1) + "] " + data.concepts[o.k].label; });
       text = text + " Did you mean: " + opts.join(" ") + "?";
     }
-    var row = "TURN|" + now + "|" + clean + "|" + concept + "|" + replyId + "|" + to + "|" + action + "|" + typed;
+    text = text + " (confidence " + conf + "%)";
+    var row = "TURN|" + now + "|" + clean + "|" + concept + "|" + replyId + "|" + to + "|" + action + "|" + typed + "|" + conf;
     ledger.push(row);
     var code = (to === "done" && st.state !== "done") ? 1 : 0;
     return { text: text, code: code, row: row };
@@ -132,18 +143,18 @@
     var cap = data.rules.grade_daily_cap, rw = data.rules["grade_" + g + "_reward"], pu = data.rules["grade_" + g + "_punish"];
     if (!cap || rw === undefined || pu === undefined) return { code: 2, text: "setup missing rules" };
     var day = Math.floor(now / 86400);
-    var st = replay(ledger, day);
+    var st = replay(ledger, day, data.seeds);
     if (st.turns === 0 || st.lastConcept === "") return { code: 5, text: "no reply to grade yet" };
     if (st.lastGradedTurn === st.turns) return { code: 7, text: "this reply is already graded" };
     if (st.gradesToday >= cap) return { code: 6, text: "daily grade limit reached (" + cap + ")" };
     ledger.push("GRADE|" + now + "|" + st.turns + "|" + st.lastConcept + "|" + st.lastReply + "|" + g + "|" + rw + "|" + pu + "|" + day);
-    var after = replay(ledger, day);
+    var after = replay(ledger, day, data.seeds);
     var w = weightOf(after.replies, st.lastReply);
     return { code: 0, text: "OK grade " + g + " for " + st.lastReply + " weight=" + w.toFixed(4) };
   }
 
   function stats(data, ledger) {
-    var st = replay(ledger, 0);
+    var st = replay(ledger, 0, data.seeds);
     return data.concepts.map(function (c) {
       var k = st.concepts[c.id] || { r: 0, p: 0 };
       return "concept " + c.id + " reward=" + k.r + " punish=" + k.p + " weight=" + ((k.r + 1) / (k.r + k.p + 2)).toFixed(4);

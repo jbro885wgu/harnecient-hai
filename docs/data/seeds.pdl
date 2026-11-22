@@ -1,0 +1,8 @@
+# SEED | concept | reward | punish
+# Hand-set starting counts (HAND-SET by the owner's design; edit here, not in C). A seed is a count like a grade:
+# greet starts at (4+1)/(4+0+2) = 0.83, help at 0.75, the others at 0.67. Every seed shows in stats.
+SEED | greet | 4 | 0
+SEED | help | 2 | 0
+SEED | account | 1 | 0
+SEED | nav | 1 | 0
+SEED | bye | 1 | 0

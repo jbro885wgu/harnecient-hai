@@ -1,0 +1,33 @@
+# hai_confidence (2026-11-22): seeds start the weights; each reply shows a confidence; the row keeps it.
+# Hand-computed: greet seeded 4/0 -> weight 5/6 = 0.8333. confidence = matched words / input words x weight.
+#   "hi"          1/1 x 0.8333 = 83%     "hello there" 1/2 x 0.8333 = 42%     "help" 1/1 x 0.75 = 75%
+#   "weather"     no match = 0%
+# Negative: a seed for a concept that does not exist is refused. Built from source in a scratch dir.
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_confidence.txt
+ENV | LC_ALL | C
+
+CASE    | confidence
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | the-engine-builds-from-source
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/d
+RUN | $T/hai_chat | stats | $T/d | $T/l
+EXPECT_OUT  | concept greet reward=4 punish=0 weight=0.8333 | the-seed-starts-greet-at-five-sixths
+EXPECT_OUT  | concept nav reward=1 punish=0 weight=0.6667 | the-small-seeds-start-at-two-thirds
+RUN | $T/hai_chat | turn | $T/d | $T/l | hi
+EXPECT_OUT  | (confidence 83%) | one-word-match-times-seed-weight
+RUN | $T/hai_chat | turn | $T/d | $T/l | hello there
+EXPECT_OUT  | (confidence 42%) | half-the-words-match-so-half-the-confidence
+RUN | $T/hai_chat | turn | $T/d | $T/l | help
+EXPECT_OUT  | (confidence 75%) | help-is-seeded-at-three-quarters
+RUN | $T/hai_chat | turn | $T/d | $T/l | weather
+EXPECT_OUT  | (confidence 0%) | no-match-means-zero-confidence
+EXPECT_HAS  | $T/l | none\p\p83 | the-confidence-is-the-ninth-field-of-the-row
+EXPECT_HAS  | $T/l | TURN\p | the-row-keeps-the-turn-shape
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/bad
+WRITE   | bad/seeds.pdl | SEED\p ghost\p 1\p 0\n
+RUN | $T/hai_chat | turn | $T/bad | $T/l2 | hi
+EXPECT_EXIT | 2 | a-seed-for-an-unknown-concept-is-refused
+EXPECT_OUT  | seed refers to an unknown concept | refusal-says-why
+CLEAN

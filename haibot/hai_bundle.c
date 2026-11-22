@@ -56,7 +56,7 @@ static void csv_cell(FILE *o, const char *s) {
 }
 
 static int allowed(const char *kind, int n) {
-    if (!strcmp(kind, "TURN")) return n == 8;
+    if (!strcmp(kind, "TURN")) return n == 8 || n == 9;
     if (!strcmp(kind, "GRADE")) return n == 9;
     return 0;
 }

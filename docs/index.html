@@ -128,10 +128,19 @@
     st.lastGraded = st.lastGradedTurn === st.turns;
     var texts = JSON.parse(localStorage.getItem(KEY + ".text") || "[]");
     feed.innerHTML = "";
-    l.forEach(function (row, i) {
+    // Texts are stored per TURN only. Grade rows are not turns: they show as their own line, and they never shift the texts.
+    var ti = 0;
+    l.forEach(function (row) {
       var f = row.split("|");
+      if (f[0] === "GRADE") {
+        var gl = document.createElement("div"); gl.className = "quiet"; gl.textContent = "   graded " + f[5] + " (reply " + f[4] + ")";
+        feed.appendChild(gl); return;
+      }
+      if (f[0] !== "TURN") return;
       var you = document.createElement("div"); you.className = "you"; you.textContent = "you> " + f[2];
-      var hai = document.createElement("div"); hai.className = "hai"; hai.textContent = "hai> " + (texts[i] || f[4]);
+      var hai = document.createElement("div"); hai.className = "hai";
+      hai.textContent = "hai> " + (texts[ti] !== undefined ? texts[ti] : "(reply " + f[4] + ", text not stored)");
+      ti++;
       feed.appendChild(you); feed.appendChild(hai);
     });
     if (l.length && !st.lastGraded) {
@@ -225,9 +234,9 @@
     });
   });
 
-  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl")])
+  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl"), load("seeds.pdl")])
     .then(function (t) {
-      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3] });
+      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3], seeds: t[4] });
       paint();
       if (!ledger().length) { say("hi"); }
     })

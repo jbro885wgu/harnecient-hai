@@ -134,11 +134,37 @@ static count_t *count_for(count_t *arr, int *n, int max, const char *id) {
     return &arr[(*n)++];
 }
 
-static void replay(const char *ledger, long today, ledger_t *L) {
+/* Seeds: hand-set starting counts per concept (chat/data/seeds.pdl, rows "SEED | concept | reward | punish").
+ * They are counts like any other, applied before the ledger, so they show in the weights and in stats.
+ * A seed for a concept that does not exist is refused (returns -1), never ignored. No seeds file = no seeds. */
+static int apply_seeds(const char *dir, ledger_t *L) {
+    char path[1024], line[LINE];
+    snprintf(path, sizeof path, "%s/seeds.pdl", dir);
+    FILE *f = fopen(path, "r");
+    if (!f) return 0;
+    static concept_t cs[MAXC];
+    int nc = load_concepts(dir, cs, MAXC);
+    if (nc < 0) { fclose(f); return -1; }
+    while (fgets(line, sizeof line, f)) {
+        if (line[0] == '#' || strncmp(line, "SEED", 4) != 0) continue;
+        char *fld[4]; int nf = split_keep(line, fld, 4);
+        if (nf != 4) continue;
+        int known = 0;
+        for (int i = 0; i < nc; i++) if (strcmp(cs[i].id, fld[1]) == 0) known = 1;
+        if (!known) { fclose(f); return -1; }
+        count_t *c = count_for(L->concepts, &L->nconcepts, MAXC, fld[1]);
+        if (c) { c->r = atof(fld[2]); c->p = atof(fld[3]); }
+    }
+    fclose(f);
+    return 0;
+}
+
+static int replay(const char *ledger, long today, ledger_t *L, const char *datadir) {
     memset(L, 0, sizeof *L);
     snprintf(L->state, sizeof L->state, "start");
     L->last_graded_turn = -1;
-    FILE *f = fopen(ledger, "r"); if (!f) return;
+    if (datadir && apply_seeds(datadir, L) != 0) return -1;
+    FILE *f = fopen(ledger, "r"); if (!f) return 0;
     char line[LINE];
     while (fgets(line, sizeof line, f)) {
         if (strncmp(line, "TURN|", 5) == 0) {
@@ -163,6 +189,7 @@ static void replay(const char *ledger, long today, ledger_t *L) {
         }
     }
     fclose(f);
+    return 0;
 }
 
 static double weight_of(const count_t *arr, int n, const char *id) {
@@ -198,7 +225,7 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
     for (char *p = clean; *p; p++) if (*p == '|' || *p == '\n' || *p == '\r') *p = ' ';
     if ((long)strlen(clean) > input_max) clean[input_max] = 0;
 
-    replay(ledger, 0, &L);
+    if (replay(ledger, 0, &L, datadir) != 0) { snprintf(out, out_len, "seed refers to an unknown concept (see chat/data/seeds.pdl)"); return 2; }
 
     /* classify: most matched tokens wins; a tie goes to the higher weight, then to file order */
     static char toks[64][64];
@@ -213,6 +240,8 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
         if (hits > best_hits || (hits == best_hits && hits > 0 && w > best_w)) { best_hits = hits; best = c; best_w = w; }
     }
     const char *concept = best >= 0 ? cs[best].id : "none";
+    /* confidence: how much of the input matched the chosen concept, times how much that concept is trusted */
+    int conf = (nt > 0 && best_hits > 0) ? (int)((100.0 * best_hits / nt) * best_w + 0.5) : 0;
 
     /* FSM: the first NEXT row for this state and concept (or *) wins */
     char to[32] = "", action[32] = "none";
@@ -267,9 +296,11 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
 
     FILE *f = fopen(ledger, "a");
     if (!f) { snprintf(out, out_len, "cannot write chat ledger"); return 3; }
-    fprintf(f, "TURN|%ld|%s|%s|%s|%s|%s|%s\n", (long)time(NULL), clean, concept, reply_id, to, action, typed);
+    fprintf(f, "TURN|%ld|%s|%s|%s|%s|%s|%s|%d\n", (long)time(NULL), clean, concept, reply_id, to, action, typed, conf);
     fclose(f);
 
+    char conftxt[64]; snprintf(conftxt, sizeof conftxt, " (confidence %d%%)", conf);
+    if (strlen(text) + strlen(conftxt) < sizeof text) strcat(text, conftxt);
     snprintf(out, out_len, "%s", text);
     if (strcmp(to, "done") == 0 && strcmp(L.state, "done") != 0) return 1;
     return 0;
@@ -287,7 +318,7 @@ int hai_chat_grade(const char *datadir, const char *ledger, int grade, long now,
     (void)path;
 
     long day = now / 86400;
-    ledger_t L; replay(ledger, day, &L);
+    ledger_t L; if (replay(ledger, day, &L, datadir) != 0) { snprintf(out, out_len, "seed refers to an unknown concept"); return 2; }
     if (L.turns == 0 || L.last_concept[0] == 0) { snprintf(out, out_len, "no reply to grade yet"); return 5; }
     if (L.last_graded_turn == L.turns) { snprintf(out, out_len, "this reply is already graded"); return 7; }
     if (L.grades_today >= cap) { snprintf(out, out_len, "daily grade limit reached (%ld)", cap); return 6; }
@@ -298,7 +329,7 @@ int hai_chat_grade(const char *datadir, const char *ledger, int grade, long now,
     fclose(f);
 
     /* the new weight of the reply, after this grade */
-    replay(ledger, day, &L);
+    replay(ledger, day, &L, datadir);
     double w = weight_of(L.replies, L.nreplies, L.last_reply);
     snprintf(out, out_len, "OK grade %d for %s weight=%.4f", grade, L.last_reply, w);
     return 0;
@@ -308,7 +339,7 @@ int hai_chat_stats(const char *datadir, const char *ledger, char *out, size_t ou
     static concept_t cs[MAXC];
     int nc = load_concepts(datadir, cs, MAXC);
     if (nc < 0) { snprintf(out, out_len, "setup missing under %s", datadir); return 2; }
-    ledger_t L; replay(ledger, 0, &L);
+    ledger_t L; if (replay(ledger, 0, &L, datadir) != 0) { snprintf(out, out_len, "seed refers to an unknown concept"); return 2; }
     out[0] = 0;
     char line[256];
     for (int c = 0; c < nc; c++) {
@@ -322,7 +353,7 @@ int hai_chat_stats(const char *datadir, const char *ledger, char *out, size_t ou
 }
 
 int hai_chat_state(const char *ledger, char *out, size_t out_len) {
-    ledger_t L; replay(ledger, 0, &L);
+    ledger_t L; replay(ledger, 0, &L, NULL);
     snprintf(out, out_len, "state=%s name=%s", L.state, L.name);
     return 0;
 }
