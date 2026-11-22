@@ -98,3 +98,11 @@
 ### Debts
 - Absolute repo paths in the case (the same debt as M2).
 - The mutation pass is one mutant (ledger ignored). Owed: a second mutant on the FSM rows, so a wrong transition is also caught.
+
+## 12. DECIDED 2026-11-22 (SAID, owner): the window ships, relay driving stays
+- Owner: "i do want the x11, even if we have to ship that. ... see development on screen, and use relay driving techniques."
+- What it means: hai's window is an X11-HQ app drawn by the house renderer (`khtpm_core_render.c`, 24,825 lines; needs Xlib, Xft and Shape), so the same relay (`entity_menu_history/<pid>.txt`) drives it as it drives every house window.
+- Precedent for shipping it: the `tearit-install` payload already ships the renderer for `tearit-hq` (taskbar, login, cursword). hai's payload follows that shape.
+- Split (PROPOSAL, recommended): the engine (account, FSM chat, ledger) stays headless and is tested by the harness with no display. The window is a skin over the same engine, driven by the relay.
+- Blocker for testing: no Xvfb here, and `DISPLAY=:0` is the owner's live desktop. A window test on the live desktop needs the owner's OK first (house rule for LIVE cases). Owner can install Xvfb (`sudo apt install xvfb`) so window tests run on a scratch display.
+- Next (W1): an app copied from `&.hq-apps/_template-hq/` into `hai/window/`, with a manager op that reads the engine. Acceptance: a window opens, the relay types `hi` and gets the reply on screen, a PNG is opened and described, and a negative (a closed window must not count as open).
