@@ -178,7 +178,7 @@ static void publish(const char *pkg) {
                 else if (!strcmp(f[0], "ALIAS") && nf >= 3) { snprintf(text, sizeof text, "alias  %s  means the same as  %s", f[1], f[2]); snprintf(cl, sizeof cl, "bank-learned"); nali++; }
                 else if (!strcmp(f[0], "SAY") && nf >= 3) { snprintf(text, sizeof text, "answer  when you say %s:  %s", f[1], f[2]); snprintf(cl, sizeof cl, "bank-learned"); }
                 else continue;
-                fprintf(o, "bank_%d_text=%s\nbank_%d_cls=%s\n", nb, text, nb, cl); nb++;
+                fprintf(o, "bk_%d_text=%s\nbk_%d_cls=%s\n", nb, text, nb, cl); nb++;
             }
         }
         fprintf(o, "bank_count=%d\nbank_title=Bank of %s: %d built-in meanings, %d taught words, %d aliases (the ledger replayed: exactly what the next reply will use)\n", nb, act0, ncon, ntau, nali);
