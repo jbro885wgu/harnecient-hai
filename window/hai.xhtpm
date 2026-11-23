@@ -28,7 +28,7 @@
     </sidebar>
     <panel id="detail" class="hai-mid">
       <text label="agent: ${agent}   ${state}   turns: ${turns}   ${stamp}" class="block-title"/>
-      <text label="Type a line + Enter to chat. Teach: /teach w = meaning  /alias w = concept  /say w = text  /mark w  /forget w  /pack lyfedesk  /grade 0..4.  /bank  /chat" class="quiet"/>
+      <text label="Type a line + Enter to chat. Teach: /teach w = meaning  /alias w = concept  /say w = text  /mark w  /forget w  /pack lyfedesk  /grade 0..4.  /bank  /chat" class="quiet" show="${chat_on}"/>
       <scrolllist show="${chat_on}">
         <repeat count="${rows_count}" bind="row">
           <item id="row${row.#}" class="data-item ${row.cls}" label="${row.text}"/>
@@ -38,12 +38,12 @@
       <text label="${bank_title}" class="block-title" show="${bank_on}"/>
       <scrolllist show="${bank_on}">
         <repeat count="${bank_count}" bind="bk">
-          <item id="bk${bk.#}" class="data-item ${bk.cls}" label="${bk.text}"/>
+          <item id="bk${bk.#}" class="data-item ${bk.cls}" label="${bk.text}" action="'${PKG}/bin/hai_session' '${bk.act}'"/>
         </repeat>
       </scrolllist>
       <scrolllist class="from-top" show="${viz_on}">
         <repeat count="${vz_count}" bind="vz">
-          <item id="vz${vz.#}" class="data-item ${vz.cls}" label="${vz.text}"/>
+          <item id="vz${vz.#}" class="data-item ${vz.cls}" label="${vz.text}" action="'${PKG}/bin/hai_session' '${vz.act}'"/>
         </repeat>
       </scrolllist>
       <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>

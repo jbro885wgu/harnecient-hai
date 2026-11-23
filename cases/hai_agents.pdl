@@ -124,6 +124,24 @@ RUN | $T/window/bin/hai_session | TOGGLE bank | $T/window
 EXPECT_HAS | window/state/ui_prefs.txt | view=bank | the-bank-tab-replaces-the-dashboard-not-both
 RUN | $T/window/bin/hai_send | $T/window | /tmp | /viz
 EXPECT_HAS | window/state/ui_prefs.txt | view=viz | the-typed-viz-command-shows-the-dashboard
+RUN | $T/window/bin/hai_session | ITEM concept:greet | $T/window
+EXPECT_EXIT | 0 | a-click-on-a-meaning-is-accepted
+EXPECT_HAS | window/state/ui_prefs.txt | view=detail | it-opens-the-detail-view
+EXPECT_HAS | window/state/ui_prefs.txt | item=concept:greet | for-that-meaning
+RUN | $T/window/bin/hai_session | ITEM taught:house | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | item=taught:house | a-taught-word-works-too
+RUN | $T/window/bin/hai_session | NOOP | $T/window
+EXPECT_EXIT | 0 | a-text-only-row-click-does-nothing
+EXPECT_HAS | window/state/ui_prefs.txt | item=taught:house | and-changes-nothing
+RUN | $T/window/bin/hai_session | ITEM ../../etc/passwd | $T/window
+EXPECT_EXIT | 4 | a-path-as-an-item-is-refused
+RUN | $T/window/bin/hai_session | ITEM nothing:here | $T/window
+EXPECT_EXIT | 4 | an-unknown-kind-is-refused
+EXPECT_HAS | window/state/ui_prefs.txt | item=taught:house | a-refused-item-leaves-the-open-one
+RUN | $T/window/bin/hai_session | VIEW viz | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | view=viz | back-to-the-overview
+RUN | $T/window/bin/hai_session | TOGGLE viz | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | view=chat | the-viz-tab-from-a-detail-view-goes-to-the-chat
 RUN | $T/window/bin/hai_session | TOGGLE nonsense | $T/window
 EXPECT_EXIT | 4 | an-unknown-toggle-is-refused
 RUN | $T/window/bin/hai_session | NEWAGENT_AUTO curious | $T/window

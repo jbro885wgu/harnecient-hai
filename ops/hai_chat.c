@@ -50,6 +50,12 @@ int main(int argc, char **argv) {
         fputs(vout, stdout); if (rc) putchar('\n');
         return rc;
     }
+    if (argc == 5 && strcmp(argv[1], "detail") == 0) {          /* hai_chat detail <datadir> <ledger> <concept:id|taught:word>: one item, for the dashboard drill-down */
+        static char dout[65536];
+        int rc = hai_chat_detail(argv[2], argv[3], argv[4], dout, sizeof dout);
+        fputs(dout, stdout); if (rc) putchar('\n');
+        return rc;
+    }
     if (argc >= 3 && strcmp(argv[1], "why") == 0) {              /* hai_chat why <ledger> [turn number | last]: how that reply was decided */
         FILE *lf = fopen(argv[2], "r"); if (!lf) { printf("no ledger\n"); return 2; }
         int want = (argc > 3 && strcmp(argv[3], "last") != 0) ? atoi(argv[3]) : -1, turn = 0, found = 0; char line[2048], inp[512] = "", w[1200] = "";

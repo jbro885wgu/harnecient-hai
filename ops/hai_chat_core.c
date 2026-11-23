@@ -712,3 +712,48 @@ int hai_chat_viz(const char *datadir, const char *ledger, char *out, size_t out_
     #undef VEMIT
     return 0;
 }
+
+int hai_chat_detail(const char *datadir, const char *ledger, const char *item, char *out, size_t out_len) {
+    static concept_t cs[MAXC]; static ledger_t L; static char body[32768];
+    int nc = load_concepts(datadir, cs, MAXC);
+    if (nc < 0) { snprintf(out, out_len, "setup missing under %s", datadir); return 2; }
+    char key[96] = ""; int is_concept = 0;
+    if (item && strncmp(item, "concept:", 8) == 0) { snprintf(key, sizeof key, "%s", item + 8); is_concept = 1; }
+    else if (item && strncmp(item, "taught:", 7) == 0) snprintf(key, sizeof key, "%s", item);
+    else { snprintf(out, out_len, "no such item"); return 4; }
+    memset(&L, 0, sizeof L); snprintf(L.state, sizeof L.state, "start"); L.last_graded_turn = -1;
+    if (apply_seeds(datadir, &L) != 0) { snprintf(out, out_len, "seed refers to an unknown concept"); return 2; }
+    size_t off = 0; body[0] = 0; int uses = 0, grades = 0;
+    #define DEMIT(...) do { if (off < sizeof body) off += (size_t)snprintf(body + off, sizeof body - off, __VA_ARGS__); } while (0)
+    FILE *f = fopen(ledger, "r");
+    if (f) {
+        char line[LINE], copy[LINE];
+        while (fgets(line, sizeof line, f)) {
+            int kind = 0; char inp[96] = "", cpt[96] = ""; int conf = 0, gturn = 0, gval = 0; char gcon[96] = "";
+            if (strncmp(line, "TURN|", 5) == 0) { snprintf(copy, sizeof copy, "%s", line); char *fld[9]; int nf = split_keep(copy, fld, 9); if (nf >= 8) { kind = 1; snprintf(inp, sizeof inp, "%.60s", fld[2]); snprintf(cpt, sizeof cpt, "%s", fld[3]); conf = nf >= 9 ? atoi(fld[8]) : 0; } }
+            else if (strncmp(line, "GRADE|", 6) == 0) { snprintf(copy, sizeof copy, "%s", line); char *fld[9]; int nf = split_keep(copy, fld, 9); if (nf >= 9) { kind = 2; gturn = atoi(fld[2]); snprintf(gcon, sizeof gcon, "%s", fld[3]); gval = atoi(fld[5]); } }
+            replay_line(&L, line, 0);
+            if (kind == 1 && strcmp(cpt, key) == 0) { DEMIT("USE|%d|%d|%s\n", L.turns, conf, inp); uses++; }
+            if (kind == 2 && strcmp(gcon, key) == 0) { grades++; DEMIT("HIST|%d|%d|%d|%.2f\n", grades, gturn, gval, weight_of(L.concepts, L.nconcepts, key)); }
+        }
+        fclose(f);
+    }
+    #undef DEMIT
+    double r = 0, p = 0; for (int i = 0; i < L.nconcepts; i++) if (strcmp(L.concepts[i].id, key) == 0) { r = L.concepts[i].r; p = L.concepts[i].p; }
+    char head[1600] = "";
+    if (is_concept) {
+        int ci = -1; for (int c = 0; c < nc; c++) if (strcmp(cs[c].id, key) == 0) ci = c;
+        if (ci < 0) { snprintf(out, out_len, "no such item"); return 4; }
+        char kw[400] = ""; for (int w = 0; w < cs[ci].nw; w++) { strncat(kw, cs[ci].words[w], sizeof kw - strlen(kw) - 2); if (w + 1 < cs[ci].nw) strncat(kw, ",", sizeof kw - strlen(kw) - 1); }
+        size_t o2 = (size_t)snprintf(head, sizeof head, "ITEM|concept|%s|%s|%s|%.2f\n", key, kw, cs[ci].reply, weight_of(L.concepts, L.nconcepts, key));
+        for (int a = 0; a < L.nalias && o2 < sizeof head - 100; a++) if (strcmp(L.alias[a].concept, key) == 0) o2 += (size_t)snprintf(head + o2, sizeof head - o2, "ALIAS|%s\n", L.alias[a].word);
+    } else {
+        const char *w = key + 7; int ti = -1; for (int i = 0; i < L.ntaught; i++) if (strcmp(L.taught[i].word, w) == 0) ti = i;
+        if (ti < 0) { snprintf(out, out_len, "no such item"); return 4; }
+        int mk = 0; for (int m = 0; m < L.nmarked; m++) if (strcmp(L.marked[m], w) == 0) mk = 1;
+        size_t o2 = (size_t)snprintf(head, sizeof head, "ITEM|taught|%s|%s|%d|%.2f\n", w, L.taught[ti].meaning, mk, weight_of(L.concepts, L.nconcepts, key));
+        for (int k = 0; k < L.nsay; k++) if (strcmp(L.say[k].word, w) == 0) o2 += (size_t)snprintf(head + o2, sizeof head - o2, "SAY|%s\n", L.say[k].text);
+    }
+    snprintf(out, out_len, "%s%sSUM|%d|%d|%.0f|%.0f\n", head, body, uses, grades, r, p);
+    return 0;
+}

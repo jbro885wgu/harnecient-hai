@@ -31,5 +31,9 @@ int hai_chat_bank(const char *datadir, const char *ledger, char *out, size_t out
 /* The dashboard data, one line per point, replayed from the ledger (the window draws text bars from it, the web demo draws SVG):
  *   CONF|turn|confidence|concept   KNOW|turn|taught|aliases|says|marked (after that turn)   TRUST|id|weight|reward|punish   CAL|lo|hi|n|good|rate|mean_conf. 0 ok, 2 setup. */
 int hai_chat_viz(const char *datadir, const char *ledger, char *out, size_t out_len);
+/* Everything about ONE item, for the dashboard drill-down. item = "concept:<id>" or "taught:<word>". Lines: ITEM|concept|id|keywords|reply|trust or ITEM|taught|word|meaning|marked|trust,
+ *   ALIAS|word (words aliased onto a concept)  SAY|text (the answer you set for a taught word)  USE|turn|confidence|input (every turn that used it)  HIST|n|turn|grade|trust-after (every grade that moved it)  SUM|uses|grades|reward|punish.
+ * 0 ok, 2 setup, 4 no such item. */
+int hai_chat_detail(const char *datadir, const char *ledger, const char *item, char *out, size_t out_len);
 
 #endif

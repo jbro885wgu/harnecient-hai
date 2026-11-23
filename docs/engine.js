@@ -8,7 +8,7 @@
  * Data: the same .pdl files as chat/data/ (copies in docs/data/; case hai_web_parity runs the C engine and this one on the same inputs
  * and requires identical output). Works in a browser (window.HaiEngine) and in node (module.exports). Command line (node docs/engine.js):
  *   turn <datadir> <ledger> <input...> | grade <datadir> <ledger> <0-4> | state <ledger> | stats <datadir> <ledger> | calib <datadir> <ledger>
- *   bank <datadir> <ledger> | viz <datadir> <ledger> | why <ledger> [turn|last] | cmd <datadir> <ledger> <define|alias|say|forget|pack> <arg1> [arg2] | mark <datadir> <ledger> <word> [high|normal]
+ *   bank <datadir> <ledger> | viz <datadir> <ledger> | detail <datadir> <ledger> <concept:id|taught:word> | why <ledger> [turn|last] | cmd <datadir> <ledger> <define|alias|say|forget|pack> <arg1> [arg2] | mark <datadir> <ledger> <word> [high|normal]
  * (the same verbs, output and exit codes as the C tool hai_chat; HAI_NOW=<unix> fixes the clock for a test). */
 (function (root) {
   "use strict";
@@ -362,6 +362,42 @@
     return out;
   }
 
+  // Everything about ONE item (same lines as hai_chat detail in C): item = "concept:<id>" or "taught:<word>".
+  function detail(data, ledger, item) {
+    var key, isConcept = false, i;
+    if (item.indexOf("concept:") === 0) { key = item.slice(8); isConcept = true; }
+    else if (item.indexOf("taught:") === 0) key = item;
+    else return { code: 4, text: "no such item" };
+    var r = 0, p = 0, uses = 0, grades = 0, body = "", turns = 0;
+    (data.seeds || []).forEach(function (sd) { if (sd.id === key) { r = sd.r; p = sd.p; } });
+    ledger.forEach(function (line) {
+      var f;
+      if (line.indexOf("TURN|") === 0) {
+        f = splitKeep(line);
+        if (f.length < 8) return;
+        turns++;
+        if (f[3] === key) { body += "USE|" + turns + "|" + (f.length >= 9 ? (parseInt(f[8], 10) || 0) : 0) + "|" + f[2].slice(0, 60) + "\n"; uses++; }
+      } else if (line.indexOf("GRADE|") === 0) {
+        f = splitKeep(line);
+        if (f.length < 9) return;
+        if (f[3] === key) { r += parseFloat(f[6]); p += parseFloat(f[7]); grades++; body += "HIST|" + grades + "|" + parseInt(f[2], 10) + "|" + parseInt(f[5], 10) + "|" + fmt((r + 1) / (r + p + 2), 2) + "\n"; }
+      }
+    });
+    var st = replay(ledger, 0, data.seeds), head = "", w = (st.concepts[key] || { r: 0, p: 0 });
+    if (isConcept) {
+      var c = null; data.concepts.forEach(function (cn) { if (cn.id === key) c = cn; });
+      if (!c) return { code: 4, text: "no such item" };
+      head = "ITEM|concept|" + key + "|" + c.words.join(",") + "|" + c.reply + "|" + fmt(weightOf(st.concepts, key), 2) + "\n";
+      st.alias.forEach(function (a) { if (a.concept === key) head += "ALIAS|" + a.word + "\n"; });
+    } else {
+      var word = key.slice(7), ti = idx(st.taught, "word", word);
+      if (ti < 0) return { code: 4, text: "no such item" };
+      head = "ITEM|taught|" + word + "|" + st.taught[ti].meaning + "|" + (st.marked.indexOf(word) >= 0 ? 1 : 0) + "|" + fmt(weightOf(st.concepts, key), 2) + "\n";
+      st.say.forEach(function (sy) { if (sy.word === word) head += "SAY|" + sy.text + "\n"; });
+    }
+    return { code: 0, text: head + body + "SUM|" + uses + "|" + grades + "|" + w.r + "|" + w.p + "\n" };
+  }
+
   // hai_chat why: what you said and why hai answered as it did (turn number, or -1 for the last).
   function why(ledger, want) {
     var turnNo = 0, inp = "", w = "", found = false;
@@ -430,7 +466,7 @@
   }
 
   var api = { parseData: parseData, turn: turn, grade: grade, stats: stats, calibration: calibration, replay: replay, tokens: tokens,
-              mark: mark, cmd: cmd, bank: bank, why: why, send: send, fmt: fmt, viz: viz };
+              mark: mark, cmd: cmd, bank: bank, why: why, send: send, fmt: fmt, viz: viz, detail: detail };
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
     if (require.main === module) {
@@ -451,6 +487,7 @@
         else if (v === "state" && a.length === 2) { var s = replay(led(a[1]), 0, []); done({ code: 0, text: "state=" + s.state + " name=" + s.name }); }
         else if (v === "stats" && a.length === 3) done({ code: 0, text: stats(load(a[1]), led(a[2])) });
         else if (v === "calib" && a.length === 3) done(calibration(load(a[1]), led(a[2])));
+        else if (v === "detail" && a.length === 4) done(detail(load(a[1]), led(a[2]), a[3]));
         else if (v === "viz" && a.length === 3) done({ code: 0, text: viz(load(a[1]), led(a[2])) });
         else if (v === "bank" && a.length === 3) done({ code: 0, text: bank(load(a[1]), led(a[2])) });
         else if (v === "why" && a.length >= 2) done(why(led(a[1]), (a[2] && a[2] !== "last") ? parseInt(a[2], 10) : -1));

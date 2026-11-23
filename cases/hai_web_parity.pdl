@@ -145,6 +145,63 @@ EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2
 RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | what is the confidence
 EXPECT_EXIT | 0 | s19-turn-what-is-the-confidence-js-exit
 EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit. (confidence 21%) | s19-turn-what-is-the-confidence-js-text
+# dump: detail-mid-concept-greet (one check per output line, in both engines)
+RUN | $T/hai_chat | detail | $T/d | $T/c.led | concept:greet
+EXPECT_EXIT | 0 | dump-detail-mid-concept-greet-c-exit
+EXPECT_OUT | ITEM\pconcept\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | dump-detail-mid-concept-greet-c-line-1
+EXPECT_OUT | ALIAS\pyo | dump-detail-mid-concept-greet-c-line-2
+EXPECT_OUT | USE\p1\p21\phey , how are u ? | dump-detail-mid-concept-greet-c-line-3
+EXPECT_OUT | USE\p5\p42\pyo there | dump-detail-mid-concept-greet-c-line-4
+EXPECT_OUT | SUM\p2\p0\p4\p0 | dump-detail-mid-concept-greet-c-line-5
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | detail | $T/d | $T/j.led | concept:greet
+EXPECT_EXIT | 0 | dump-detail-mid-concept-greet-js-exit
+EXPECT_OUT | ITEM\pconcept\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | dump-detail-mid-concept-greet-js-line-1
+EXPECT_OUT | ALIAS\pyo | dump-detail-mid-concept-greet-js-line-2
+EXPECT_OUT | USE\p1\p21\phey , how are u ? | dump-detail-mid-concept-greet-js-line-3
+EXPECT_OUT | USE\p5\p42\pyo there | dump-detail-mid-concept-greet-js-line-4
+EXPECT_OUT | SUM\p2\p0\p4\p0 | dump-detail-mid-concept-greet-js-line-5
+# dump: detail-mid-taught-house (one check per output line, in both engines)
+RUN | $T/hai_chat | detail | $T/d | $T/c.led | taught:house
+EXPECT_EXIT | 0 | dump-detail-mid-taught-house-c-exit
+EXPECT_OUT | ITEM\ptaught\phouse\pthe LyfeDesk desktop we both work in\p1\p0.50 | dump-detail-mid-taught-house-c-line-1
+EXPECT_OUT | USE\p4\p50\pdo u like the house | dump-detail-mid-taught-house-c-line-2
+EXPECT_OUT | USE\p6\p100\phouse house tell me about the house | dump-detail-mid-taught-house-c-line-3
+EXPECT_OUT | SUM\p2\p0\p0\p0 | dump-detail-mid-taught-house-c-line-4
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | detail | $T/d | $T/j.led | taught:house
+EXPECT_EXIT | 0 | dump-detail-mid-taught-house-js-exit
+EXPECT_OUT | ITEM\ptaught\phouse\pthe LyfeDesk desktop we both work in\p1\p0.50 | dump-detail-mid-taught-house-js-line-1
+EXPECT_OUT | USE\p4\p50\pdo u like the house | dump-detail-mid-taught-house-js-line-2
+EXPECT_OUT | USE\p6\p100\phouse house tell me about the house | dump-detail-mid-taught-house-js-line-3
+EXPECT_OUT | SUM\p2\p0\p0\p0 | dump-detail-mid-taught-house-js-line-4
+# dump: detail-mid-taught-harness (one check per output line, in both engines)
+RUN | $T/hai_chat | detail | $T/d | $T/c.led | taught:harness
+EXPECT_EXIT | 0 | dump-detail-mid-taught-harness-c-exit
+EXPECT_OUT | ITEM\ptaught\pharness\p\p0\p0.50 | dump-detail-mid-taught-harness-c-line-1
+EXPECT_OUT | SAY\pA harness is how I check myself. | dump-detail-mid-taught-harness-c-line-2
+EXPECT_OUT | USE\p7\p50\pwhat is a harness | dump-detail-mid-taught-harness-c-line-3
+EXPECT_OUT | SUM\p1\p0\p0\p0 | dump-detail-mid-taught-harness-c-line-4
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | detail | $T/d | $T/j.led | taught:harness
+EXPECT_EXIT | 0 | dump-detail-mid-taught-harness-js-exit
+EXPECT_OUT | ITEM\ptaught\pharness\p\p0\p0.50 | dump-detail-mid-taught-harness-js-line-1
+EXPECT_OUT | SAY\pA harness is how I check myself. | dump-detail-mid-taught-harness-js-line-2
+EXPECT_OUT | USE\p7\p50\pwhat is a harness | dump-detail-mid-taught-harness-js-line-3
+EXPECT_OUT | SUM\p1\p0\p0\p0 | dump-detail-mid-taught-harness-js-line-4
+# dump: detail-mid-concept-nav (one check per output line, in both engines)
+RUN | $T/hai_chat | detail | $T/d | $T/c.led | concept:nav
+EXPECT_EXIT | 0 | dump-detail-mid-concept-nav-c-exit
+EXPECT_OUT | ITEM\pconcept\pnav\pnav,navigate,page,pages,navigation\pr_nav\p0.67 | dump-detail-mid-concept-nav-c-line-1
+EXPECT_OUT | SUM\p0\p0\p1\p0 | dump-detail-mid-concept-nav-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | detail | $T/d | $T/j.led | concept:nav
+EXPECT_EXIT | 0 | dump-detail-mid-concept-nav-js-exit
+EXPECT_OUT | ITEM\pconcept\pnav\pnav,navigate,page,pages,navigation\pr_nav\p0.67 | dump-detail-mid-concept-nav-js-line-1
+EXPECT_OUT | SUM\p0\p0\p1\p0 | dump-detail-mid-concept-nav-js-line-2
+# dump: detail-mid-taught-nothing (one check per output line, in both engines)
+RUN | $T/hai_chat | detail | $T/d | $T/c.led | taught:nothing
+EXPECT_EXIT | 4 | dump-detail-mid-taught-nothing-c-exit
+EXPECT_OUT | no such item | dump-detail-mid-taught-nothing-c-line-1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | detail | $T/d | $T/j.led | taught:nothing
+EXPECT_EXIT | 4 | dump-detail-mid-taught-nothing-js-exit
+EXPECT_OUT | no such item | dump-detail-mid-taught-nothing-js-line-1
 # step 20: cmd pack lyfedesk
 RUN | $T/hai_chat | cmd | $T/d | $T/c.led | pack | lyfedesk
 EXPECT_EXIT | 0 | s20-cmd-pack-lyfedesk-c-exit
@@ -588,6 +645,25 @@ EXPECT_OUT | TRUST\ptaught:hai\p0.50\p0\p0 | dump-viz-js-line-52
 EXPECT_OUT | TRUST\ptaught:harnecient\p0.50\p0\p0 | dump-viz-js-line-53
 EXPECT_OUT | TRUST\ptaught:entity\p0.50\p0\p0 | dump-viz-js-line-54
 EXPECT_OUT | CAL\p70\p79\p1\p1\p1.0000\p0.7500 | dump-viz-js-line-55
+# dump: detail-end-greet (one check per output line, in both engines)
+RUN | $T/hai_chat | detail | $T/d | $T/c.led | concept:greet
+EXPECT_EXIT | 0 | dump-detail-end-greet-c-exit
+EXPECT_OUT | ITEM\pconcept\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | dump-detail-end-greet-c-line-1
+EXPECT_OUT | ALIAS\pyo | dump-detail-end-greet-c-line-2
+EXPECT_OUT | ALIAS\phowdy | dump-detail-end-greet-c-line-3
+EXPECT_OUT | USE\p1\p21\phey , how are u ? | dump-detail-end-greet-c-line-4
+EXPECT_OUT | USE\p5\p42\pyo there | dump-detail-end-greet-c-line-5
+EXPECT_OUT | USE\p19\p42\phello again | dump-detail-end-greet-c-line-6
+EXPECT_OUT | SUM\p3\p0\p4\p0 | dump-detail-end-greet-c-line-7
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | detail | $T/d | $T/j.led | concept:greet
+EXPECT_EXIT | 0 | dump-detail-end-greet-js-exit
+EXPECT_OUT | ITEM\pconcept\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | dump-detail-end-greet-js-line-1
+EXPECT_OUT | ALIAS\pyo | dump-detail-end-greet-js-line-2
+EXPECT_OUT | ALIAS\phowdy | dump-detail-end-greet-js-line-3
+EXPECT_OUT | USE\p1\p21\phey , how are u ? | dump-detail-end-greet-js-line-4
+EXPECT_OUT | USE\p5\p42\pyo there | dump-detail-end-greet-js-line-5
+EXPECT_OUT | USE\p19\p42\phello again | dump-detail-end-greet-js-line-6
+EXPECT_OUT | SUM\p3\p0\p4\p0 | dump-detail-end-greet-js-line-7
 # dump: stats (one check per output line, in both engines)
 RUN | $T/hai_chat | stats | $T/d | $T/c.led
 EXPECT_EXIT | 0 | dump-stats-c-exit

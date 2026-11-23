@@ -158,14 +158,21 @@ int main(int argc, char **argv) {
         return strcmp(act, name) == 0 ? write_pointer(sdir, "active.txt", "main") : 0;
     }
     char st[1300]; snprintf(st, sizeof st, "%s/state", pkg);
-    if (strncmp(req, "TOGGLE ", 7) == 0 || strncmp(req, "VIEW ", 5) == 0) {          /* window preferences, never agent knowledge */
-        int vals[3] = {1, 1, 1}, bank = 0; char line[128], path[1400]; snprintf(path, sizeof path, "%s/ui_prefs.txt", st);
+    if (strcmp(req, "NOOP") == 0) return 0;                       /* a row that is only text: its click does nothing */
+    if (strncmp(req, "TOGGLE ", 7) == 0 || strncmp(req, "VIEW ", 5) == 0 || strncmp(req, "ITEM ", 5) == 0) {          /* window preferences, never agent knowledge */
+        int vals[3] = {1, 1, 1}, bank = 0; char line[128], path[1400], item[100] = ""; snprintf(path, sizeof path, "%s/ui_prefs.txt", st);
         FILE *pf = fopen(path, "r");
-        if (pf) { while (fgets(line, sizeof line, pf)) { if (!strncmp(line, "left=", 5)) vals[0] = atoi(line + 5); else if (!strncmp(line, "right=", 6)) vals[1] = atoi(line + 6); else if (!strncmp(line, "why=", 4)) vals[2] = atoi(line + 4); else if (!strncmp(line, "view=bank", 9)) bank = 1; else if (!strncmp(line, "view=viz", 8)) bank = 2; } fclose(pf); }
+        if (pf) { while (fgets(line, sizeof line, pf)) { if (!strncmp(line, "left=", 5)) vals[0] = atoi(line + 5); else if (!strncmp(line, "right=", 6)) vals[1] = atoi(line + 6); else if (!strncmp(line, "why=", 4)) vals[2] = atoi(line + 4); else if (!strncmp(line, "view=bank", 9)) bank = 1; else if (!strncmp(line, "view=viz", 8)) bank = 2; else if (!strncmp(line, "view=detail", 11)) bank = 3; else if (!strncmp(line, "item=", 5)) { snprintf(item, sizeof item, "%s", line + 5); item[strcspn(item, "\r\n")] = 0; } } fclose(pf); }
         if (!strcmp(req, "TOGGLE left")) vals[0] = !vals[0]; else if (!strcmp(req, "TOGGLE right")) vals[1] = !vals[1]; else if (!strcmp(req, "TOGGLE why")) vals[2] = !vals[2];
-        else if (!strcmp(req, "TOGGLE bank")) bank = bank == 1 ? 0 : 1; else if (!strcmp(req, "TOGGLE viz")) bank = bank == 2 ? 0 : 2; else if (!strcmp(req, "VIEW bank")) bank = 1; else if (!strcmp(req, "VIEW viz")) bank = 2; else if (!strcmp(req, "VIEW chat")) bank = 0; else return 4;
+        else if (!strncmp(req, "ITEM ", 5)) {   /* open the detail view of one meaning or taught word (concept:<id> or taught:<word>) */
+            const char *it = req + 5; int ok = (!strncmp(it, "concept:", 8) || !strncmp(it, "taught:", 7)) && strlen(it) < 90;
+            for (const char *c = it; ok && *c; c++) if (!((*c >= 'a' && *c <= 'z') || (*c >= 'A' && *c <= 'Z') || (*c >= '0' && *c <= '9') || *c == ':' || *c == '_' || *c == '-')) ok = 0;
+            if (!ok) return 4; snprintf(item, sizeof item, "%s", it); bank = 3;
+        }
+        else if (!strcmp(req, "TOGGLE bank")) bank = bank == 1 ? 0 : 1; else if (!strcmp(req, "TOGGLE viz")) bank = (bank == 2 || bank == 3) ? 0 : 2; else if (!strcmp(req, "VIEW bank")) bank = 1; else if (!strcmp(req, "VIEW viz")) bank = 2; else if (!strcmp(req, "VIEW chat")) bank = 0; else return 4;
         mkdir(st, 0755); char tmp[1500]; snprintf(tmp, sizeof tmp, "%s.tmp", path); FILE *o = fopen(tmp, "w"); if (!o) return 3;
-        fprintf(o, "left=%d\nright=%d\nwhy=%d\nview=%s\n", vals[0], vals[1], vals[2], bank == 2 ? "viz" : bank == 1 ? "bank" : "chat"); fclose(o);
+        fprintf(o, "left=%d\nright=%d\nwhy=%d\nview=%s\n", vals[0], vals[1], vals[2], bank == 3 ? "detail" : bank == 2 ? "viz" : bank == 1 ? "bank" : "chat");
+        if (item[0]) fprintf(o, "item=%s\n", item); fclose(o);
         return rename(tmp, path) == 0 ? 0 : 3;
     }
     if (strncmp(req, "NEWAGENT_AUTO ", 14) == 0) {                                   /* the sidebar's New+ buttons: an id is made, nothing to type */
