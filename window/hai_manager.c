@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include "hai_chat_core.h"
 
-#define ROWMAX 12
+#define ROWMAX 14
 static volatile sig_atomic_t stop = 0;
 static void on_term(int sig) { (void)sig; stop = 1; }
 
@@ -38,6 +38,18 @@ static int reply_text(const char *pkg, const char *id, const char *name, char *o
     fclose(f); return found;
 }
 
+/* Replace every {key} with val (the teach loop's reply texts carry {word} and {meaning}). */
+static void fill_key(char *text, size_t cap, const char *key, const char *val) {
+    char pat[40]; snprintf(pat, sizeof pat, "{%s}", key);
+    char *p = strstr(text, pat);
+    while (p) {
+        char tmp[1100]; size_t pre = (size_t)(p - text);
+        snprintf(tmp, sizeof tmp, "%.*s%s%s", (int)pre, text, val, p + strlen(pat));
+        snprintf(text, cap, "%.*s", (int)cap - 1, tmp);
+        p = strstr(text + pre + strlen(val), pat);
+    }
+}
+
 static void publish(const char *pkg) {
     char ledger[1024], ui[1024], tmp[1100], state[160];
     snprintf(ledger, sizeof ledger, "%s/state/chat.ledger", pkg);
@@ -45,13 +57,19 @@ static void publish(const char *pkg) {
     snprintf(tmp, sizeof tmp, "%s.tmp", ui);
     hai_chat_state(ledger, state, sizeof state);            /* "state=... name=..." */
 
+    int said_mode = 0;                       /* a ledger written since 2026-11-23 records what hai said (SAID rows); an older one is looked up in replies.pdl */
+    { FILE *pf = fopen(ledger, "r"); if (pf) { char l2[2048]; while (fgets(l2, sizeof l2, pf)) if (strncmp(l2, "SAID|", 5) == 0) { said_mode = 1; break; } fclose(pf); } }
     FILE *f = fopen(ledger, "r");
-    char rows[ROWMAX][256]; int nrows = 0, nturns = 0;
+    char rows[ROWMAX][320]; int nrows = 0, nturns = 0;
+    static char tw[32][64], tm[32][200]; int ntw = 0;       /* words taught so far, rebuilt from the ledger on every pass */
     if (f) {
         char line[2048];
         while (fgets(line, sizeof line, f)) {
-            int is_turn = strncmp(line, "TURN|", 5) == 0, is_grade = strncmp(line, "GRADE|", 6) == 0;
-            if (!is_turn && !is_grade) continue;
+            int is_turn = strncmp(line, "TURN|", 5) == 0, is_grade = strncmp(line, "GRADE|", 6) == 0, is_mark = strncmp(line, "MARK|", 5) == 0;
+            int is_said = strncmp(line, "SAID|", 5) == 0;
+            const char *cmdname = strncmp(line, "DEFINE|", 7) == 0 ? "/teach" : strncmp(line, "ALIAS|", 6) == 0 ? "/alias" : strncmp(line, "SAY|", 4) == 0 ? "/say" :
+                                  strncmp(line, "FORGET|", 7) == 0 ? "/forget" : strncmp(line, "PACK|", 5) == 0 ? "/pack" : NULL;
+            if (!is_turn && !is_grade && !is_mark && !is_said && !cmdname) continue;
             line[strcspn(line, "\r\n")] = 0;
             char *fld[12]; int n = 0; char *p = line;
             fld[n++] = p;
@@ -61,8 +79,27 @@ static void publish(const char *pkg) {
                 if (n >= 9 && fld[8][0]) snprintf(rows[nrows % ROWMAX], sizeof rows[0], "you: %s  ->  %s  (%s%%)", fld[2], fld[4], fld[8]);
                 else snprintf(rows[nrows % ROWMAX], sizeof rows[0], "you: %s  ->  %s", fld[2], fld[4]);
                 nrows++; nturns++;
-                char rt[200];   /* the sentence hai answered, from replies.pdl (not stored in the ledger, only its id is) */
-                if (reply_text(pkg, fld[4], n >= 8 ? fld[7] : "", rt, sizeof rt)) { snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    hai: %s", rt); nrows++; }
+                /* teach loop: store_meaning rows teach a word (typed word = field 7, the meaning = the typed line, field 2) */
+                if (n >= 8 && strcmp(fld[6], "store_meaning") == 0 && fld[7][0]) {
+                    int k = -1; for (int i = 0; i < ntw; i++) if (strcmp(tw[i], fld[7]) == 0) k = i;
+                    if (k < 0 && ntw < 32) k = ntw++;
+                    if (k >= 0) { snprintf(tw[k], sizeof tw[k], "%s", fld[7]); snprintf(tm[k], sizeof tm[k], "%s", fld[2]); }
+                }
+                char rt[300];   /* the sentence hai answered, from replies.pdl (not stored in the ledger, only its id is) */
+                if (!said_mode && reply_text(pkg, fld[4], n >= 8 ? fld[7] : "", rt, sizeof rt)) {
+                    const char *wd = n >= 8 ? fld[7] : "", *mn = fld[2];
+                    if (strncmp(fld[3], "taught:", 7) == 0) { wd = fld[3] + 7; mn = ""; for (int i = 0; i < ntw; i++) if (strcmp(tw[i], wd) == 0) mn = tm[i]; }
+                    fill_key(rt, sizeof rt, "word", wd); fill_key(rt, sizeof rt, "meaning", mn); snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    hai: %s", rt); nrows++; }
+            } else if (is_said && n >= 4) {
+                snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    hai: %s", fld[3]); nrows++;
+            } else if (cmdname && n >= 3) {
+                if (n >= 5 && strncmp(fld[4], "pack:", 5) == 0) continue;           /* rows a /pack wrote: shown as the one /pack row */
+                if (strcmp(cmdname, "/pack") == 0 || strcmp(cmdname, "/forget") == 0) snprintf(rows[nrows % ROWMAX], sizeof rows[0], "you: %s %s", cmdname, fld[2]);
+                else snprintf(rows[nrows % ROWMAX], sizeof rows[0], "you: %s %s = %s", cmdname, fld[2], n >= 4 ? fld[3] : "");
+                nrows++;
+            } else if (is_mark && n >= 4) {
+                snprintf(rows[nrows % ROWMAX], sizeof rows[0], "you: /mark %s %s", fld[2], fld[3]);
+                nrows++;
             } else if (is_grade && n >= 6) {
                 /* GRADE|ts|turn_no|concept|reply|grade|reward|punish|day */
                 snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    graded %s  (%s)", fld[5], fld[4]);

@@ -20,4 +20,10 @@ int hai_chat_stats(const char *datadir, const char *ledger, char *out, size_t ou
 /* Calibration of stated confidence against grades (see hai_chat_core.c). 0 ok, 2 setup missing. */
 int hai_chat_calibration(const char *datadir, const char *ledger, char *out, size_t out_len);
 
+/* Mark a word "high" attention (asked about first, counts more when recognised) or "normal". 0 ok, 3 write failed, 4 bad word or level. */
+int hai_chat_mark(const char *datadir, const char *ledger, const char *word, const char *level, long now, char *out, size_t out_len);
+
+/* The teaching levers: define | alias | say | forget | pack (see hai_chat_core.c). 0 ok, 2 setup, 3 write failed, 4 bad input. */
+int hai_chat_cmd(const char *datadir, const char *ledger, const char *verb, const char *arg1, const char *arg2, long now, char *out, size_t out_len);
+
 #endif

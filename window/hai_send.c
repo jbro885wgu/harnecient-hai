@@ -31,6 +31,25 @@ int main(int argc, char **argv) {
         fprintf(stderr, "%s\n", out);
         return rc;
     }
+    {   /* the teaching levers: /teach w = meaning, /alias w = concept, /say w = text, /forget w, /pack name */
+        static const char *cmds[][2] = { {"/teach ", "define"}, {"/alias ", "alias"}, {"/say ", "say"}, {"/forget ", "forget"}, {"/pack ", "pack"} };
+        for (unsigned i = 0; i < sizeof cmds / sizeof cmds[0]; i++) {
+            size_t n0 = strlen(cmds[i][0]);
+            if (strncmp(t, cmds[i][0], n0) != 0) continue;
+            char a1[256] = "", a2[600] = ""; const char *rest = t + n0; const char *eq = strstr(rest, " = ");
+            if (eq) { snprintf(a1, sizeof a1, "%.*s", (int)(eq - rest), rest); snprintf(a2, sizeof a2, "%s", eq + 3); } else snprintf(a1, sizeof a1, "%s", rest);
+            int rc = hai_chat_cmd(data, ledger, cmds[i][1], a1, a2, (long)time(NULL), out, sizeof out);
+            fprintf(stderr, "%s\n", out);
+            return rc;
+        }
+    }
+    if (strncmp(t, "/mark ", 6) == 0) {                       /* /mark <word> [high|normal] */
+        char word[64] = "", level[16] = "high";
+        if (sscanf(t + 6, "%63s %15s", word, level) < 1) return 4;
+        int rc = hai_chat_mark(data, ledger, word, level, (long)time(NULL), out, sizeof out);
+        fprintf(stderr, "%s\n", out);
+        return rc;
+    }
     int rc = hai_chat_turn(data, ledger, t, out, sizeof out);
     fprintf(stderr, "%s\n", out);
     return rc == 1 ? 0 : rc;   /* 1 = the chat finished (bye): not an error for the window */

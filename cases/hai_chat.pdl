@@ -1,4 +1,5 @@
 # hai_chat (M3, 2026-11-22): the FSM chat, fixed replies, options on a miss. Built from source in a scratch dir.
+# 2026-11-23: the unknown-word input is now "zz qq xx" (words under 3 letters): a longer unknown word starts the teach loop (case hai_teach), not the fallback.
 # Each check can FAIL. Negatives: unknown words give the fallback, not a guess; a closed chat refuses; an empty ledger has no name.
 # State is replayed from the ledger on every run (a new process proves it is not held in memory).
 # DEBT: the case names the hai repo by absolute path (the case op expands only $T and $HOUSE).
@@ -14,7 +15,7 @@ EXPECT_OUT  | state=start name= | empty-ledger-starts-with-no-name
 RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | hi
 EXPECT_EXIT | 0 | greet-accepted
 EXPECT_OUT  | Hi. I can chat | greet-replies
-RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | weather forecast tomorrow
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | zz qq xx
 EXPECT_EXIT | 0 | unknown-words-accepted
 EXPECT_OUT  | I don't know that yet. Did you mean: [1] | unknown-gives-options-not-a-guess
 RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/chat.ledger | account

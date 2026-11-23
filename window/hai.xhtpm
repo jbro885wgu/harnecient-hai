@@ -10,7 +10,7 @@
       <text label="turns = ${turns}" class="quiet"/>
     </sidebar>
     <panel id="detail" class="settings-block">
-      <text label="hai-cli (W1): type a line, press Enter. /grade 0..4 grades the last reply." class="quiet"/>
+      <text label="Type a line + Enter to chat. Teach me: /teach w = meaning  /alias w = concept  /say w = text  /mark w  /forget w  /pack lyfedesk  /grade 0..4" class="quiet"/>
       <scrolllist>
           <repeat count="${rows_count}" bind="row">
             <item id="row${row.#}" class="data-item" label="${row.text}"/>

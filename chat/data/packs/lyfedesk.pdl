@@ -1,0 +1,15 @@
+# A starter pack: words a new LyfeDesk user can load with one command (/pack lyfedesk). Each row is written to the person's own ledger,
+# so it can be changed, graded, marked or forgotten like anything they taught by hand. DEFINE | word | meaning, ALIAS | word | built-in concept, SAY | word | answer.
+DEFINE | house | the LyfeDesk desktop we both work in: its windows, bars and menus
+DEFINE | driving | using a real window like a person does: clicking, typing and looking at the screen, not only running commands
+DEFINE | confidence | how sure I am that I understood you: the share of your words I matched, times how much I trust that meaning
+DEFINE | harness | a test that can fail, so a claim is checked and not only said
+DEFINE | ledger | the append-only list of rows that is the one record of what happened; everything else is rebuilt from it
+DEFINE | hai | me: a small chat that learns the words you teach it and shows what it is unsure of
+DEFINE | harnecient | the project that builds me and the tools around me
+DEFINE | entity | a character or helper in the house with its own folder, like a pet or an agent
+DEFINE | attention | which words you tell me matter most: I ask about marked words first and count them double
+ALIAS | yo | greet
+ALIAS | howdy | greet
+ALIAS | options | help
+ALIAS | commands | help

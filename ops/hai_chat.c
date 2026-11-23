@@ -38,6 +38,18 @@ int main(int argc, char **argv) {
         printf("%s\n", out);
         return 0;
     }
+    if (argc >= 6 && strcmp(argv[1], "cmd") == 0) {              /* hai_chat cmd <datadir> <ledger> <lever> <arg1> [arg2] */
+        char out[512];
+        int rc = hai_chat_cmd(argv[2], argv[3], argv[4], argv[5], argc > 6 ? argv[6] : "", (long)time(NULL), out, sizeof out);
+        printf("%s\n", out);
+        return rc;
+    }
+    if (argc >= 5 && strcmp(argv[1], "mark") == 0) {            /* hai_chat mark <datadir> <ledger> <word> [high|normal] */
+        char out[256];
+        int rc = hai_chat_mark(argv[2], argv[3], argv[4], argc > 5 ? argv[5] : "high", (long)time(NULL), out, sizeof out);
+        printf("%s\n", out);
+        return rc;
+    }
     if (argc == 4 && strcmp(argv[1], "stats") == 0) {
         int rc = hai_chat_stats(argv[2], argv[3], out, sizeof out);
         printf("%s", out);

@@ -29,7 +29,7 @@ EXPECT_EXIT | 4 | a-grade-that-is-not-a-number-is-refused
 RUN | $T/window/bin/hai_send | $T/window | /nohouse |
 EXPECT_EXIT | 0 | empty-text-is-ignored
 RUN | grep | -c | ^ | $T/window/state/chat.ledger
-EXPECT_OUT | 2 | only-the-turn-and-the-grade-are-in-the-ledger
+EXPECT_OUT | 3 | only-the-turn-its-said-row-and-the-grade-are-in-the-ledger (SAID rows added 2026-11-23)
 RUN | $T/window/bin/hai_send | $T/window | /nohouse | hi; touch $T/PWNED
 EXPECT_EXIT | 0 | shell-characters-are-just-text
 EXPECT_NOFILE | PWNED | no-shell-runs-the-typed-text

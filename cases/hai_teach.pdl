@@ -1,0 +1,101 @@
+# hai_teach (2026-11-23): the teach loop. An unknown content word is ASKED about, the typed answer is remembered from the ledger,
+# a later mention is recognised with the person's own words, /mark sets attention, /grade moves a taught word's weight.
+# Built from source in a scratch dir. Each check can FAIL (mutants: see the end). State is replayed from the ledger on every call.
+# DEBT: the case names the hai repo by absolute path (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_teach.txt
+ENV | LC_ALL | C
+
+CASE    | teach
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | builds-from-source
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | do u like this house
+EXPECT_OUT  | I do not know "house" yet. What does it mean to you? | unknown-word-is-asked-about-not-guessed
+EXPECT_OUT  | (confidence 0%) | the-ask-states-zero-confidence
+RUN | $T/hai_chat | state | $T/l
+EXPECT_OUT  | state=await_meaning | the-chat-waits-for-the-meaning
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the LyfeDesk desktop we both work in
+EXPECT_OUT  | what you said about "house": the LyfeDesk desktop we both work in | the-explanation-is-stored-and-quoted
+RUN | $T/hai_chat | state | $T/l
+EXPECT_OUT  | state=idle | back-to-idle-after-the-answer
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | do u like the house
+EXPECT_OUT  | You taught me about "house": the LyfeDesk desktop we both work in | a-later-mention-is-recognised-with-the-persons-own-words
+EXPECT_OUT  | (confidence 50%) | taught-word-confidence-is-honest-one-content-word-times-weight-half
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | so what about the house
+EXPECT_OUT  | You taught me about "house" | a-taught-word-beats-a-single-weak-built-in-match
+RUN | $T/hai_chat | grade | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | 4
+EXPECT_OUT  | weight=0.8333 | grading-a-taught-reply-moves-its-weight
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the house
+EXPECT_OUT  | (confidence 83%) | confidence-rises-after-the-grade
+RUN | $T/hai_chat | mark | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | house | high
+EXPECT_OUT  | OK marked house high | mark-accepted
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the house
+EXPECT_OUT  | (confidence 100%) | marked-high-counts-double-capped-at-100
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | have u tried driving it
+EXPECT_OUT  | I do not know "driving" yet | the-next-unknown-word-is-asked
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | skip
+EXPECT_OUT  | I will not ask about that now | skip-passes
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | have u tried driving it
+EXPECT_OUT  | I do not know "driving" yet | a-skipped-word-is-asked-again-it-was-not-taught
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | using the mouse and keys on a real window
+EXPECT_OUT  | what you said about "driving" | second-word-taught
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | zz qq
+EXPECT_OUT  | I don't know that yet. Did you mean: | no-content-word-keeps-the-old-fallback
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+EXPECT_OUT  | Hi. I can chat | built-in-concepts-still-win-when-no-taught-word
+# the ledger is the only authority: a NEW process rebuilt everything above from rows; nothing was held in memory
+RUN | grep | -c | ^TURN.*store_meaning | $T/l
+EXPECT_OUT  | 2 | two-teach-rows-in-the-ledger
+RUN | grep | -c | ^MARK.*house.high | $T/l
+EXPECT_OUT  | 1 | the-mark-row-is-in-the-ledger
+# ghost data: a file beside the ledger cannot teach it anything
+WRITE | $T/taught.txt | house means a boat
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the house
+EXPECT_OUT  | LyfeDesk desktop | a-stray-file-changes-nothing
+# NEGATIVE: an unknown word in a ledger that never taught it is asked about again (a fresh ledger knows nothing)
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/fresh | the house
+EXPECT_OUT  | I do not know "house" yet | a-fresh-ledger-has-no-taught-words
+RUN | $T/hai_chat | mark | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/fresh | bad-word | high
+EXPECT_EXIT | 4 | a-non-alphanumeric-mark-is-refused
+RUN | $T/hai_chat | mark | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/fresh | house | loud
+EXPECT_EXIT | 4 | an-unknown-attention-level-is-refused
+
+# ---- the other levers (2026-11-23): /teach (define), /alias, /say, /forget, /pack, and the SAID transcript rows ----
+CASE    | levers
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | builds-from-source
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | yo
+EXPECT_OUT  | I don't know that yet. Did you mean | an-unaliased-word-is-not-a-guess-greeting-baseline
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | alias | yo | greet
+EXPECT_OUT  | "yo" now means the same as greet | alias-accepted
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | yo
+EXPECT_OUT  | Hi. I can chat | an-aliased-word-triggers-the-built-in-concept
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | alias | yo | nonsense
+EXPECT_EXIT | 4 | an-alias-to-an-unknown-concept-is-refused
+EXPECT_OUT  | I know these meanings to alias to: greet, help | the-refusal-lists-what-it-can-alias-to
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | define | harness | a test that can fail
+EXPECT_OUT  | what you said about "harness": a test that can fail | teach-without-being-asked
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the harness
+EXPECT_OUT  | You taught me about "harness": a test that can fail | an-explicit-definition-is-recognised
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | say | harness | A harness is how I check myself.
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the harness
+EXPECT_OUT  | A harness is how I check myself. | say-gives-the-persons-own-answer
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | forget | harness
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the harness
+EXPECT_OUT  | I do not know "harness" yet | forget-removes-the-definition-and-the-answer
+RUN | grep | -c | ^SAID | $T/l
+EXPECT_OUT  | 9 | every-turn-and-lever-recorded-what-hai-said (5 turns + 4 accepted levers; the refused alias writes nothing)
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | pack | lyfedesk
+EXPECT_OUT  | Loaded the lyfedesk pack: 13 things taught. | the-starter-pack-loads-thirteen-rows
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | have u tried driving it
+EXPECT_OUT  | You taught me about "driving": using a real window like a person does | the-pack-taught-the-owners-word
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | howdy
+EXPECT_OUT  | Hi. I can chat | the-pack-aliased-a-greeting
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | pack | nosuchpack
+EXPECT_EXIT | 4 | an-unknown-pack-is-refused
+RUN | grep | -c | ^DEFINE.*pack:lyfedesk | $T/p
+EXPECT_OUT  | 9 | pack-rows-carry-their-origin-in-the-ledger
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | forget | driving
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | have u tried driving it
+EXPECT_OUT  | I do not know "driving" yet | a-pack-word-can-be-forgotten-like-any-other

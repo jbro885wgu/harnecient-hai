@@ -7,3 +7,8 @@ REPLY | r_nav | Navigation lives in the menu. Full nav comes with the window (M8
 REPLY | r_bye | bye
 REPLY | r_fallback | I don't know that yet.
 REPLY | r_done | The chat is closed. Start hai again to talk.
+REPLY | r_ask_meaning | I do not know "{word}" yet. What does it mean to you? (type skip to pass)
+REPLY | r_learned | Thank you. I will remember what you said about "{word}": {meaning}
+REPLY | r_skipped | OK, I will not ask about that now.
+REPLY | r_taught | You taught me about "{word}": {meaning}
+REPLY | r_said | {say}

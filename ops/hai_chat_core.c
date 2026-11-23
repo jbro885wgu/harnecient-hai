@@ -16,6 +16,7 @@
 #define MAXW 16
 #define LINE 2048
 #define MAXL 256
+#define TMAX 64
 
 typedef struct { char id[64], words[MAXW][64]; int nw; char reply[64], label[64]; } concept_t;
 typedef struct { char from[32], concept[64], to[32], action[32]; } next_t;
@@ -124,6 +125,11 @@ typedef struct {
     int last_graded_turn;
     count_t concepts[MAXC]; int nconcepts;
     count_t replies[MAXC];  int nreplies;
+    char pending[64];                                   /* the word hai asked about and is waiting to hear the meaning of */
+    struct { char word[64]; char meaning[200]; } taught[TMAX]; int ntaught;
+    char marked[TMAX][64]; int nmarked;                  /* words marked "high" attention */
+    struct { char word[64], concept[64]; } alias[TMAX]; int nalias;   /* ALIAS rows: a new word that triggers a built-in concept */
+    struct { char word[64], text[200]; } say[TMAX]; int nsay;         /* SAY rows: the person's own answer for a word */
 } ledger_t;
 
 static count_t *count_for(count_t *arr, int *n, int max, const char *id) {
@@ -159,6 +165,18 @@ static int apply_seeds(const char *dir, ledger_t *L) {
     return 0;
 }
 
+static void l_define(ledger_t *L, const char *word, const char *meaning) {
+    int k = -1; for (int i = 0; i < L->ntaught; i++) if (strcmp(L->taught[i].word, word) == 0) k = i;
+    if (k < 0 && L->ntaught < TMAX) k = L->ntaught++;
+    if (k >= 0) { snprintf(L->taught[k].word, sizeof L->taught[k].word, "%s", word); snprintf(L->taught[k].meaning, sizeof L->taught[k].meaning, "%s", meaning); }
+}
+static void l_forget(ledger_t *L, const char *word) {
+    for (int i = 0; i < L->ntaught; i++) if (strcmp(L->taught[i].word, word) == 0) { L->taught[i] = L->taught[--L->ntaught]; break; }
+    for (int i = 0; i < L->nalias; i++) if (strcmp(L->alias[i].word, word) == 0) { L->alias[i] = L->alias[--L->nalias]; break; }
+    for (int i = 0; i < L->nsay; i++) if (strcmp(L->say[i].word, word) == 0) { L->say[i] = L->say[--L->nsay]; break; }
+    for (int i = 0; i < L->nmarked; i++) if (strcmp(L->marked[i], word) == 0) { snprintf(L->marked[i], 64, "%s", L->marked[--L->nmarked]); break; }
+}
+
 static int replay(const char *ledger, long today, ledger_t *L, const char *datadir) {
     memset(L, 0, sizeof *L);
     snprintf(L->state, sizeof L->state, "start");
@@ -175,6 +193,37 @@ static int replay(const char *ledger, long today, ledger_t *L, const char *datad
             snprintf(L->last_concept, sizeof L->last_concept, "%s", fld[3]);
             snprintf(L->last_reply, sizeof L->last_reply, "%s", fld[4]);
             if (strcmp(fld[6], "store_name") == 0) snprintf(L->name, sizeof L->name, "%s", fld[7]);
+            /* the teach loop: ask_word leaves a word pending; store_meaning turns the typed line into that word's meaning */
+            if (strcmp(fld[6], "ask_word") == 0) snprintf(L->pending, sizeof L->pending, "%s", fld[7]); else L->pending[0] = 0;
+            if (strcmp(fld[6], "store_meaning") == 0 && fld[7][0]) l_define(L, fld[7], fld[2]);
+        } else if (strncmp(line, "DEFINE|", 7) == 0) {
+            char *fld[6]; int nf = split_keep(line, fld, 6);           /* DEFINE|unix|word|meaning|origin */
+            if (nf >= 4) l_define(L, fld[2], fld[3]);
+        } else if (strncmp(line, "ALIAS|", 6) == 0) {
+            char *fld[6]; int nf = split_keep(line, fld, 6);           /* ALIAS|unix|word|concept|origin */
+            if (nf >= 4) {
+                int k = -1; for (int i = 0; i < L->nalias; i++) if (strcmp(L->alias[i].word, fld[2]) == 0) k = i;
+                if (k < 0 && L->nalias < TMAX) k = L->nalias++;
+                if (k >= 0) { snprintf(L->alias[k].word, 64, "%s", fld[2]); snprintf(L->alias[k].concept, 64, "%s", fld[3]); }
+            }
+        } else if (strncmp(line, "SAY|", 4) == 0) {
+            char *fld[6]; int nf = split_keep(line, fld, 6);           /* SAY|unix|word|text|origin */
+            if (nf >= 4) {
+                int k = -1; for (int i = 0; i < L->nsay; i++) if (strcmp(L->say[i].word, fld[2]) == 0) k = i;
+                if (k < 0 && L->nsay < TMAX) k = L->nsay++;
+                if (k >= 0) { snprintf(L->say[k].word, 64, "%s", fld[2]); snprintf(L->say[k].text, 200, "%s", fld[3]); }
+                int known = 0; for (int i = 0; i < L->ntaught; i++) if (strcmp(L->taught[i].word, fld[2]) == 0) known = 1;
+                if (!known) l_define(L, fld[2], "");                   /* a word with only an answer is still a word hai recognises */
+            }
+        } else if (strncmp(line, "FORGET|", 7) == 0) {
+            char *fld[4]; int nf = split_keep(line, fld, 4);           /* FORGET|unix|word */
+            if (nf >= 3) l_forget(L, fld[2]);
+        } else if (strncmp(line, "MARK|", 5) == 0) {
+            char *fld[5]; int nf = split_keep(line, fld, 5);          /* MARK|unix|word|level */
+            if (nf < 4) continue;
+            int k = -1; for (int i = 0; i < L->nmarked; i++) if (strcmp(L->marked[i], fld[2]) == 0) k = i;
+            if (strcmp(fld[3], "high") == 0) { if (k < 0 && L->nmarked < TMAX) snprintf(L->marked[L->nmarked++], 64, "%s", fld[2]); }
+            else if (k >= 0) { for (int i = k; i + 1 < L->nmarked; i++) snprintf(L->marked[i], 64, "%s", L->marked[i + 1]); L->nmarked--; }
         } else if (strncmp(line, "GRADE|", 6) == 0) {
             char *fld[9]; int nf = split_keep(line, fld, 9);
             if (nf < 9) continue;
@@ -212,6 +261,28 @@ static int tokens(const char *in, char toks[][64], int max) {
     return n;
 }
 
+/* Replace every {key} in text with val. */
+static void fill(char *text, size_t cap, const char *key, const char *val) {
+    char pat[80]; snprintf(pat, sizeof pat, "{%s}", key);
+    char *p = strstr(text, pat);
+    while (p) {
+        char tmp[1100]; size_t pre = (size_t)(p - text);
+        snprintf(tmp, sizeof tmp, "%.*s%s%s", (int)pre, text, val, p + strlen(pat));
+        snprintf(text, cap, "%.*s", (int)cap - 1, tmp);
+        p = strstr(text + pre + strlen(val), pat);
+    }
+}
+static int is_stop(const char *dir, const char *w) {
+    char path[1024], line[LINE]; snprintf(path, sizeof path, "%s/stopwords.pdl", dir);
+    FILE *f = fopen(path, "r"); if (!f) return 0; int hit = 0;
+    while (fgets(line, sizeof line, f)) {
+        if (strncmp(line, "STOP", 4) != 0) continue;
+        char *fld[3]; int nf = split_keep(line, fld, 3);
+        if (nf >= 2 && strcmp(fld[1], w) == 0) { hit = 1; break; }
+    }
+    fclose(f); return hit;
+}
+
 int hai_chat_turn(const char *datadir, const char *ledger, const char *input, char *out, size_t out_len) {
     static concept_t cs[MAXC]; static reply_t rs[MAXC]; static next_t ns[64];
     static ledger_t L;
@@ -236,6 +307,9 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
         for (int t = 0; t < nt; t++)
             for (int w = 0; w < cs[c].nw; w++)
                 if (strcmp(toks[t], cs[c].words[w]) == 0) { hits++; break; }
+        for (int t = 0; t < nt; t++)                                  /* words the person aliased onto this concept */
+            for (int a = 0; a < L.nalias; a++)
+                if (strcmp(L.alias[a].concept, cs[c].id) == 0 && strcmp(toks[t], L.alias[a].word) == 0) { hits++; break; }
         double w = weight_of(L.concepts, L.nconcepts, cs[c].id);
         if (hits > best_hits || (hits == best_hits && hits > 0 && w > best_w)) { best_hits = hits; best = c; best_w = w; }
     }
@@ -262,10 +336,61 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
     if (strcmp(L.state, "await_name") == 0 && strcmp(action, "store_name") == 0) snprintf(reply_id, sizeof reply_id, "r_named");
     if (strcmp(L.state, "done") == 0) snprintf(reply_id, sizeof reply_id, "r_done");
 
+    /* the teach loop: a pending question is answered; a taught word is recognised; an unknown content word is asked about */
+    char tword[64] = "", tmean[200] = "", ov_concept[96] = "";
+    if (rule_long(datadir, "teach_enabled", 0) > 0 && strcmp(L.state, "await_name") != 0 && strcmp(L.state, "done") != 0) {
+        long minlen = rule_long(datadir, "teach_min_len", 3); if (minlen < 1) minlen = 3;
+        long mult = rule_long(datadir, "attn_high_mult", 1); if (mult < 1) mult = 1;
+        if (strcmp(L.state, "await_meaning") == 0 && L.pending[0]) {
+            snprintf(tword, sizeof tword, "%s", L.pending);
+            snprintf(ov_concept, sizeof ov_concept, "teach"); concept = ov_concept;
+            snprintf(to, sizeof to, "idle");
+            if (nt == 1 && strcmp(toks[0], "skip") == 0) { snprintf(reply_id, sizeof reply_id, "r_skipped"); snprintf(action, sizeof action, "none"); typed[0] = 0; conf = 0; }
+            else { snprintf(reply_id, sizeof reply_id, "r_learned"); snprintf(action, sizeof action, "store_meaning"); snprintf(typed, sizeof typed, "%s", tword); snprintf(tmean, sizeof tmean, "%s", clean); conf = 100; }
+        } else {
+            int ncontent = 0; for (int t = 0; t < nt; t++) if (!is_stop(datadir, toks[t])) ncontent++;
+            int hit_idx = -1, hits = 0, marked_hit = 0;
+            for (int t = 0; t < nt; t++) for (int k = 0; k < L.ntaught; k++) if (strcmp(toks[t], L.taught[k].word) == 0) {
+                hits++; if (hit_idx < 0) hit_idx = k;
+                for (int m = 0; m < L.nmarked; m++) if (strcmp(L.marked[m], toks[t]) == 0) marked_hit = 1;
+            }
+            if (hit_idx >= 0 && hits >= best_hits) {      /* a taught word beats a weaker or equal built-in match */
+                snprintf(tword, sizeof tword, "%s", L.taught[hit_idx].word); snprintf(tmean, sizeof tmean, "%s", L.taught[hit_idx].meaning);
+                snprintf(ov_concept, sizeof ov_concept, "taught:%s", tword); concept = ov_concept;
+                snprintf(reply_id, sizeof reply_id, "r_taught"); snprintf(to, sizeof to, "%s", L.state);
+                for (int k = 0; k < L.nsay; k++) {
+                    if (strcmp(L.say[k].word, tword) != 0) continue;
+                    snprintf(reply_id, sizeof reply_id, "r_said"); snprintf(tmean, sizeof tmean, "%s", L.say[k].text);
+                }
+                snprintf(action, sizeof action, "none"); typed[0] = 0;
+                double w = weight_of(L.concepts, L.nconcepts, ov_concept);
+                double c = 100.0 * hits * (marked_hit ? mult : 1) / (ncontent > 0 ? ncontent : 1) * w;
+                conf = c > 100 ? 100 : (int)(c + 0.5);
+            } else if (best < 0) {
+                int pick = -1, pick_marked = 0; size_t pick_len = 0;
+                for (int t = 0; t < nt; t++) {
+                    if ((long)strlen(toks[t]) < minlen || is_stop(datadir, toks[t])) continue;
+                    int known = 0; for (int c = 0; c < nc && !known; c++) for (int w = 0; w < cs[c].nw; w++) if (strcmp(toks[t], cs[c].words[w]) == 0) known = 1;
+                    for (int a = 0; a < L.nalias && !known; a++) if (strcmp(L.alias[a].word, toks[t]) == 0) known = 1;
+                    if (known) continue;
+                    int mk = 0; for (int m = 0; m < L.nmarked; m++) if (strcmp(L.marked[m], toks[t]) == 0) mk = 1;
+                    if (pick < 0 || (mk && !pick_marked) || (mk == pick_marked && strlen(toks[t]) > pick_len)) { pick = t; pick_marked = mk; pick_len = strlen(toks[t]); }
+                }
+                if (pick >= 0) {
+                    snprintf(tword, sizeof tword, "%s", toks[pick]);
+                    snprintf(ov_concept, sizeof ov_concept, "ask"); concept = ov_concept;
+                    snprintf(reply_id, sizeof reply_id, "r_ask_meaning"); snprintf(to, sizeof to, "await_meaning");
+                    snprintf(action, sizeof action, "ask_word"); snprintf(typed, sizeof typed, "%s", tword); conf = 0;
+                }
+            }
+        }
+    }
+
     char text[512] = "";
     for (int i = 0; i < nr; i++) if (strcmp(rs[i].id, reply_id) == 0) { snprintf(text, sizeof text, "%s", rs[i].text); break; }
     if (!text[0]) snprintf(text, sizeof text, "I don't know that yet.");
 
+    if (tword[0]) { fill(text, sizeof text, "word", tword); fill(text, sizeof text, "meaning", tmean); fill(text, sizeof text, "say", tmean); }
     char *nm = strstr(text, "{name}");
     if (nm) {
         char who[64];
@@ -297,6 +422,11 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
     FILE *f = fopen(ledger, "a");
     if (!f) { snprintf(out, out_len, "cannot write chat ledger"); return 3; }
     fprintf(f, "TURN|%ld|%s|%s|%s|%s|%s|%s|%d\n", (long)time(NULL), clean, concept, reply_id, to, action, typed, conf);
+    {   /* SAID: what hai actually said this turn (a recorded fact), so a window shows the transcript without re-deriving it */
+        char said[512]; snprintf(said, sizeof said, "%s", text);
+        for (char *p = said; *p; p++) if (*p == '|' || *p == '\n') *p = '/';
+        fprintf(f, "SAID|%ld|%d|%s\n", (long)time(NULL), L.turns + 1, said);
+    }
     fclose(f);
 
     char conftxt[64]; snprintf(conftxt, sizeof conftxt, " (confidence %d%%)", conf);
@@ -408,5 +538,88 @@ int hai_chat_calibration(const char *datadir, const char *ledger, char *out, siz
     }
     snprintf(line, sizeof line, "ECE=%.4f graded=%d\n", ece, total);
     strncat(out, line, out_len - strlen(out) - 1);
+    return 0;
+}
+
+/* Mark a word as deserving more attention ("high") or back to normal. Appends MARK|unix|word|level. 0 ok, 2 setup, 4 bad word or level. */
+int hai_chat_mark(const char *datadir, const char *ledger, const char *word, const char *level, long now, char *out, size_t out_len) {
+    (void)datadir;
+    if (!word || !word[0] || (strcmp(level, "high") != 0 && strcmp(level, "normal") != 0)) { snprintf(out, out_len, "usage: /mark <word> [high|normal]"); return 4; }
+    char w[64]; int k = 0;
+    for (const char *p = word; *p && k < 63; p++) { if (!isalnum((unsigned char)*p)) { snprintf(out, out_len, "a marked word is letters and digits only"); return 4; } w[k++] = (char)tolower((unsigned char)*p); }
+    w[k] = 0;
+    FILE *f = fopen(ledger, "a"); if (!f) { snprintf(out, out_len, "cannot write chat ledger"); return 3; }
+    fprintf(f, "MARK|%ld|%s|%s\n", now, w, level);
+    fclose(f);
+    snprintf(out, out_len, "OK marked %s %s", w, level);
+    return 0;
+}
+
+static int clean_word(const char *in, char *w, size_t cap) {
+    size_t k = 0;
+    if (!in || !in[0]) return 0;
+    for (const char *p = in; *p && k + 1 < cap; p++) { if (!isalnum((unsigned char)*p)) return 0; w[k++] = (char)tolower((unsigned char)*p); }
+    w[k] = 0; return k > 0;
+}
+static void clean_text(const char *in, char *t, size_t cap) {
+    snprintf(t, cap, "%s", in ? in : "");
+    for (char *p = t; *p; p++) if (*p == '|' || *p == '\n' || *p == '\r') *p = ' ';
+}
+static void said_row(FILE *f, long now, int turns, const char *text) {
+    char said[512]; snprintf(said, sizeof said, "%s", text);
+    for (char *p = said; *p; p++) if (*p == '|' || *p == '\n') *p = '/';
+    fprintf(f, "SAID|%ld|%d|%s\n", now, turns, said);
+}
+
+/* The teaching levers. verb: define | alias | say | forget | pack. Every lever appends rows; nothing else changes state.
+ * define word meaning | alias word concept | say word text | forget word | pack name (arg1 = name, reads <datadir>/packs/<name>.pdl).
+ * 0 ok, 2 setup, 3 write failed, 4 bad input. */
+int hai_chat_cmd(const char *datadir, const char *ledger, const char *verb, const char *arg1, const char *arg2, long now, char *out, size_t out_len) {
+    char w[64], t[220];
+    ledger_t *L = calloc(1, sizeof *L); if (!L) { snprintf(out, out_len, "out of memory"); return 2; }
+    replay(ledger, 0, L, datadir);
+    int turns = L->turns; free(L);
+    FILE *f;
+    if (strcmp(verb, "pack") == 0) {
+        char name[64], path[1100], line[LINE]; int rows = 0;
+        if (!clean_word(arg1, name, sizeof name)) { snprintf(out, out_len, "usage: /pack <name>"); return 4; }
+        snprintf(path, sizeof path, "%s/packs/%s.pdl", datadir, name);
+        FILE *pf = fopen(path, "r"); if (!pf) { snprintf(out, out_len, "no pack called %s", name); return 4; }
+        f = fopen(ledger, "a"); if (!f) { fclose(pf); snprintf(out, out_len, "cannot write chat ledger"); return 3; }
+        fprintf(f, "PACK|%ld|%s\n", now, name);
+        while (fgets(line, sizeof line, pf)) {
+            if (strncmp(line, "DEFINE", 6) != 0 && strncmp(line, "ALIAS", 5) != 0 && strncmp(line, "SAY", 3) != 0) continue;
+            char *fld[4]; int nf = split_keep(line, fld, 4); if (nf < 3 || !clean_word(fld[1], w, sizeof w)) continue;
+            clean_text(fld[2], t, sizeof t);
+            fprintf(f, "%s|%ld|%s|%s|pack:%s\n", fld[0], now, w, t, name); rows++;
+        }
+        fclose(pf);
+        char msg[160]; snprintf(msg, sizeof msg, "Loaded the %s pack: %d things taught.", name, rows);
+        said_row(f, now, turns, msg); fclose(f);
+        snprintf(out, out_len, "%s", msg); return 0;
+    }
+    if (!clean_word(arg1, w, sizeof w)) { snprintf(out, out_len, "a word is letters and digits only"); return 4; }
+    char msg[600];
+    if (strcmp(verb, "define") == 0 || strcmp(verb, "say") == 0) {
+        clean_text(arg2, t, sizeof t); if (!t[0]) { snprintf(out, out_len, "usage: /%s <word> = <text>", strcmp(verb, "define") == 0 ? "teach" : "say"); return 4; }
+        f = fopen(ledger, "a"); if (!f) { snprintf(out, out_len, "cannot write chat ledger"); return 3; }
+        fprintf(f, "%s|%ld|%s|%s|you\n", strcmp(verb, "define") == 0 ? "DEFINE" : "SAY", now, w, t);
+        if (strcmp(verb, "define") == 0) snprintf(msg, sizeof msg, "Thank you. I will remember what you said about \"%s\": %s", w, t);
+        else snprintf(msg, sizeof msg, "OK. When you mention \"%s\" I will say: %s", w, t);
+    } else if (strcmp(verb, "alias") == 0) {
+        char cid[64]; static concept_t cs[MAXC]; int nc = load_concepts(datadir, cs, MAXC), ok = 0;
+        if (!clean_word(arg2, cid, sizeof cid) || nc < 0) { snprintf(out, out_len, "usage: /alias <word> = <concept>"); return 4; }
+        for (int i = 0; i < nc; i++) if (strcmp(cs[i].id, cid) == 0) ok = 1;
+        if (!ok) { char list[400] = ""; size_t off = 0; for (int i = 0; i < nc && off + 70 < sizeof list; i++) off += (size_t)snprintf(list + off, sizeof list - off, "%s%s", cs[i].id, i + 1 < nc ? ", " : ""); snprintf(out, out_len, "I know these meanings to alias to: %s", list); return 4; }
+        f = fopen(ledger, "a"); if (!f) { snprintf(out, out_len, "cannot write chat ledger"); return 3; }
+        fprintf(f, "ALIAS|%ld|%s|%s|you\n", now, w, cid);
+        snprintf(msg, sizeof msg, "OK. \"%s\" now means the same as %s to me.", w, cid);
+    } else if (strcmp(verb, "forget") == 0) {
+        f = fopen(ledger, "a"); if (!f) { snprintf(out, out_len, "cannot write chat ledger"); return 3; }
+        fprintf(f, "FORGET|%ld|%s\n", now, w);
+        snprintf(msg, sizeof msg, "OK. I forgot everything you taught me about \"%s\".", w);
+    } else { snprintf(out, out_len, "unknown lever %s", verb); return 4; }
+    said_row(f, now, turns, msg); fclose(f);
+    snprintf(out, out_len, "%s", msg);
     return 0;
 }
