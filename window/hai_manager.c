@@ -211,7 +211,7 @@ static void publish(const char *pkg) {
                     else if (!strcmp(f[0], "HIST") && nf >= 5 && nh < 40) { hturn[nh] = atoi(f[2]); hg[nh] = atoi(f[3]); hw[nh] = atof(f[4]); nh++; }
                     else if (!strcmp(f[0], "SUM") && nf >= 3) { uses = atoi(f[1]); grades = atoi(f[2]); }
                 }
-                VROW("viz-title", "%s", title); VROW("viz-note", "used %d times, graded %d times", uses, grades);
+                VROW("viz-title", "%s", title); VROW("viz-note", "used %d time%s, graded %d time%s", uses, uses == 1 ? "" : "s", grades, grades == 1 ? "" : "s");
                 VROW("viz-title", "Trust over time (after each grade you gave it)");
                 if (nh == 0) VROW("viz-note", "(not graded yet: trust stays at its starting value %.2f)", w0);
                 else { char line[420] = ""; for (int i = 0; i < nh; i++) { int lv = (int)(hw[i] * 7 + 0.5); if (lv < 0) lv = 0; if (lv > 7) lv = 7; strcat(line, spk[lv]); } VROW("viz-line", "%s", line);

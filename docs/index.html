@@ -46,6 +46,10 @@
   #tip { position: fixed; pointer-events: none; background: #101010; border: 1px solid #3a3a3a; border-radius: 3px; padding: 6px 9px; font-size: 12px; display: none; z-index: 9; max-width: 280px; }
   #tip b { color: var(--text-primary, #f0efec); font-size: 14px; } #tip span { color: #c3c2b7; }
   .tbl { display: none; margin-top: 8px; font-size: 12px; overflow-x: auto; } .tbl table { border-collapse: collapse; } .tbl td, .tbl th { border: 1px solid #2e2e2c; padding: 2px 8px; text-align: left; }
+  .tabs { display: flex; gap: 6px; padding: 10px 18px 0; } .tabs button { background: #232323; color: #aaa; border: 1px solid #3a3a3a; border-radius: 3px 3px 0 0; padding: 6px 16px; font: inherit; cursor: pointer; }
+  .tabs button.on { background: #2f5f8f; color: #fff; border-color: #2f5f8f; } .tabs button:hover { color: #fff; }
+  .back { background: #232323; color: #cfe8ff; border: 1px solid #3a3a3a; padding: 5px 12px; font: inherit; cursor: pointer; margin-bottom: 10px; } .back:hover { background: #2f5f8f; }
+  .hit.click { cursor: pointer; } .kv { font-size: 13px; color: var(--text-secondary); margin: 2px 0; } .kv b { color: var(--text-primary); }
   .empty { color: #8a8a8a; font-size: 13px; padding: 16px 0; }
   @media (max-width: 720px) { main { grid-template-columns: 1fr; } }
 </style>
@@ -121,14 +125,15 @@
     </details>
   </aside>
   <section>
+    <div class="tabs"><button id="tab-chat" class="on" type="button">Chat</button><button id="tab-dash" type="button">Dashboard</button></div>
     <div id="feed" aria-live="polite"></div>
     <form id="say">
       <input id="msg" autocomplete="off" placeholder="type a word, or a number from the menu" aria-label="message">
       <button class="go" type="submit">Send</button>
     </form>
-<div id="dash" class="viz-root" aria-label="dashboard">
-  <h2>Dashboard</h2>
-  <p class="sub">Four charts of this browser's ledger, from the same numbers as <code>hai_chat viz</code>. They fill in as you chat, teach and grade.
+<div id="dash" class="viz-root" aria-label="dashboard" style="display:none">
+  <h2 id="dash-title">Dashboard</h2>
+  <p class="sub" id="dash-sub">Four charts of this browser's ledger, from the same numbers as <code>hai_chat viz</code>. Click a bar in <b>Trust per meaning</b> to open that word or meaning on its own.
     <label><input type="checkbox" id="tbl-toggle"> show as tables</label></p>
   <div class="cards" id="cards"></div>
 </div>
@@ -212,8 +217,9 @@
     var x = (ev.clientX || 0) + 14, y = (ev.clientY || 0) + 14; if (x > window.innerWidth - 300) x = window.innerWidth - 300; tip.style.left = x + "px"; tip.style.top = y + "px";
   }
   function hideTip() { tip.style.display = "none"; }
-  function hit(parent, x, y, w, hgt, value, label) {
-    var r = el("rect", { x: x, y: y, width: w, height: hgt, class: "hit", tabindex: 0, "aria-label": value + ", " + label }, parent);
+  function hit(parent, x, y, w, hgt, value, label, onclick) {
+    var r = el("rect", { x: x, y: y, width: w, height: hgt, class: onclick ? "hit click" : "hit", tabindex: 0, role: onclick ? "button" : "img", "aria-label": value + ", " + label + (onclick ? " (click to open)" : "") }, parent);
+    if (onclick) { r.addEventListener("click", onclick); r.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onclick(); } }); }
     r.addEventListener("pointermove", function (ev) { showTip(ev, value, label); }); r.addEventListener("pointerleave", hideTip);
     r.addEventListener("focus", function () { var bb = r.getBoundingClientRect(); showTip({ clientX: bb.left, clientY: bb.bottom }, value, label); }); r.addEventListener("blur", hideTip);
   }
@@ -239,20 +245,69 @@
     });
     return o;
   }
-  function lineChart(c, pts, ymax, yfmt, label) {   // pts: [{x, y, tip}]; x are 1..n turn numbers
+  function lineChart(c, pts, ymax, yfmt, label, xname) {
+    xname = xname || "turn";   // pts: [{x, y, tip}]; x are 1..n turn numbers
     var W = 520, H = 190, L = 34, R = 10, T = 10, B = 24, svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": label }, c);
     [0, 0.5, 1].forEach(function (g) { var y = T + (H - T - B) * (1 - g); el("line", { x1: L, x2: W - R, y1: y, y2: y, class: "axis" }, svg); el("text", { x: L - 6, y: y + 4, "text-anchor": "end" }, svg, yfmt(ymax * g)); });
     var n = pts.length, X = function (i) { return n === 1 ? (L + W - R) / 2 : L + (W - L - R) * i / (n - 1); }, Y = function (v) { return T + (H - T - B) * (1 - v / ymax); };
     el("polyline", { points: pts.map(function (p, i) { return X(i) + "," + Y(p.y); }).join(" "), fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
     pts.forEach(function (p, i) { el("circle", { cx: X(i), cy: Y(p.y), r: 4, fill: "var(--series-1)", stroke: "var(--surface-1)", "stroke-width": 2 }, svg); });
     var last = pts[n - 1], ly = Y(last.y) - 9; if (ly < T + 8) ly = Y(last.y) + 18; el("text", { x: Math.min(X(n - 1), W - R - 2), y: ly, "text-anchor": "end", class: "val" }, svg, yfmt(last.y));
-    el("text", { x: L, y: H - 6 }, svg, "turn 1"); el("text", { x: W - R, y: H - 6, "text-anchor": "end" }, svg, "turn " + pts[n - 1].x);
+    el("text", { x: L, y: H - 6 }, svg, xname + " " + pts[0].x); el("text", { x: W - R, y: H - 6, "text-anchor": "end" }, svg, xname + " " + pts[n - 1].x);
     var step = n === 1 ? 40 : (W - L - R) / (n - 1);
     pts.forEach(function (p, i) { hit(svg, X(i) - Math.max(12, step / 2), T, Math.max(24, step), H - T - B, yfmt(p.y), p.tip); });
+  }
+  var detailItem = null, tab = "chat";
+  function setTab(t) {
+    tab = t; var dash = document.getElementById("dash");
+    document.getElementById("tab-chat").className = t === "chat" ? "on" : ""; document.getElementById("tab-dash").className = t === "dash" ? "on" : "";
+    feed.style.display = t === "chat" ? "" : "none"; document.getElementById("say").style.display = t === "chat" ? "" : "none"; dash.style.display = t === "dash" ? "" : "none";
+    if (t === "dash") drawDash();
+  }
+  function openItem(item) { detailItem = item; drawDash(); var d = document.getElementById("dash"); if (d.scrollIntoView) d.scrollIntoView({ block: "start" }); }
+  function drawDetail(host) {
+    var res = HaiEngine.detail(data, ledger(), detailItem), back = document.createElement("button");
+    back.type = "button"; back.className = "back"; back.textContent = "\u2190 back to the overview"; back.addEventListener("click", function () { detailItem = null; drawDash(); });
+    var top = document.createElement("div"); top.style.gridColumn = "1 / -1"; top.appendChild(back); host.appendChild(top);
+    document.getElementById("dash-title").textContent = detailItem.replace(/^concept:/, "").replace(/^taught:/, "");
+    document.getElementById("dash-sub").textContent = detailItem.indexOf("taught:") === 0 ? "a word you taught" : "a built-in meaning";
+    if (res.code) { var g = document.createElement("div"); g.className = "empty"; g.textContent = "That item is gone (it was forgotten)."; host.appendChild(g); return; }
+    var d = { alias: [], say: "", use: [], hist: [], item: null, sum: null };
+    res.text.split("\n").forEach(function (ln) { var f = ln.split("|");
+      if (f[0] === "ITEM") d.item = { kind: f[1], name: f[2], meaning: f[3], extra: f[4], trust: +f[5] };
+      else if (f[0] === "ALIAS") d.alias.push(f[1]); else if (f[0] === "SAY") d.say = f.slice(1).join("|");
+      else if (f[0] === "USE") d.use.push({ n: +f[1], c: +f[2], t: f.slice(3).join("|") });
+      else if (f[0] === "HIST") d.hist.push({ n: +f[1], turn: +f[2], g: +f[3], w: +f[4] });
+      else if (f[0] === "SUM") d.sum = { uses: +f[1], grades: +f[2], r: +f[3], p: +f[4] }; });
+    var c = card("Summary", "what hai knows about it", host);
+    [["trust", d.item.trust.toFixed(2) + (d.item.trust === 0.5 ? " (never graded)" : "")], [d.item.kind === "concept" ? "keywords" : "it means", d.item.meaning],
+     ["used in answers", d.sum.uses + (d.sum.uses === 1 ? " time" : " times")], ["graded", d.sum.grades + (d.sum.grades === 1 ? " time" : " times") + " (reward " + d.sum.r + ", punish " + d.sum.p + ")"]].forEach(function (kv) {
+      var p = document.createElement("div"); p.className = "kv"; var b = document.createElement("b"); b.textContent = kv[0] + ": "; p.appendChild(b); p.appendChild(document.createTextNode(kv[1])); c.appendChild(p); });
+    if (d.item.kind === "taught" && d.item.extra === "1") { var mk = document.createElement("div"); mk.className = "kv"; mk.textContent = "marked: counts more when you say it"; c.appendChild(mk); }
+    if (d.alias.length) { var al = document.createElement("div"); al.className = "kv"; al.textContent = "also triggered by: " + d.alias.join(", "); c.appendChild(al); }
+    if (d.say) { var sy = document.createElement("div"); sy.className = "kv"; sy.textContent = "your answer for it: " + d.say; c.appendChild(sy); }
+    c = card("Trust over time", "after each grade you gave it (1.00 = always good)", host);
+    if (!d.hist.length) { var e1 = document.createElement("div"); e1.className = "empty"; e1.textContent = "Not graded yet, so trust stays at its starting value. Grade a reply that used it."; c.appendChild(e1); }
+    else { lineChart(c, d.hist.map(function (p) { return { x: p.n, y: p.w, tip: "grade " + p.g + " on turn " + p.turn }; }), 1, function (y) { return y.toFixed(2); }, "trust over time", "grade");
+           table(c, ["grade #", "turn", "grade given", "trust after"], d.hist.map(function (p) { return [p.n, p.turn, p.g, p.w.toFixed(2)]; })); }
+    c = card("Where it was used", "the confidence of each answer that used it", host);
+    if (!d.use.length) { var e2 = document.createElement("div"); e2.className = "empty"; e2.textContent = "Never used in an answer yet. Say something that contains it."; c.appendChild(e2); }
+    else {
+      var rows = d.use.slice(-10), W4 = 520, rh = 24, H4 = rows.length * rh + 4, svg4 = el("svg", { viewBox: "0 0 " + W4 + " " + H4, role: "img", "aria-label": "confidence of each answer that used it" }, c), L4 = 70, R4 = 44;
+      rows.forEach(function (u, i) { var y = i * rh + 3, w = (W4 - L4 - R4) * u.c / 100;
+        el("text", { x: L4 - 8, y: y + 13, "text-anchor": "end" }, svg4, "turn " + u.n);
+        el("path", { d: "M" + L4 + "," + y + " h" + Math.max(0, w - 4) + " a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-" + Math.max(0, w - 4) + " z", fill: "var(--series-1)" }, svg4);
+        el("text", { x: L4 + w + 6, y: y + 13, class: "val" }, svg4, u.c + "%");
+        hit(svg4, 0, y - 2, W4, rh, u.c + "%", "turn " + u.n + ": " + u.t); });
+      table(c, ["turn", "confidence %", "what you said"], d.use.map(function (u) { return [u.n, u.c, u.t]; }));
+    }
+    document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; });
   }
   function drawDash() {
     var host = document.getElementById("cards"); host.textContent = "";
     if (!data) return;
+    if (detailItem) { drawDetail(host); return; }
+    document.getElementById("dash-title").textContent = "Dashboard"; document.getElementById("dash-sub").textContent = "Four charts of this browser's ledger. Click a bar in Trust per meaning to open that word or meaning on its own.";
     var l = ledger(), v = parseViz(HaiEngine.viz(data, l)), c;
     c = card("Confidence per turn", "how sure hai was of each answer: matched words / your words x trust", host);
     if (!v.conf.length) { var e0 = document.createElement("div"); e0.className = "empty"; e0.textContent = "No turns yet: say something."; c.appendChild(e0); }
@@ -272,7 +327,7 @@
       el("text", { x: L2 - 8, y: y + 12, "text-anchor": "end" }, svg2, r.id.length > 16 ? r.id.slice(0, 15) + "…" : r.id);
       el("path", { d: "M" + L2 + "," + y + " h" + Math.max(0, w - 4) + " a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-" + Math.max(0, w - 4) + " z", fill: "var(--series-1)" }, svg2);
       el("text", { x: L2 + w + 6, y: y + 12, class: "val" }, svg2, r.w.toFixed(2));
-      hit(svg2, 0, y - 2, W2, rh, r.w.toFixed(2), r.id + ": " + r.r + " reward, " + r.p + " punish");
+      hit(svg2, 0, y - 2, W2, rh, r.w.toFixed(2), r.id + ": " + r.r + " reward, " + r.p + " punish. Click to open it.", (function (id) { return function () { openItem(id.indexOf("taught:") === 0 ? id : "concept:" + id); }; })(r.id));
     });
     table(c, ["meaning", "trust", "reward", "punish"], v.trust.map(function (r) { return [r.id, r.w.toFixed(2), r.r, r.p]; }));
     c = card("Calibration", "stated confidence against how often you graded that answer good (grade replies to fill this in)", host);
@@ -297,6 +352,8 @@
     }
     document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; });
   }
+  document.getElementById("tab-chat").addEventListener("click", function () { setTab("chat"); });
+  document.getElementById("tab-dash").addEventListener("click", function () { detailItem = null; setTab("dash"); });
   document.getElementById("tbl-toggle").addEventListener("change", function () { document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; }); });
 
   document.getElementById("say").addEventListener("submit", function (e) {
