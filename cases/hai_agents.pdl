@@ -77,3 +77,15 @@ EXPECT_EXIT | 0 | the-typed-agent-delete-works
 EXPECT_NOFILE | chat/agents/typed/agent.pdl | a-deleted-agent-is-gone
 RUN | cat | $T/window/state/active_agent.txt
 EXPECT_OUT  | hai | deleting-the-active-agent-falls-back-to-the-original
+# ---- found by recording the real window (2026-11-23): one relay click fires NEW twice in one second; the second used to TRUNCATE the first ----
+# state here: curio has ONE session from the earlier NEW (it holds a turn). Go back to main, then press New three times quickly.
+RUN | $T/window/bin/hai_session | AGENT curio | $T/window
+RUN | $T/window/bin/hai_session | SWITCH main | $T/window
+RUN | $T/window/bin/hai_session | NEW | $T/window
+RUN | $T/window/bin/hai_session | NEW | $T/window
+RUN | $T/window/bin/hai_session | NEW | $T/window
+RUN | find | $T/window/state/agents/curio/sessions | -name | session_*.ledger | -printf | x
+EXPECT_OUT  | xx | three-quick-new-presses-leave-exactly-one-new-session
+EXPECT_OUT_LACKS | xxx | an-empty-session-is-reused-not-piled-up
+RUN | $T/window/bin/hai_send | $T/window | /tmp | the house
+EXPECT_OUT  | I remember "house"! You told me: the desktop | the-new-session-kept-what-was-taught-after-the-quick-presses

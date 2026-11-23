@@ -57,6 +57,12 @@ static void set_row(const char *file, const char *key, const char *row) {
 }
 static void trim(char *s) { size_t n = strlen(s); while (n && (s[n-1] == '\n' || s[n-1] == '\r' || s[n-1] == ' ')) s[--n] = 0; }
 
+static int has_turn(const char *ledger) {
+    FILE *f = fopen(ledger, "r"); if (!f) return 0; char l[512]; int yes = 0;
+    while (fgets(l, sizeof l, f)) if (strncmp(l, "TURN|", 5) == 0) { yes = 1; break; }
+    fclose(f); return yes;
+}
+
 static int inherit(const char *src, const char *dst) {
     FILE *in = fopen(src, "r"), *out = fopen(dst, "w");
     if (!out) { if (in) fclose(in); return 3; }
@@ -116,9 +122,16 @@ int main(int argc, char **argv) {
     char agent[64], root[1300], sdir[1400], src[1500], dst[1500], name[128];
     hai_agent_active(pkg, agent, sizeof agent); hai_root(pkg, agent, root, sizeof root); snprintf(sdir, sizeof sdir, "%s/sessions", root);
     if (strcmp(req, "NEW") == 0) {
-        mkdirs(sdir); snprintf(name, sizeof name, "session_%ld", (long)time(NULL));
+        mkdirs(sdir);
         char cur[64]; hai_session_active(pkg, agent, cur, sizeof cur);
-        hai_session_ledger(pkg, agent, cur, src, sizeof src); hai_session_ledger(pkg, agent, name, dst, sizeof dst);
+        hai_session_ledger(pkg, agent, cur, src, sizeof src);
+        if (strcmp(cur, "main") != 0 && !has_turn(src)) return 0;           /* the active session is still empty: reuse it (a double click, or a second "New") */
+        snprintf(name, sizeof name, "session_%ld", (long)time(NULL));
+        hai_session_ledger(pkg, agent, name, dst, sizeof dst);
+        for (int k = 2; access(dst, F_OK) == 0 && k < 100; k++) {              /* NEVER overwrite a session: inherit() truncates its target, and two clicks in one second share a name */
+            snprintf(name, sizeof name, "session_%ld_%d", (long)time(NULL), k); hai_session_ledger(pkg, agent, name, dst, sizeof dst);
+        }
+        if (access(dst, F_OK) == 0) return 3;
         if (inherit(src, dst) != 0) return 3;
         return write_pointer(sdir, "active.txt", name);
     }

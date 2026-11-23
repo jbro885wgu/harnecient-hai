@@ -6,12 +6,10 @@
   <page name="main">
     <sidebar id="sidebar" class="sidebar">
       <text label="Agents" class="block-title"/>
-      <scrolllist class="from-top">
-        <repeat count="${agents_count}" bind="agent">
+      <repeat count="${agents_count}" bind="agent">
           <item id="a${agent.#}" class="${agent.cls}" label="${agent.label}"
                 action="'${PKG}/bin/hai_session' 'AGENT ${agent.name}'"/>
         </repeat>
-      </scrolllist>
       <text label="Sessions" class="block-title"/>
       <item id="new" class="data-item" label="+ New Session" action="'${PKG}/bin/hai_session' 'NEW'"/>
       <scrolllist class="from-top">
@@ -22,9 +20,9 @@
                 confirm="Delete session ${session.label}?"/>
         </repeat>
       </scrolllist>
-      <text label="${agent} ${stamp}" class="quiet"/>
     </sidebar>
     <panel id="detail" class="settings-block">
+      <text label="agent: ${agent}   ${state}   turns: ${turns}   ${stamp}" class="block-title"/>
       <text label="Type a line + Enter to chat. Teach: /teach w = meaning  /alias w = concept  /say w = text  /mark w  /forget w  /pack lyfedesk  /grade 0..4.  Agents: /agent new <id> [curious|terse|scholar]  /agent <id>" class="quiet"/>
       <scrolllist>
           <repeat count="${rows_count}" bind="row">
