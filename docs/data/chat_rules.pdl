@@ -17,3 +17,8 @@ RULE | grade_daily_cap | 10
 # calibration (hai_chat calib): bins of stated confidence, and what counts as a good grade
 RULE | calib_bin_width | 10
 RULE | good_min_grade | 1
+# the teach loop (2026-11-23): 1 = on. An unknown content word is asked about, the explanation is remembered.
+RULE | teach_enabled | 1
+RULE | teach_min_len | 3
+# a word the person marked "high" counts this many times when recognised (confidence is capped at 100)
+RULE | attn_high_mult | 2

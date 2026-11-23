@@ -1,0 +1,53 @@
+# hai_install (2026-11-23): install.sh builds hai from a LOCAL source into a scratch HOME, writes the hai command, keeps the user's ledger on update, refuses bad input, uninstalls.
+# The real download path (curl of the GitHub tarball) is NOT run here: it needs the network and a pushed branch; it was run once by hand (see book 24) and only proves the mechanics.
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE). The scratch HOME is a fixed folder under /tmp, removed first.
+RESULTS | ../results/hai_install.txt
+ENV | LC_ALL | C
+ENV | HOME | /tmp/hai_install_case_home
+ENV | HAI_SRC | /home/no/Desktop/github/work/#.hai/harnecient-hai
+
+CASE    | install
+SCRATCH |
+RUN | rm | -rf | /tmp/hai_install_case_home
+RUN | mkdir | -p | /tmp/hai_install_case_home
+RUN | sh | /home/no/Desktop/github/work/#.hai/harnecient-hai/install.sh | hai
+EXPECT_EXIT | 0 | the-installer-succeeds-from-a-local-source
+EXPECT_OUT | installed. Type:  hai | it-says-how-to-start
+EXPECT_EXISTS | /tmp/hai_install_case_home/.local/bin/hai | the-hai-command-is-written
+EXPECT_EXISTS | /tmp/hai_install_case_home/.local/share/hai/bin/hai | the-chat-program-is-built
+EXPECT_EXISTS | /tmp/hai_install_case_home/.local/share/hai/bin/hai_chat | the-dump-tool-is-built
+EXPECT_EXISTS | /tmp/hai_install_case_home/.local/share/hai/chat/data/concepts.pdl | the-data-is-installed
+EXPECT_EXISTS | /tmp/hai_install_case_home/.local/share/hai/chat/data/packs/lyfedesk.pdl | the-starter-pack-is-installed
+RUN | /tmp/hai_install_case_home/.local/bin/hai | where
+EXPECT_EXIT | 0 | hai-where-runs
+EXPECT_OUT | your ledger: /tmp/hai_install_case_home/.local/share/hai-chat/chat.ledger | the-ledger-is-in-the-users-own-folder
+RUN | /tmp/hai_install_case_home/.local/bin/hai | bank
+EXPECT_EXIT | 0 | hai-bank-runs-before-any-chat
+EXPECT_OUT | CONCEPT\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | the-bank-lists-the-built-in-meanings
+RUN | /tmp/hai_install_case_home/.local/share/hai/bin/hai_chat | cmd | /tmp/hai_install_case_home/.local/share/hai/chat/data | /tmp/hai_install_case_home/.local/share/hai-chat/chat.ledger | define | house | the desktop we work in
+EXPECT_EXIT | 0 | a-lever-writes-into-the-users-ledger
+RUN | sh | /home/no/Desktop/github/work/#.hai/harnecient-hai/install.sh | hai
+EXPECT_EXIT | 0 | updating-succeeds
+RUN | /tmp/hai_install_case_home/.local/bin/hai | bank
+EXPECT_OUT | TAUGHT\phouse\pthe desktop we work in\p0\p0.50 | an-update-keeps-what-the-user-taught
+RUN | sh | /home/no/Desktop/github/work/#.hai/harnecient-hai/install.sh | nonsense
+EXPECT_EXIT | 1 | an-unknown-product-is-refused
+EXPECT_OUT | unknown product | the-refusal-says-why
+RUN | sh | /home/no/Desktop/github/work/#.hai/harnecient-hai/install.sh | uninstall
+EXPECT_EXIT | 0 | uninstall-succeeds
+EXPECT_NOFILE | /tmp/hai_install_case_home/.local/bin/hai | the-command-is-gone
+EXPECT_EXISTS | /tmp/hai_install_case_home/.local/share/hai-chat/chat.ledger | the-users-ledger-is-kept
+RUN | rm | -rf | /tmp/hai_install_case_home
+
+CASE    | install-refusals
+SCRATCH |
+RUN | mkdir | -p | /tmp/hai_install_case_home
+RUN | sh | /home/no/Desktop/github/work/#.hai/harnecient-hai/install.sh | hai
+EXPECT_EXIT | 0 | control-the-same-call-succeeds
+RUN | rm | -rf | /tmp/hai_install_case_home
+ENV | HAI_SRC | /nonexistent-source
+RUN | sh | /home/no/Desktop/github/work/#.hai/harnecient-hai/install.sh | hai
+EXPECT_EXIT | 1 | a-source-without-ops-hai-c-is-refused
+EXPECT_OUT | has no ops/hai.c | the-refusal-names-the-problem
+EXPECT_NOFILE | /tmp/hai_install_case_home/.local/bin/hai | nothing-is-installed-after-a-refusal
+RUN | rm | -rf | /tmp/hai_install_case_home

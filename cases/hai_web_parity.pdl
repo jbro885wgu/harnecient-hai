@@ -1,0 +1,546 @@
+# hai_web_parity (2026-11-23): the C engine (ops/hai_chat) and the JS engine (docs/engine.js, the web demo) run the SAME scripted conversation and must say the SAME
+# thing, line for line and exit code for exit code. The expected text was taken from the C tool and is written here as a literal, so BOTH engines are checked against it:
+# a change in either one turns this case red. The conversation reaches: greeting, an unknown word that is asked about, the answer stored, a taught word recalled, an alias,
+# a mark, a say, skip, the name flow, bye, a starter pack, forget, bad input for every lever, grades (good, repeat, out of range). Then the dumps: why, bank, stats, calib, state.
+# Needs node (the JS engine is run from its command line). Timestamps are not compared (they differ by the second); output text and exit codes are.
+RESULTS | ../results/hai_web_parity.txt
+ENV | LC_ALL | C
+ENV | HAI_NOW | 1700000000
+
+CASE    | parity
+SCRATCH |
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/d
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -I | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | the-c-engine-builds-from-source
+# step 1: turn hey , how are u ?
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | hey , how are u ?
+EXPECT_EXIT | 0 | s01-turn-hey-how-are-u-c-exit
+EXPECT_OUT_IS | Hi. I can chat with fixed replies for now. Type help. (confidence 21%) | s01-turn-hey-how-are-u-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | hey , how are u ?
+EXPECT_EXIT | 0 | s01-turn-hey-how-are-u-js-exit
+EXPECT_OUT_IS | Hi. I can chat with fixed replies for now. Type help. (confidence 21%) | s01-turn-hey-how-are-u-js-text
+# step 2: turn do u like this house
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | do u like this house
+EXPECT_EXIT | 0 | s02-turn-do-u-like-this-house-c-exit
+EXPECT_OUT_IS | I do not know "house" yet. What does it mean to you? (type skip to pass) (confidence 0%) | s02-turn-do-u-like-this-house-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | do u like this house
+EXPECT_EXIT | 0 | s02-turn-do-u-like-this-house-js-exit
+EXPECT_OUT_IS | I do not know "house" yet. What does it mean to you? (type skip to pass) (confidence 0%) | s02-turn-do-u-like-this-house-js-text
+# step 3: turn the LyfeDesk desktop we both work in
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | the LyfeDesk desktop we both work in
+EXPECT_EXIT | 0 | s03-turn-the-lyfedesk-desktop-we-both-w-c-exit
+EXPECT_OUT_IS | Thank you. I will remember what you said about "house": the LyfeDesk desktop we both work in (confidence 100%) | s03-turn-the-lyfedesk-desktop-we-both-w-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | the LyfeDesk desktop we both work in
+EXPECT_EXIT | 0 | s03-turn-the-lyfedesk-desktop-we-both-w-js-exit
+EXPECT_OUT_IS | Thank you. I will remember what you said about "house": the LyfeDesk desktop we both work in (confidence 100%) | s03-turn-the-lyfedesk-desktop-we-both-w-js-text
+# step 4: turn do u like the house
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | do u like the house
+EXPECT_EXIT | 0 | s04-turn-do-u-like-the-house-c-exit
+EXPECT_OUT_IS | You taught me about "house": the LyfeDesk desktop we both work in (confidence 50%) | s04-turn-do-u-like-the-house-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | do u like the house
+EXPECT_EXIT | 0 | s04-turn-do-u-like-the-house-js-exit
+EXPECT_OUT_IS | You taught me about "house": the LyfeDesk desktop we both work in (confidence 50%) | s04-turn-do-u-like-the-house-js-text
+# step 5: cmd alias yo greet
+RUN | $T/hai_chat | cmd | $T/d | $T/c.led | alias | yo | greet
+EXPECT_EXIT | 0 | s05-cmd-alias-yo-greet-c-exit
+EXPECT_OUT_IS | OK. "yo" now means the same as greet to me. | s05-cmd-alias-yo-greet-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | cmd | $T/d | $T/j.led | alias | yo | greet
+EXPECT_EXIT | 0 | s05-cmd-alias-yo-greet-js-exit
+EXPECT_OUT_IS | OK. "yo" now means the same as greet to me. | s05-cmd-alias-yo-greet-js-text
+# step 6: turn yo there
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | yo there
+EXPECT_EXIT | 0 | s06-turn-yo-there-c-exit
+EXPECT_OUT_IS | Hi. I can chat with fixed replies for now. Type help. (confidence 42%) | s06-turn-yo-there-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | yo there
+EXPECT_EXIT | 0 | s06-turn-yo-there-js-exit
+EXPECT_OUT_IS | Hi. I can chat with fixed replies for now. Type help. (confidence 42%) | s06-turn-yo-there-js-text
+# step 7: mark house high
+RUN | $T/hai_chat | mark | $T/d | $T/c.led | house | high
+EXPECT_EXIT | 0 | s07-mark-house-high-c-exit
+EXPECT_OUT_IS | OK marked house high | s07-mark-house-high-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | mark | $T/d | $T/j.led | house | high
+EXPECT_EXIT | 0 | s07-mark-house-high-js-exit
+EXPECT_OUT_IS | OK marked house high | s07-mark-house-high-js-text
+# step 8: turn house house tell me about the house
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | house house tell me about the house
+EXPECT_EXIT | 0 | s08-turn-house-house-tell-me-about-the-c-exit
+EXPECT_OUT_IS | You taught me about "house": the LyfeDesk desktop we both work in (confidence 100%) | s08-turn-house-house-tell-me-about-the-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | house house tell me about the house
+EXPECT_EXIT | 0 | s08-turn-house-house-tell-me-about-the-js-exit
+EXPECT_OUT_IS | You taught me about "house": the LyfeDesk desktop we both work in (confidence 100%) | s08-turn-house-house-tell-me-about-the-js-text
+# step 9: cmd say harness A harness is how I check myself.
+RUN | $T/hai_chat | cmd | $T/d | $T/c.led | say | harness | A harness is how I check myself.
+EXPECT_EXIT | 0 | s09-cmd-say-harness-a-harness-is-how-i-c-exit
+EXPECT_OUT_IS | OK. When you mention "harness" I will say: A harness is how I check myself. | s09-cmd-say-harness-a-harness-is-how-i-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | cmd | $T/d | $T/j.led | say | harness | A harness is how I check myself.
+EXPECT_EXIT | 0 | s09-cmd-say-harness-a-harness-is-how-i-js-exit
+EXPECT_OUT_IS | OK. When you mention "harness" I will say: A harness is how I check myself. | s09-cmd-say-harness-a-harness-is-how-i-js-text
+# step 10: turn what is a harness
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | what is a harness
+EXPECT_EXIT | 0 | s10-turn-what-is-a-harness-c-exit
+EXPECT_OUT_IS | A harness is how I check myself. (confidence 50%) | s10-turn-what-is-a-harness-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | what is a harness
+EXPECT_EXIT | 0 | s10-turn-what-is-a-harness-js-exit
+EXPECT_OUT_IS | A harness is how I check myself. (confidence 50%) | s10-turn-what-is-a-harness-js-text
+# step 11: turn zz qq
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | zz qq
+EXPECT_EXIT | 0 | s11-turn-zz-qq-c-exit
+EXPECT_OUT_IS | I don't know that yet. Did you mean: [1] say hi [2] help [3] account? (confidence 0%) | s11-turn-zz-qq-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | zz qq
+EXPECT_EXIT | 0 | s11-turn-zz-qq-js-exit
+EXPECT_OUT_IS | I don't know that yet. Did you mean: [1] say hi [2] help [3] account? (confidence 0%) | s11-turn-zz-qq-js-text
+# step 12: turn blorptastic wonder
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | blorptastic wonder
+EXPECT_EXIT | 0 | s12-turn-blorptastic-wonder-c-exit
+EXPECT_OUT_IS | I do not know "blorptastic" yet. What does it mean to you? (type skip to pass) (confidence 0%) | s12-turn-blorptastic-wonder-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | blorptastic wonder
+EXPECT_EXIT | 0 | s12-turn-blorptastic-wonder-js-exit
+EXPECT_OUT_IS | I do not know "blorptastic" yet. What does it mean to you? (type skip to pass) (confidence 0%) | s12-turn-blorptastic-wonder-js-text
+# step 13: turn skip
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | skip
+EXPECT_EXIT | 0 | s13-turn-skip-c-exit
+EXPECT_OUT_IS | OK, I will not ask about that now. (confidence 0%) | s13-turn-skip-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | skip
+EXPECT_EXIT | 0 | s13-turn-skip-js-exit
+EXPECT_OUT_IS | OK, I will not ask about that now. (confidence 0%) | s13-turn-skip-js-text
+# step 14: turn what is blorptastic
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | what is blorptastic
+EXPECT_EXIT | 0 | s14-turn-what-is-blorptastic-c-exit
+EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit. (confidence 25%) | s14-turn-what-is-blorptastic-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | what is blorptastic
+EXPECT_EXIT | 0 | s14-turn-what-is-blorptastic-js-exit
+EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit. (confidence 25%) | s14-turn-what-is-blorptastic-js-text
+# step 15: cmd define nav2 a second map
+RUN | $T/hai_chat | cmd | $T/d | $T/c.led | define | nav2 | a second map
+EXPECT_EXIT | 0 | s15-cmd-define-nav2-a-second-map-c-exit
+EXPECT_OUT_IS | Thank you. I will remember what you said about "nav2": a second map | s15-cmd-define-nav2-a-second-map-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | cmd | $T/d | $T/j.led | define | nav2 | a second map
+EXPECT_EXIT | 0 | s15-cmd-define-nav2-a-second-map-js-exit
+EXPECT_OUT_IS | Thank you. I will remember what you said about "nav2": a second map | s15-cmd-define-nav2-a-second-map-js-text
+# step 16: turn help
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | help
+EXPECT_EXIT | 0 | s16-turn-help-c-exit
+EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit. (confidence 75%) | s16-turn-help-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | help
+EXPECT_EXIT | 0 | s16-turn-help-js-exit
+EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit. (confidence 75%) | s16-turn-help-js-text
+# step 17: grade 3
+RUN | $T/hai_chat | grade | $T/d | $T/c.led | 3
+EXPECT_EXIT | 0 | s17-grade-3-c-exit
+EXPECT_OUT_IS | OK grade 3 for r_help weight=0.8000 | s17-grade-3-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | grade | $T/d | $T/j.led | 3
+EXPECT_EXIT | 0 | s17-grade-3-js-exit
+EXPECT_OUT_IS | OK grade 3 for r_help weight=0.8000 | s17-grade-3-js-text
+# step 18: grade 3
+RUN | $T/hai_chat | grade | $T/d | $T/c.led | 3
+EXPECT_EXIT | 7 | s18-grade-3-c-exit
+EXPECT_OUT_IS | this reply is already graded | s18-grade-3-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | grade | $T/d | $T/j.led | 3
+EXPECT_EXIT | 7 | s18-grade-3-js-exit
+EXPECT_OUT_IS | this reply is already graded | s18-grade-3-js-text
+# step 19: turn what is the confidence
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | what is the confidence
+EXPECT_EXIT | 0 | s19-turn-what-is-the-confidence-c-exit
+EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit. (confidence 21%) | s19-turn-what-is-the-confidence-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | what is the confidence
+EXPECT_EXIT | 0 | s19-turn-what-is-the-confidence-js-exit
+EXPECT_OUT_IS | I know: hi, help, account, nav, bye. Numbers work too: 1 help, 2 quit. (confidence 21%) | s19-turn-what-is-the-confidence-js-text
+# step 20: cmd pack lyfedesk
+RUN | $T/hai_chat | cmd | $T/d | $T/c.led | pack | lyfedesk
+EXPECT_EXIT | 0 | s20-cmd-pack-lyfedesk-c-exit
+EXPECT_OUT_IS | Loaded the lyfedesk pack: 13 things taught. | s20-cmd-pack-lyfedesk-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | cmd | $T/d | $T/j.led | pack | lyfedesk
+EXPECT_EXIT | 0 | s20-cmd-pack-lyfedesk-js-exit
+EXPECT_OUT_IS | Loaded the lyfedesk pack: 13 things taught. | s20-cmd-pack-lyfedesk-js-text
+# step 21: turn do u know the lyfedesk
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | do u know the lyfedesk
+EXPECT_EXIT | 0 | s21-turn-do-u-know-the-lyfedesk-c-exit
+EXPECT_OUT_IS | I do not know "lyfedesk" yet. What does it mean to you? (type skip to pass) (confidence 0%) | s21-turn-do-u-know-the-lyfedesk-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | do u know the lyfedesk
+EXPECT_EXIT | 0 | s21-turn-do-u-know-the-lyfedesk-js-exit
+EXPECT_OUT_IS | I do not know "lyfedesk" yet. What does it mean to you? (type skip to pass) (confidence 0%) | s21-turn-do-u-know-the-lyfedesk-js-text
+# step 22: cmd forget house
+RUN | $T/hai_chat | cmd | $T/d | $T/c.led | forget | house
+EXPECT_EXIT | 0 | s22-cmd-forget-house-c-exit
+EXPECT_OUT_IS | OK. I forgot everything you taught me about "house". | s22-cmd-forget-house-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | cmd | $T/d | $T/j.led | forget | house
+EXPECT_EXIT | 0 | s22-cmd-forget-house-js-exit
+EXPECT_OUT_IS | OK. I forgot everything you taught me about "house". | s22-cmd-forget-house-js-text
+# step 23: turn do u like the house
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | do u like the house
+EXPECT_EXIT | 0 | s23-turn-do-u-like-the-house-c-exit
+EXPECT_OUT_IS | Thank you. I will remember what you said about "lyfedesk": do u like the house (confidence 100%) | s23-turn-do-u-like-the-house-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | do u like the house
+EXPECT_EXIT | 0 | s23-turn-do-u-like-the-house-js-exit
+EXPECT_OUT_IS | Thank you. I will remember what you said about "lyfedesk": do u like the house (confidence 100%) | s23-turn-do-u-like-the-house-js-text
+# step 24: cmd pack nopack
+RUN | $T/hai_chat | cmd | $T/d | $T/c.led | pack | nopack
+EXPECT_EXIT | 4 | s24-cmd-pack-nopack-c-exit
+EXPECT_OUT_IS | no pack called nopack | s24-cmd-pack-nopack-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | cmd | $T/d | $T/j.led | pack | nopack
+EXPECT_EXIT | 4 | s24-cmd-pack-nopack-js-exit
+EXPECT_OUT_IS | no pack called nopack | s24-cmd-pack-nopack-js-text
+# step 25: mark bad-word
+RUN | $T/hai_chat | mark | $T/d | $T/c.led | bad-word
+EXPECT_EXIT | 4 | s25-mark-bad-word-c-exit
+EXPECT_OUT_IS | a marked word is letters and digits only | s25-mark-bad-word-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | mark | $T/d | $T/j.led | bad-word
+EXPECT_EXIT | 4 | s25-mark-bad-word-js-exit
+EXPECT_OUT_IS | a marked word is letters and digits only | s25-mark-bad-word-js-text
+# step 26: grade 9
+RUN | $T/hai_chat | grade | $T/d | $T/c.led | 9
+EXPECT_EXIT | 4 | s26-grade-9-c-exit
+EXPECT_OUT_IS | grade must be 0 to 4 | s26-grade-9-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | grade | $T/d | $T/j.led | 9
+EXPECT_EXIT | 4 | s26-grade-9-js-exit
+EXPECT_OUT_IS | grade must be 0 to 4 | s26-grade-9-js-text
+# step 27: turn my name is
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | my name is
+EXPECT_EXIT | 0 | s27-turn-my-name-is-c-exit
+EXPECT_OUT_IS | What name should I use for you? (confidence 22%) | s27-turn-my-name-is-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | my name is
+EXPECT_EXIT | 0 | s27-turn-my-name-is-js-exit
+EXPECT_OUT_IS | What name should I use for you? (confidence 22%) | s27-turn-my-name-is-js-text
+# step 28: turn alice
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | alice
+EXPECT_EXIT | 0 | s28-turn-alice-c-exit
+EXPECT_OUT_IS | Nice to meet you, alice. (confidence 0%) | s28-turn-alice-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | alice
+EXPECT_EXIT | 0 | s28-turn-alice-js-exit
+EXPECT_OUT_IS | Nice to meet you, alice. (confidence 0%) | s28-turn-alice-js-text
+# step 29: turn bye
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | bye
+EXPECT_EXIT | 1 | s29-turn-bye-c-exit
+EXPECT_OUT_IS | bye (confidence 67%) | s29-turn-bye-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | bye
+EXPECT_EXIT | 1 | s29-turn-bye-js-exit
+EXPECT_OUT_IS | bye (confidence 67%) | s29-turn-bye-js-text
+# step 30: turn hello again
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | hello again
+EXPECT_EXIT | 0 | s30-turn-hello-again-c-exit
+EXPECT_OUT_IS | The chat is closed. Start hai again to talk. (confidence 42%) | s30-turn-hello-again-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | hello again
+EXPECT_EXIT | 0 | s30-turn-hello-again-js-exit
+EXPECT_OUT_IS | The chat is closed. Start hai again to talk. (confidence 42%) | s30-turn-hello-again-js-text
+# step 31: cmd forget harness
+RUN | $T/hai_chat | cmd | $T/d | $T/c.led | forget | harness
+EXPECT_EXIT | 0 | s31-cmd-forget-harness-c-exit
+EXPECT_OUT_IS | OK. I forgot everything you taught me about "harness". | s31-cmd-forget-harness-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | cmd | $T/d | $T/j.led | forget | harness
+EXPECT_EXIT | 0 | s31-cmd-forget-harness-js-exit
+EXPECT_OUT_IS | OK. I forgot everything you taught me about "harness". | s31-cmd-forget-harness-js-text
+# step 32: turn what is a harness
+RUN | $T/hai_chat | turn | $T/d | $T/c.led | what is a harness
+EXPECT_EXIT | 0 | s32-turn-what-is-a-harness-c-exit
+EXPECT_OUT_IS | The chat is closed. Start hai again to talk. (confidence 21%) | s32-turn-what-is-a-harness-c-text
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | turn | $T/d | $T/j.led | what is a harness
+EXPECT_EXIT | 0 | s32-turn-what-is-a-harness-js-exit
+EXPECT_OUT_IS | The chat is closed. Start hai again to talk. (confidence 21%) | s32-turn-what-is-a-harness-js-text
+# dump: bank (one check per output line, in both engines)
+RUN | $T/hai_chat | bank | $T/d | $T/c.led
+EXPECT_EXIT | 0 | dump-bank-c-exit
+EXPECT_OUT | CONCEPT\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | dump-bank-c-line-1
+EXPECT_OUT | CONCEPT\phelp\phelp,1,menu,what,can\pr_help\p0.86 | dump-bank-c-line-2
+EXPECT_OUT | CONCEPT\paccount\paccount,name,login,passphrase,create\pr_ask_name\p0.67 | dump-bank-c-line-3
+EXPECT_OUT | CONCEPT\pnav\pnav,navigate,page,pages,navigation\pr_nav\p0.67 | dump-bank-c-line-4
+EXPECT_OUT | CONCEPT\pbye\pbye,quit,exit,goodbye,2\pr_bye\p0.67 | dump-bank-c-line-5
+EXPECT_OUT | TAUGHT\pattention\pwhich words you tell me matter most: I ask about marked words first and count them double\p0\p0.50 | dump-bank-c-line-6
+EXPECT_OUT | TAUGHT\plyfedesk\pdo u like the house\p0\p0.50 | dump-bank-c-line-7
+EXPECT_OUT | TAUGHT\pnav2\pa second map\p0\p0.50 | dump-bank-c-line-8
+EXPECT_OUT | TAUGHT\pdriving\pusing a real window like a person does: clicking, typing and looking at the screen, not only running commands\p0\p0.50 | dump-bank-c-line-9
+EXPECT_OUT | TAUGHT\pconfidence\phow sure I am that I understood you: the share of your words I matched, times how much I trust that meaning\p0\p0.50 | dump-bank-c-line-10
+EXPECT_OUT | TAUGHT\pledger\pthe append-only list of rows that is the one record of what happened; everything else is rebuilt from it\p0\p0.50 | dump-bank-c-line-11
+EXPECT_OUT | TAUGHT\phai\pme: a small chat that learns the words you teach it and shows what it is unsure of\p0\p0.50 | dump-bank-c-line-12
+EXPECT_OUT | TAUGHT\pharnecient\pthe project that builds me and the tools around me\p0\p0.50 | dump-bank-c-line-13
+EXPECT_OUT | TAUGHT\pentity\pa character or helper in the house with its own folder, like a pet or an agent\p0\p0.50 | dump-bank-c-line-14
+EXPECT_OUT | ALIAS\pyo\pgreet | dump-bank-c-line-15
+EXPECT_OUT | ALIAS\phowdy\pgreet | dump-bank-c-line-16
+EXPECT_OUT | ALIAS\poptions\phelp | dump-bank-c-line-17
+EXPECT_OUT | ALIAS\pcommands\phelp | dump-bank-c-line-18
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | bank | $T/d | $T/j.led
+EXPECT_EXIT | 0 | dump-bank-js-exit
+EXPECT_OUT | CONCEPT\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | dump-bank-js-line-1
+EXPECT_OUT | CONCEPT\phelp\phelp,1,menu,what,can\pr_help\p0.86 | dump-bank-js-line-2
+EXPECT_OUT | CONCEPT\paccount\paccount,name,login,passphrase,create\pr_ask_name\p0.67 | dump-bank-js-line-3
+EXPECT_OUT | CONCEPT\pnav\pnav,navigate,page,pages,navigation\pr_nav\p0.67 | dump-bank-js-line-4
+EXPECT_OUT | CONCEPT\pbye\pbye,quit,exit,goodbye,2\pr_bye\p0.67 | dump-bank-js-line-5
+EXPECT_OUT | TAUGHT\pattention\pwhich words you tell me matter most: I ask about marked words first and count them double\p0\p0.50 | dump-bank-js-line-6
+EXPECT_OUT | TAUGHT\plyfedesk\pdo u like the house\p0\p0.50 | dump-bank-js-line-7
+EXPECT_OUT | TAUGHT\pnav2\pa second map\p0\p0.50 | dump-bank-js-line-8
+EXPECT_OUT | TAUGHT\pdriving\pusing a real window like a person does: clicking, typing and looking at the screen, not only running commands\p0\p0.50 | dump-bank-js-line-9
+EXPECT_OUT | TAUGHT\pconfidence\phow sure I am that I understood you: the share of your words I matched, times how much I trust that meaning\p0\p0.50 | dump-bank-js-line-10
+EXPECT_OUT | TAUGHT\pledger\pthe append-only list of rows that is the one record of what happened; everything else is rebuilt from it\p0\p0.50 | dump-bank-js-line-11
+EXPECT_OUT | TAUGHT\phai\pme: a small chat that learns the words you teach it and shows what it is unsure of\p0\p0.50 | dump-bank-js-line-12
+EXPECT_OUT | TAUGHT\pharnecient\pthe project that builds me and the tools around me\p0\p0.50 | dump-bank-js-line-13
+EXPECT_OUT | TAUGHT\pentity\pa character or helper in the house with its own folder, like a pet or an agent\p0\p0.50 | dump-bank-js-line-14
+EXPECT_OUT | ALIAS\pyo\pgreet | dump-bank-js-line-15
+EXPECT_OUT | ALIAS\phowdy\pgreet | dump-bank-js-line-16
+EXPECT_OUT | ALIAS\poptions\phelp | dump-bank-js-line-17
+EXPECT_OUT | ALIAS\pcommands\phelp | dump-bank-js-line-18
+# dump: why-turn-1 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 1
+EXPECT_EXIT | 0 | dump-why-turn-1-c-exit
+EXPECT_OUT | you said: hey , how are u ? | dump-why-turn-1-c-line-1
+EXPECT_OUT | why: matched "hey" as greet: 1 of 4 words x trust 0.83 = 21% | dump-why-turn-1-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 1
+EXPECT_EXIT | 0 | dump-why-turn-1-js-exit
+EXPECT_OUT | you said: hey , how are u ? | dump-why-turn-1-js-line-1
+EXPECT_OUT | why: matched "hey" as greet: 1 of 4 words x trust 0.83 = 21% | dump-why-turn-1-js-line-2
+# dump: why-turn-2 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 2
+EXPECT_EXIT | 0 | dump-why-turn-2-c-exit
+EXPECT_OUT | you said: do u like this house | dump-why-turn-2-c-line-1
+EXPECT_OUT | why: "house" is a content word that is not a keyword, an alias or a taught word, so I ask what it means | dump-why-turn-2-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 2
+EXPECT_EXIT | 0 | dump-why-turn-2-js-exit
+EXPECT_OUT | you said: do u like this house | dump-why-turn-2-js-line-1
+EXPECT_OUT | why: "house" is a content word that is not a keyword, an alias or a taught word, so I ask what it means | dump-why-turn-2-js-line-2
+# dump: why-turn-3 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 3
+EXPECT_EXIT | 0 | dump-why-turn-3-c-exit
+EXPECT_OUT | you said: the LyfeDesk desktop we both work in | dump-why-turn-3-c-line-1
+EXPECT_OUT | why: I asked what "house" means, so I stored your whole answer as its meaning (certain: you told me) | dump-why-turn-3-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 3
+EXPECT_EXIT | 0 | dump-why-turn-3-js-exit
+EXPECT_OUT | you said: the LyfeDesk desktop we both work in | dump-why-turn-3-js-line-1
+EXPECT_OUT | why: I asked what "house" means, so I stored your whole answer as its meaning (certain: you told me) | dump-why-turn-3-js-line-2
+# dump: why-turn-4 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 4
+EXPECT_EXIT | 0 | dump-why-turn-4-c-exit
+EXPECT_OUT | you said: do u like the house | dump-why-turn-4-c-line-1
+EXPECT_OUT | why: you taught me "house": 1 hit of 1 content words x trust 0.50 = 50% | dump-why-turn-4-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 4
+EXPECT_EXIT | 0 | dump-why-turn-4-js-exit
+EXPECT_OUT | you said: do u like the house | dump-why-turn-4-js-line-1
+EXPECT_OUT | why: you taught me "house": 1 hit of 1 content words x trust 0.50 = 50% | dump-why-turn-4-js-line-2
+# dump: why-turn-5 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 5
+EXPECT_EXIT | 0 | dump-why-turn-5-c-exit
+EXPECT_OUT | you said: yo there | dump-why-turn-5-c-line-1
+EXPECT_OUT | why: matched "yo" as greet: 1 of 2 words x trust 0.83 = 42% | dump-why-turn-5-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 5
+EXPECT_EXIT | 0 | dump-why-turn-5-js-exit
+EXPECT_OUT | you said: yo there | dump-why-turn-5-js-line-1
+EXPECT_OUT | why: matched "yo" as greet: 1 of 2 words x trust 0.83 = 42% | dump-why-turn-5-js-line-2
+# dump: why-turn-6 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 6
+EXPECT_EXIT | 0 | dump-why-turn-6-c-exit
+EXPECT_OUT | you said: house house tell me about the house | dump-why-turn-6-c-line-1
+EXPECT_OUT | why: you taught me "house": 3 hit of 3 content words (marked: counts x2 or more) x trust 0.50 = 100% | dump-why-turn-6-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 6
+EXPECT_EXIT | 0 | dump-why-turn-6-js-exit
+EXPECT_OUT | you said: house house tell me about the house | dump-why-turn-6-js-line-1
+EXPECT_OUT | why: you taught me "house": 3 hit of 3 content words (marked: counts x2 or more) x trust 0.50 = 100% | dump-why-turn-6-js-line-2
+# dump: why-turn-7 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 7
+EXPECT_EXIT | 0 | dump-why-turn-7-c-exit
+EXPECT_OUT | you said: what is a harness | dump-why-turn-7-c-line-1
+EXPECT_OUT | why: you taught me "harness": 1 hit of 1 content words x trust 0.50 = 50% | dump-why-turn-7-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 7
+EXPECT_EXIT | 0 | dump-why-turn-7-js-exit
+EXPECT_OUT | you said: what is a harness | dump-why-turn-7-js-line-1
+EXPECT_OUT | why: you taught me "harness": 1 hit of 1 content words x trust 0.50 = 50% | dump-why-turn-7-js-line-2
+# dump: why-turn-8 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 8
+EXPECT_EXIT | 0 | dump-why-turn-8-c-exit
+EXPECT_OUT | you said: zz qq | dump-why-turn-8-c-line-1
+EXPECT_OUT | why: no word matched any meaning I know and there is no new content word to ask about, so I offer my top options | dump-why-turn-8-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 8
+EXPECT_EXIT | 0 | dump-why-turn-8-js-exit
+EXPECT_OUT | you said: zz qq | dump-why-turn-8-js-line-1
+EXPECT_OUT | why: no word matched any meaning I know and there is no new content word to ask about, so I offer my top options | dump-why-turn-8-js-line-2
+# dump: why-turn-9 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 9
+EXPECT_EXIT | 0 | dump-why-turn-9-c-exit
+EXPECT_OUT | you said: blorptastic wonder | dump-why-turn-9-c-line-1
+EXPECT_OUT | why: "blorptastic" is a content word that is not a keyword, an alias or a taught word, so I ask what it means | dump-why-turn-9-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 9
+EXPECT_EXIT | 0 | dump-why-turn-9-js-exit
+EXPECT_OUT | you said: blorptastic wonder | dump-why-turn-9-js-line-1
+EXPECT_OUT | why: "blorptastic" is a content word that is not a keyword, an alias or a taught word, so I ask what it means | dump-why-turn-9-js-line-2
+# dump: why-turn-10 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 10
+EXPECT_EXIT | 0 | dump-why-turn-10-c-exit
+EXPECT_OUT | you said: skip | dump-why-turn-10-c-line-1
+EXPECT_OUT | why: I asked what "blorptastic" means and you passed, so nothing was stored | dump-why-turn-10-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 10
+EXPECT_EXIT | 0 | dump-why-turn-10-js-exit
+EXPECT_OUT | you said: skip | dump-why-turn-10-js-line-1
+EXPECT_OUT | why: I asked what "blorptastic" means and you passed, so nothing was stored | dump-why-turn-10-js-line-2
+# dump: why-turn-11 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 11
+EXPECT_EXIT | 0 | dump-why-turn-11-c-exit
+EXPECT_OUT | you said: what is blorptastic | dump-why-turn-11-c-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 3 words x trust 0.75 = 25% | dump-why-turn-11-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 11
+EXPECT_EXIT | 0 | dump-why-turn-11-js-exit
+EXPECT_OUT | you said: what is blorptastic | dump-why-turn-11-js-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 3 words x trust 0.75 = 25% | dump-why-turn-11-js-line-2
+# dump: why-turn-12 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 12
+EXPECT_EXIT | 0 | dump-why-turn-12-c-exit
+EXPECT_OUT | you said: help | dump-why-turn-12-c-line-1
+EXPECT_OUT | why: matched "help" as help: 1 of 1 words x trust 0.75 = 75% | dump-why-turn-12-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 12
+EXPECT_EXIT | 0 | dump-why-turn-12-js-exit
+EXPECT_OUT | you said: help | dump-why-turn-12-js-line-1
+EXPECT_OUT | why: matched "help" as help: 1 of 1 words x trust 0.75 = 75% | dump-why-turn-12-js-line-2
+# dump: why-turn-13 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 13
+EXPECT_EXIT | 0 | dump-why-turn-13-c-exit
+EXPECT_OUT | you said: what is the confidence | dump-why-turn-13-c-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 4 words x trust 0.86 = 21% | dump-why-turn-13-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 13
+EXPECT_EXIT | 0 | dump-why-turn-13-js-exit
+EXPECT_OUT | you said: what is the confidence | dump-why-turn-13-js-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 4 words x trust 0.86 = 21% | dump-why-turn-13-js-line-2
+# dump: why-turn-14 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 14
+EXPECT_EXIT | 0 | dump-why-turn-14-c-exit
+EXPECT_OUT | you said: do u know the lyfedesk | dump-why-turn-14-c-line-1
+EXPECT_OUT | why: "lyfedesk" is a content word that is not a keyword, an alias or a taught word, so I ask what it means | dump-why-turn-14-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 14
+EXPECT_EXIT | 0 | dump-why-turn-14-js-exit
+EXPECT_OUT | you said: do u know the lyfedesk | dump-why-turn-14-js-line-1
+EXPECT_OUT | why: "lyfedesk" is a content word that is not a keyword, an alias or a taught word, so I ask what it means | dump-why-turn-14-js-line-2
+# dump: why-turn-15 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 15
+EXPECT_EXIT | 0 | dump-why-turn-15-c-exit
+EXPECT_OUT | you said: do u like the house | dump-why-turn-15-c-line-1
+EXPECT_OUT | why: I asked what "lyfedesk" means, so I stored your whole answer as its meaning (certain: you told me) | dump-why-turn-15-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 15
+EXPECT_EXIT | 0 | dump-why-turn-15-js-exit
+EXPECT_OUT | you said: do u like the house | dump-why-turn-15-js-line-1
+EXPECT_OUT | why: I asked what "lyfedesk" means, so I stored your whole answer as its meaning (certain: you told me) | dump-why-turn-15-js-line-2
+# dump: why-turn-16 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 16
+EXPECT_EXIT | 0 | dump-why-turn-16-c-exit
+EXPECT_OUT | you said: my name is | dump-why-turn-16-c-line-1
+EXPECT_OUT | why: matched "name" as account: 1 of 3 words x trust 0.67 = 22% | dump-why-turn-16-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 16
+EXPECT_EXIT | 0 | dump-why-turn-16-js-exit
+EXPECT_OUT | you said: my name is | dump-why-turn-16-js-line-1
+EXPECT_OUT | why: matched "name" as account: 1 of 3 words x trust 0.67 = 22% | dump-why-turn-16-js-line-2
+# dump: why-turn-17 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 17
+EXPECT_EXIT | 0 | dump-why-turn-17-c-exit
+EXPECT_OUT | you said: alice | dump-why-turn-17-c-line-1
+EXPECT_OUT | why: no word matched any meaning I know | dump-why-turn-17-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 17
+EXPECT_EXIT | 0 | dump-why-turn-17-js-exit
+EXPECT_OUT | you said: alice | dump-why-turn-17-js-line-1
+EXPECT_OUT | why: no word matched any meaning I know | dump-why-turn-17-js-line-2
+# dump: why-turn-18 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 18
+EXPECT_EXIT | 0 | dump-why-turn-18-c-exit
+EXPECT_OUT | you said: bye | dump-why-turn-18-c-line-1
+EXPECT_OUT | why: matched "bye" as bye: 1 of 1 words x trust 0.67 = 67% | dump-why-turn-18-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 18
+EXPECT_EXIT | 0 | dump-why-turn-18-js-exit
+EXPECT_OUT | you said: bye | dump-why-turn-18-js-line-1
+EXPECT_OUT | why: matched "bye" as bye: 1 of 1 words x trust 0.67 = 67% | dump-why-turn-18-js-line-2
+# dump: why-turn-19 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 19
+EXPECT_EXIT | 0 | dump-why-turn-19-c-exit
+EXPECT_OUT | you said: hello again | dump-why-turn-19-c-line-1
+EXPECT_OUT | why: matched "hello" as greet: 1 of 2 words x trust 0.83 = 42% | dump-why-turn-19-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 19
+EXPECT_EXIT | 0 | dump-why-turn-19-js-exit
+EXPECT_OUT | you said: hello again | dump-why-turn-19-js-line-1
+EXPECT_OUT | why: matched "hello" as greet: 1 of 2 words x trust 0.83 = 42% | dump-why-turn-19-js-line-2
+# dump: why-turn-20 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 20
+EXPECT_EXIT | 0 | dump-why-turn-20-c-exit
+EXPECT_OUT | you said: what is a harness | dump-why-turn-20-c-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 4 words x trust 0.86 = 21% | dump-why-turn-20-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 20
+EXPECT_EXIT | 0 | dump-why-turn-20-js-exit
+EXPECT_OUT | you said: what is a harness | dump-why-turn-20-js-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 4 words x trust 0.86 = 21% | dump-why-turn-20-js-line-2
+# dump: why-turn-21 (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | 21
+EXPECT_EXIT | 1 | dump-why-turn-21-c-exit
+EXPECT_OUT | no WHY row (older ledger, or no such turn) | dump-why-turn-21-c-line-1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | 21
+EXPECT_EXIT | 1 | dump-why-turn-21-js-exit
+EXPECT_OUT | no WHY row (older ledger, or no such turn) | dump-why-turn-21-js-line-1
+# dump: why-last (one check per output line, in both engines)
+RUN | $T/hai_chat | why | $T/c.led | last
+EXPECT_EXIT | 0 | dump-why-last-c-exit
+EXPECT_OUT | you said: what is a harness | dump-why-last-c-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 4 words x trust 0.86 = 21% | dump-why-last-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | why | $T/j.led | last
+EXPECT_EXIT | 0 | dump-why-last-js-exit
+EXPECT_OUT | you said: what is a harness | dump-why-last-js-line-1
+EXPECT_OUT | why: matched "what" as help: 1 of 4 words x trust 0.86 = 21% | dump-why-last-js-line-2
+# dump: stats (one check per output line, in both engines)
+RUN | $T/hai_chat | stats | $T/d | $T/c.led
+EXPECT_EXIT | 0 | dump-stats-c-exit
+EXPECT_OUT | concept greet reward=4 punish=0 weight=0.8333 | dump-stats-c-line-1
+EXPECT_OUT | concept help reward=5 punish=0 weight=0.8571 | dump-stats-c-line-2
+EXPECT_OUT | concept account reward=1 punish=0 weight=0.6667 | dump-stats-c-line-3
+EXPECT_OUT | concept nav reward=1 punish=0 weight=0.6667 | dump-stats-c-line-4
+EXPECT_OUT | concept bye reward=1 punish=0 weight=0.6667 | dump-stats-c-line-5
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | stats | $T/d | $T/j.led
+EXPECT_EXIT | 0 | dump-stats-js-exit
+EXPECT_OUT | concept greet reward=4 punish=0 weight=0.8333 | dump-stats-js-line-1
+EXPECT_OUT | concept help reward=5 punish=0 weight=0.8571 | dump-stats-js-line-2
+EXPECT_OUT | concept account reward=1 punish=0 weight=0.6667 | dump-stats-js-line-3
+EXPECT_OUT | concept nav reward=1 punish=0 weight=0.6667 | dump-stats-js-line-4
+EXPECT_OUT | concept bye reward=1 punish=0 weight=0.6667 | dump-stats-js-line-5
+# dump: calib (one check per output line, in both engines)
+RUN | $T/hai_chat | calib | $T/d | $T/c.led
+EXPECT_EXIT | 0 | dump-calib-c-exit
+EXPECT_OUT | BIN lo=70 hi=79 n=1 good=1 rate=1.0000 mean_conf=0.7500 | dump-calib-c-line-1
+EXPECT_OUT | ECE=0.2500 graded=1 | dump-calib-c-line-2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | calib | $T/d | $T/j.led
+EXPECT_EXIT | 0 | dump-calib-js-exit
+EXPECT_OUT | BIN lo=70 hi=79 n=1 good=1 rate=1.0000 mean_conf=0.7500 | dump-calib-js-line-1
+EXPECT_OUT | ECE=0.2500 graded=1 | dump-calib-js-line-2
+# dump: state (one check per output line, in both engines)
+RUN | $T/hai_chat | state | $T/c.led
+EXPECT_EXIT | 0 | dump-state-c-exit
+EXPECT_OUT | state=done name=alice | dump-state-c-line-1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js | state | $T/j.led
+EXPECT_EXIT | 0 | dump-state-js-exit
+EXPECT_OUT | state=done name=alice | dump-state-js-line-1
+
+# the printf rounding rule: C rounds an exact tie to even (0.125 -> 0.12), JavaScript toFixed rounds it up (0.13). engine.js fmt() follows C. Checked against the system printf.
+CASE    | rounding
+SCRATCH |
+RUN | /usr/bin/printf | %.2f | 0.125
+EXPECT_EXIT | 0 | tie-0.125-printf-runs
+RUN | node | -e | console.log(require('/home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js').fmt(0.125,2))
+EXPECT_OUT_IS | 0.12 | tie-0.125-js-matches-printf
+RUN | /usr/bin/printf | %.2f | 0.125
+EXPECT_OUT_IS | 0.12 | tie-0.125-printf-says-0.12
+RUN | /usr/bin/printf | %.2f | 0.375
+EXPECT_EXIT | 0 | tie-0.375-printf-runs
+RUN | node | -e | console.log(require('/home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js').fmt(0.375,2))
+EXPECT_OUT_IS | 0.38 | tie-0.375-js-matches-printf
+RUN | /usr/bin/printf | %.2f | 0.375
+EXPECT_OUT_IS | 0.38 | tie-0.375-printf-says-0.38
+RUN | /usr/bin/printf | %.2f | 0.625
+EXPECT_EXIT | 0 | tie-0.625-printf-runs
+RUN | node | -e | console.log(require('/home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js').fmt(0.625,2))
+EXPECT_OUT_IS | 0.62 | tie-0.625-js-matches-printf
+RUN | /usr/bin/printf | %.2f | 0.625
+EXPECT_OUT_IS | 0.62 | tie-0.625-printf-says-0.62
+RUN | /usr/bin/printf | %.2f | 0.875
+EXPECT_EXIT | 0 | tie-0.875-printf-runs
+RUN | node | -e | console.log(require('/home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js').fmt(0.875,2))
+EXPECT_OUT_IS | 0.88 | tie-0.875-js-matches-printf
+RUN | /usr/bin/printf | %.2f | 0.875
+EXPECT_OUT_IS | 0.88 | tie-0.875-printf-says-0.88
+RUN | /usr/bin/printf | %.4f | 0.03125
+EXPECT_EXIT | 0 | tie-0.03125-printf-runs
+RUN | node | -e | console.log(require('/home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js').fmt(0.03125,4))
+EXPECT_OUT_IS | 0.0312 | tie-0.03125-js-matches-printf
+RUN | /usr/bin/printf | %.4f | 0.03125
+EXPECT_OUT_IS | 0.0312 | tie-0.03125-printf-says-0.0312
+RUN | /usr/bin/printf | %.2f | 0.8333333
+EXPECT_EXIT | 0 | tie-0.8333333-printf-runs
+RUN | node | -e | console.log(require('/home/no/Desktop/github/work/#.hai/harnecient-hai/docs/engine.js').fmt(0.8333333,2))
+EXPECT_OUT_IS | 0.83 | tie-0.8333333-js-matches-printf
+RUN | /usr/bin/printf | %.2f | 0.8333333
+EXPECT_OUT_IS | 0.83 | tie-0.8333333-printf-says-0.83
