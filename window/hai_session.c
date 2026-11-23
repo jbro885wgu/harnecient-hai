@@ -120,6 +120,16 @@ int main(int argc, char **argv) {
     if (argc < 3) { fprintf(stderr, "usage: hai_session <NEW|SWITCH s|DELETE s|AGENT a|NEWAGENT a [persona]|DELETEAGENT a> <package_dir> [house_root]\n"); return 2; }
     const char *req = argv[1], *pkg = argv[2];
     char agent[64], root[1300], sdir[1400], src[1500], dst[1500], name[128];
+    /* The renderer appends the house root (argc >= 4) and a sidebar item can fire its action TWICE for one click (seen 2026-11-23 with the relay: a toggle went 1, 0, 1).
+       An identical request within 600 ms is that echo, not a second click, so it is ignored. Calls with two arguments (harness cases) are never debounced. */
+    if (argc >= 4) {
+        char dp[1400]; snprintf(dp, sizeof dp, "%s/state/last_req.txt", pkg);
+        struct timespec ts; clock_gettime(CLOCK_REALTIME, &ts); long long now = (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+        char prev[256] = ""; long long pt = 0; FILE *df = fopen(dp, "r");
+        if (df) { if (fscanf(df, "%lld %255[^\n]", &pt, prev) < 2) prev[0] = 0; fclose(df); }
+        if (prev[0] && strcmp(prev, req) == 0 && now - pt >= 0 && now - pt < 600) return 0;
+        df = fopen(dp, "w"); if (df) { fprintf(df, "%lld %s\n", now, req); fclose(df); }
+    }
     hai_agent_active(pkg, agent, sizeof agent); hai_root(pkg, agent, root, sizeof root); snprintf(sdir, sizeof sdir, "%s/sessions", root);
     if (strcmp(req, "NEW") == 0) {
         mkdirs(sdir);
