@@ -1,0 +1,79 @@
+# hai_agents (2026-11-23): many agents, each a self-contained folder (own corpus, replies, rules, packs) with its own sessions and a personality preset
+# applied once at birth. State is files + ledgers; the window only calls hai_session / hai_send. Built from source in a scratch package.
+# Each check can FAIL (mutants listed in book 23). DEBT: the case names the hai repo by absolute path (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_agents.txt
+ENV | LC_ALL | C
+
+CASE    | agents
+SCRATCH |
+RUN | mkdir | -p | $T/window/bin | $T/window/state
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat | $T/chat
+RUN | rm | -rf | $T/chat/agents
+RUN | mkdir | -p | $T/chat/agents
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -I/home/no/Desktop/github/work/#.hai/harnecient-hai/ops | -o | $T/window/bin/hai_session | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/hai_session.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | session-op-builds
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -I/home/no/Desktop/github/work/#.hai/harnecient-hai/ops | -o | $T/window/bin/hai_send | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/hai_send.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | send-builds
+# ---- birth ----
+RUN | $T/window/bin/hai_session | NEWAGENT curio curious | $T/window
+EXPECT_EXIT | 0 | a-curious-agent-is-born
+EXPECT_FILE | chat/agents/curio/data/concepts.pdl | its-corpus-is-its-own-copy
+EXPECT_HAS | chat/agents/curio/agent.pdl | AGENT \p curio \p curious | the-agent-card-names-the-persona
+EXPECT_HAS | chat/agents/curio/data/chat_rules.pdl | RULE \p attn_high_mult \p 3 | the-persona-changed-a-rule-number
+EXPECT_HAS | chat/agents/curio/data/replies.pdl | Ooh, "{word}"! | the-persona-changed-the-voice
+RUN | grep | -c | attn_high_mult | $T/chat/agents/curio/data/chat_rules.pdl
+EXPECT_OUT  | 1 | a-rule-is-replaced-not-duplicated
+RUN | grep | attn_high_mult | $T/chat/data/chat_rules.pdl
+EXPECT_OUT  | RULE \p attn_high_mult \p 2 | the-original-agent-is-untouched-by-the-persona
+RUN | $T/window/bin/hai_session | NEWAGENT curio curious | $T/window
+EXPECT_EXIT | 4 | a-duplicate-agent-is-refused
+RUN | $T/window/bin/hai_session | NEWAGENT ghost nosuchpersona | $T/window
+EXPECT_EXIT | 4 | an-unknown-persona-is-refused
+EXPECT_NOFILE | chat/agents/ghost/data/concepts.pdl | a-failed-birth-leaves-nothing-behind
+RUN | $T/window/bin/hai_session | NEWAGENT hai | $T/window
+EXPECT_EXIT | 4 | the-original-name-is-reserved
+RUN | $T/window/bin/hai_session | NEWAGENT ../evil | $T/window
+EXPECT_EXIT | 4 | a-path-in-an-agent-name-is-refused
+# ---- voice and isolation ----
+RUN | $T/window/bin/hai_send | $T/window | /tmp | hello
+EXPECT_OUT  | Hello! I love learning | the-curious-agent-greets-in-its-own-voice
+RUN | $T/window/bin/hai_send | $T/window | /tmp | do u like this house
+EXPECT_OUT  | Ooh, "house"! | the-curious-agent-asks-in-its-own-voice
+EXPECT_FILE | state/agents/curio/chat.ledger | its-ledger-is-under-its-own-state
+EXPECT_NOFILE | state/chat.ledger | the-original-agents-ledger-was-not-written
+RUN | $T/window/bin/hai_session | AGENT hai | $T/window
+RUN | $T/window/bin/hai_send | $T/window | /tmp | hello
+EXPECT_FILE | state/chat.ledger | the-original-agent-writes-its-own-ledger
+RUN | grep | -c | Hello! I love | $T/window/state/chat.ledger
+EXPECT_OUT  | 0 | the-original-agent-does-not-speak-the-curious-voice
+RUN | grep | -c | ^SAID | $T/window/state/chat.ledger
+EXPECT_OUT  | 1 | one-turn-one-said-row-in-the-original-ledger
+# ---- born knowing: a persona can load a starter pack into the first session ----
+RUN | $T/window/bin/hai_session | NEWAGENT prof scholar | $T/window
+RUN | grep | -c | ^DEFINE.*pack:lyfedesk | $T/window/state/agents/prof/chat.ledger
+EXPECT_OUT  | 9 | the-scholar-is-born-knowing-nine-definitions
+RUN | $T/window/bin/hai_send | $T/window | /tmp | do u like this house
+EXPECT_OUT  | On "house", my notes say: | the-scholar-answers-from-its-notes-in-its-voice
+# ---- sessions of an agent ----
+RUN | $T/window/bin/hai_session | AGENT curio | $T/window
+RUN | $T/window/bin/hai_send | $T/window | /tmp | /teach house = the desktop
+RUN | $T/window/bin/hai_session | NEW | $T/window
+EXPECT_EXIT | 0 | a-new-session-starts
+RUN | $T/window/bin/hai_send | $T/window | /tmp | the house
+EXPECT_OUT  | I remember "house"! You told me: the desktop | a-new-session-inherits-what-was-taught-and-keeps-the-agents-voice
+RUN | $T/window/bin/hai_session | DELETE main | $T/window
+EXPECT_EXIT | 4 | the-first-session-cannot-be-deleted-from-the-window
+RUN | $T/window/bin/hai_session | AGENT nobody | $T/window
+EXPECT_EXIT | 4 | switching-to-a-missing-agent-is-refused
+RUN | $T/window/bin/hai_session | SWITCH nosuchsession | $T/window
+EXPECT_EXIT | 4 | switching-to-a-missing-session-is-refused
+# ---- the typed commands call the same op ----
+RUN | $T/window/bin/hai_send | $T/window | /tmp | /agent new typed terse
+EXPECT_EXIT | 0 | the-typed-agent-new-works
+RUN | $T/window/bin/hai_send | $T/window | /tmp | hello
+EXPECT_OUT  | Hi. | the-terse-agent-is-short
+RUN | $T/window/bin/hai_send | $T/window | /tmp | /agent delete typed
+EXPECT_EXIT | 0 | the-typed-agent-delete-works
+EXPECT_NOFILE | chat/agents/typed/agent.pdl | a-deleted-agent-is-gone
+RUN | cat | $T/window/state/active_agent.txt
+EXPECT_OUT  | hai | deleting-the-active-agent-falls-back-to-the-original

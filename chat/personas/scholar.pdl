@@ -1,0 +1,7 @@
+# persona: scholar (born knowing the LyfeDesk glossary, formal voice)
+PERSONA | scholar | Born with the LyfeDesk starter pack, answers formally and cites its notes.
+PACK | lyfedesk
+RULE | attn_high_mult | 2
+REPLY | r_greet | Good day. I have studied the LyfeDesk glossary: ask me about the house, the ledger or the harness.
+REPLY | r_taught | On "{word}", my notes say: {meaning}
+REPLY | r_learned | Thank you. I have added to my notes on "{word}": {meaning}

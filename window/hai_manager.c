@@ -12,6 +12,9 @@
 #include <time.h>
 #include <unistd.h>
 #include "hai_chat_core.h"
+#include "hai_active.h"
+#include <dirent.h>
+#include <stdlib.h>
 
 #define ROWMAX 14
 static volatile sig_atomic_t stop = 0;
@@ -50,9 +53,26 @@ static void fill_key(char *text, size_t cap, const char *key, const char *val) {
     }
 }
 
+static int cmp_name(const void *a, const void *b) { return strcmp((const char *)a, (const char *)b); }
+
+/* label of a session: the first thing the person typed in it (like a chat list), else its name */
+static void session_label(const char *ledger, const char *name, char *out, size_t cap) {
+    snprintf(out, cap, "%s", name);
+    if (strcmp(name, "main") == 0) return;
+    FILE *f = fopen(ledger, "r"); if (!f) return;
+    char line[2048];
+    while (fgets(line, sizeof line, f)) {
+        if (strncmp(line, "TURN|", 5) != 0) continue;
+        char *p = strchr(line + 5, '|'); if (!p) continue; p++;
+        char *e = strchr(p, '|'); if (!e) continue; *e = 0;
+        snprintf(out, cap, "%.24s", p); break;
+    }
+    fclose(f);
+}
+
 static void publish(const char *pkg) {
     char ledger[1024], ui[1024], tmp[1100], state[160];
-    snprintf(ledger, sizeof ledger, "%s/state/chat.ledger", pkg);
+    hai_active_ledger(pkg, ledger, sizeof ledger);
     snprintf(ui, sizeof ui, "%s/state/ui.txt", pkg);
     snprintf(tmp, sizeof tmp, "%s.tmp", ui);
     hai_chat_state(ledger, state, sizeof state);            /* "state=... name=..." */
@@ -116,10 +136,39 @@ static void publish(const char *pkg) {
     fprintf(o, "turns=%d\n", nturns);
     for (int i = 0; i < shown; i++) {
         int idx = nrows < ROWMAX ? i : (nrows - ROWMAX + i) % ROWMAX;
-        fprintf(o, "row_%d_text=%s\n", i, rows[idx]);
+        /* colour class: the person, hai, or a lever/grade note (css in hai.css) */
+        const char *cls = strncmp(rows[idx], "    hai:", 8) == 0 ? "chat-hai" : strncmp(rows[idx], "you: /", 6) == 0 ? "chat-note" : strncmp(rows[idx], "you:", 4) == 0 ? "chat-you" : "chat-note";
+        fprintf(o, "row_%d_text=%s\nrow_%d_cls=%s\n", i, rows[idx], i, cls);
     }
     fprintf(o, "rows_count=%d\n", shown);
     fprintf(o, "no_rows=%d\n", shown == 0 ? 1 : 0);
+    {   /* sidebar: the agents (each a folder with its own corpus and personality) and the active agent's sessions */
+        char act[64], asess[64]; hai_agent_active(pkg, act, sizeof act); hai_session_active(pkg, act, asess, sizeof asess);
+        char names[32][64]; int na = 0; snprintf(names[na++], 64, "hai");
+        char adir[1200]; snprintf(adir, sizeof adir, "%s/../chat/agents", pkg);
+        DIR *d = opendir(adir); struct dirent *e;
+        if (d) { char tmpn[24][64]; int nt = 0; while ((e = readdir(d)) && nt < 24) if (e->d_name[0] != '.' && hai_name_ok(e->d_name)) snprintf(tmpn[nt++], 64, "%s", e->d_name);
+                 closedir(d); qsort(tmpn, (size_t)nt, 64, cmp_name); for (int i = 0; i < nt && na < 32; i++) snprintf(names[na++], 64, "%s", tmpn[i]); }
+        fprintf(o, "agent=%s\nagents_count=%d\n", act, na);
+        for (int i = 0; i < na; i++) {
+            int on = strcmp(names[i], act) == 0; char card[1400], persona[64] = "";
+            if (strcmp(names[i], "hai") == 0) snprintf(persona, sizeof persona, "original");
+            else { snprintf(card, sizeof card, "%s/%s/agent.pdl", adir, names[i]); FILE *c = fopen(card, "r");
+                   if (c) { char ln[256], a1[64], a2[64]; if (fgets(ln, sizeof ln, c) && sscanf(ln, "AGENT | %63s | %63s", a1, a2) == 2) snprintf(persona, sizeof persona, "%s", a2); fclose(c); } }
+            fprintf(o, "agent_%d_name=%s\nagent_%d_label=%s%s  (%s)\nagent_%d_cls=%s\n", i, names[i], i, on ? "> " : "  ", names[i], persona, i, on ? "session-item session-active" : "session-item");
+        }
+        char sroot[1200], sdir[1300]; hai_root(pkg, act, sroot, sizeof sroot); snprintf(sdir, sizeof sdir, "%s/sessions", sroot);
+        char sn[40][64]; int ns = 0; snprintf(sn[ns++], 64, "main");
+        d = opendir(sdir);
+        if (d) { char tmps[36][64]; int nt = 0; while ((e = readdir(d)) && nt < 36) { size_t L = strlen(e->d_name); if (L > 7 && strcmp(e->d_name + L - 7, ".ledger") == 0) { snprintf(tmps[nt], 64, "%.*s", (int)(L - 7), e->d_name); if (hai_name_ok(tmps[nt])) nt++; } }
+                 closedir(d); qsort(tmps, (size_t)nt, 64, cmp_name); for (int i = 0; i < nt && ns < 40; i++) snprintf(sn[ns++], 64, "%s", tmps[i]); }
+        fprintf(o, "sessions_count=%d\n", ns);
+        for (int i = 0; i < ns; i++) {
+            char lp[1500], lab[64]; hai_session_ledger(pkg, act, sn[i], lp, sizeof lp); session_label(lp, sn[i], lab, sizeof lab);
+            int on = strcmp(sn[i], asess) == 0;
+            fprintf(o, "session_%d_name=%s\nsession_%d_label=%s%s\nsession_%d_cls=%s\n", i, sn[i], i, on ? "> " : "  ", lab, i, on ? "session-item session-active" : "session-item");
+        }
+    }
     fclose(o);
     rename(tmp, ui);
 }

@@ -12,3 +12,9 @@ haibot/hai_event
 haibot/hai_elements
 window/.hq_manager/
 window/cli_io_state.txt
+
+# agents and sessions made at run time (the shipped agents folder stays empty; chat/agents/<id>/ is the person's own data)
+chat/agents/*/
+window/state/agents/
+window/state/sessions/
+window/state/active_agent.txt

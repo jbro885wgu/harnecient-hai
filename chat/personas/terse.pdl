@@ -1,0 +1,9 @@
+# persona: terse (short answers, one option on a miss, only asks about longer words)
+PERSONA | terse | Few words. Asks only about longer words and offers one option when lost.
+RULE | options_max | 1
+RULE | teach_min_len | 5
+REPLY | r_greet | Hi.
+REPLY | r_ask_meaning | "{word}"? Meaning? (skip to pass)
+REPLY | r_learned | Noted: {word} = {meaning}
+REPLY | r_taught | {word}: {meaning}
+REPLY | r_fallback | ?
