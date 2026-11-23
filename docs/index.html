@@ -9,14 +9,14 @@
   header { padding: 14px 18px; border-bottom: 1px solid #333; }
   header h1 { font-size: 18px; margin: 0; }
   header p { margin: 4px 0 0; color: #8a8a8a; font-size: 13px; }
-  main { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 80px); }
+  main { display: grid; grid-template-columns: 240px 1fr; min-height: 560px; }
   aside { background: #181818; border-right: 1px solid #2a2a2a; padding: 14px; }
   .quiet { color: #8a8a8a; }
   .menu button, .reset { display: block; width: 100%; text-align: left; margin: 6px 0; padding: 8px 10px;
     background: #232323; color: #ddd; border: 1px solid #3a3a3a; border-radius: 3px; font: inherit; cursor: pointer; }
   .menu button:hover, .reset:hover { background: #2f5f8f; color: #fff; }
   .reset { background: #3a1e1e; border-color: #6b2b2b; color: #ffdede; }
-  #feed { padding: 14px 18px; overflow-y: auto; max-height: calc(100vh - 170px); }
+  #feed { padding: 14px 18px; overflow-y: auto; height: 520px; }
   .you { color: #9fd0ff; } .hai { color: #e8e8e8; margin-bottom: 10px; }
   form { display: flex; gap: 8px; padding: 12px 18px; border-top: 1px solid #2a2a2a; }
   input { flex: 1; background: #101010; color: #eee; border: 1px solid #3a3a3a; padding: 8px; font: inherit; }
@@ -30,6 +30,23 @@
   details { margin-top: 18px; color: #8a8a8a; font-size: 13px; }
   code { background: #101010; padding: 2px 5px; }
   aside code { word-break: break-all; white-space: normal; display: inline-block; max-width: 100%; }
+  .why { color: #7f8c99; font-size: 13px; margin: -6px 0 10px; }
+  .note { color: #b8a95a; font-size: 13px; margin-bottom: 6px; }
+  /* dashboard: colors are roles, dark-surface values validated with the dataviz palette script (blue #3987e5 + orange #d95926: CVD dE 26.8, contrast >= 3:1) */
+  #dash { padding: 14px 18px 30px; border-top: 1px solid #2a2a2a; }
+  #dash h2 { font-size: 16px; margin: 0 0 4px; } #dash .sub { color: #8a8a8a; font-size: 13px; margin: 0 0 12px; }
+  .viz-root { --surface-1: #1a1a19; --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8a8a8a; --grid: #2e2e2c; --series-1: #3987e5; --series-2: #d95926; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
+  .card { background: var(--surface-1); border: 1px solid #2a2a2a; border-radius: 4px; padding: 12px 14px; position: relative; }
+  .card h3 { font-size: 14px; margin: 0; color: var(--text-primary); } .card .sub { margin: 2px 0 8px; font-size: 12px; }
+  .card svg { width: 100%; height: auto; display: block; } .card svg text { fill: var(--text-secondary); font: 11px ui-monospace, Menlo, Consolas, monospace; }
+  .card svg .axis { stroke: var(--grid); stroke-width: 1; } .card svg .val { fill: var(--text-primary); font-weight: bold; }
+  .hit { fill: transparent; cursor: default; } .hit:hover, .hit:focus { fill: rgba(255,255,255,0.08); outline: none; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-secondary); margin: 4px 0; } .legend i { display: inline-block; width: 14px; height: 3px; margin-right: 5px; vertical-align: middle; }
+  #tip { position: fixed; pointer-events: none; background: #101010; border: 1px solid #3a3a3a; border-radius: 3px; padding: 6px 9px; font-size: 12px; display: none; z-index: 9; max-width: 280px; }
+  #tip b { color: var(--text-primary, #f0efec); font-size: 14px; } #tip span { color: #c3c2b7; }
+  .tbl { display: none; margin-top: 8px; font-size: 12px; overflow-x: auto; } .tbl table { border-collapse: collapse; } .tbl td, .tbl th { border: 1px solid #2e2e2c; padding: 2px 8px; text-align: left; }
+  .empty { color: #8a8a8a; font-size: 13px; padding: 16px 0; }
   @media (max-width: 720px) { main { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -44,13 +61,16 @@
     <div class="menu">
       <button data-say="help">[1] Help</button>
       <button data-say="bye">[2] Quit</button>
+      <button data-say="/pack lyfedesk">Load the starter pack (teaches 13 things)</button>
+      <button data-say="/bank" id="bank-btn">Show what hai knows (the bank)</button>
     </div>
     <button class="reset" id="reset">Start over (clears this browser's ledger)</button>
     <details open>
-      <summary>Install (planned)</summary>
-      <p>The installer is a stub right now. The real one is a milestone not yet built, so this command installs nothing yet:</p>
+      <summary>Install it on your computer</summary>
+      <p>Linux or macOS, a terminal, and a C compiler (cc, gcc or clang). No sudo, no language model, nothing leaves your machine:</p>
       <p><code>curl -fsSL https://raw.githubusercontent.com/jbro885wgu/harnecient-hai/hai/install.sh | sh -s -- hai</code></p>
-      <p>To try it today, clone the repo and follow <code>book/04-hai-model/1.hai-user-tutorial.md</code>.</p>
+      <p class="quiet">It builds into <code>~/.local/share/hai</code>, writes the <code>hai</code> command to <code>~/.local/bin</code> and keeps your chat ledger in <code>~/.local/share/hai-chat</code> (an update never touches it). Then type <code>hai</code>. Remove it with <code>sh install.sh uninstall</code>.</p>
+      <p class="quiet">The command line has the same levers as this page (<code>/teach</code>, <code>/alias</code>, <code>/say</code>, <code>/mark</code>, <code>/pack</code>, <code>/bank</code>, <code>/why</code>).</p>
     </details>
     <div id="note"></div>
     <details id="events-box" open>
@@ -80,23 +100,24 @@
         <li>Linking your own documents so it learns them at once: the full app (design stage).</li>
         <li>Watching other models and learning from them: the full app (design stage).</li>
         <li>Tool calls (open a page, list pages): the full app (milestone M4).</li>
-        <li>Learning here is only the grade counts. It never rewrites its replies.</li>
+        <li>It learns words you teach it and trust from your grades. It never writes a new sentence: every reply is fixed text you can read.</li>
         <li>Your account and ledger stay in this browser only. The full app keeps them on your machine.</li>
       </ul>
       <p>If one of these blocks you, say so: that limit is a desk to fix, not a reason to stop.</p>
     </details>
     <details id="next-box">
       <summary>What is coming next (honest status)</summary>
-      <p class="quiet"><b>Built and running here:</b> chat, grades 0 to 4 with learning, events (rest, cast), export and import.</p>
+      <p class="quiet"><b>Built and running here:</b> chat that asks about words it does not know and learns what you teach, levers (teach, alias, say, mark, forget, starter pack), the reason under every answer, the bank, grades 0 to 4 with learning, a dashboard of charts, events (rest, cast), export and import.</p>
       <p class="quiet"><b>Next:</b> the haibot party of 6 and PC box; faint and healing as rows; elements picked at start (the ten Terumon elements); hangman battles with ELO per haibot.</p>
-      <p class="quiet"><b>Later:</b> tool calls, linked documents, watching other models, the X11 window with typed input, pairing and two agents over the network, the installer.</p>
+      <p class="quiet"><b>Later:</b> tool calls, linked documents, watching other models, pairing and two agents over the network. (The installer and the desktop window with agents and sessions exist now: see the install box.)</p>
       <p class="quiet"><b>Not decided:</b> credits price list, armour crafted with a model (reviewed by a person before it counts), whether shared files are copied or transferred.</p>
       <p class="quiet">Full report and roadmap: the repo book, <code>book/11-progress-and-roadmap.md</code>. A toy that runs a simulated month of the real engine: <a href="vision.html" style="color:#9fd0ff">vision.html</a>.</p>
     </details>
     <details>
       <summary>How this works</summary>
       <p>Every message adds a row (a <code>TURN</code>) to a ledger kept in this browser. The state and your name are rebuilt from those rows each time, so a reload keeps the chat where it was.</p>
-      <p>Learning from your grades (0 to 4) and from linked documents is not built yet, so this demo does not get better yet.</p>
+      <p>Type a word hai does not know and it <b>asks</b> what it means, then remembers your answer. Teach more with <code>/teach word = meaning</code>, <code>/alias word = concept</code>, <code>/say word = text</code>; mark a word that matters with <code>/mark word</code>; grade the last reply with <code>/grade 0</code> to <code>/grade 4</code> (or the buttons). The gray line under each answer says why it answered that way.</p>
+      <p>Same rules as the command line: the case <code>hai_web_parity</code> runs the C engine and this one on the same conversation and requires identical output.</p>
     </details>
   </aside>
   <section>
@@ -105,8 +126,16 @@
       <input id="msg" autocomplete="off" placeholder="type a word, or a number from the menu" aria-label="message">
       <button class="go" type="submit">Send</button>
     </form>
+<div id="dash" class="viz-root" aria-label="dashboard">
+  <h2>Dashboard</h2>
+  <p class="sub">Four charts of this browser's ledger, from the same numbers as <code>hai_chat viz</code>. They fill in as you chat, teach and grade.
+    <label><input type="checkbox" id="tbl-toggle"> show as tables</label></p>
+  <div class="cards" id="cards"></div>
+</div>
   </section>
 </main>
+
+<div id="tip" role="status"></div>
 <script src="engine.js"></script>
 <script src="event.js"></script>
 <script src="bundle.js"></script>
@@ -122,28 +151,21 @@
   function ledger() { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { return []; } }
   function save(l) { localStorage.setItem(KEY, JSON.stringify(l)); }
 
+  var showWhy = true;
   function paint() {
-    var l = ledger(), st = HaiEngine.replay(l);
-    stateEl.textContent = "state=" + st.state + " name=" + st.name;
+    var l = ledger(), st = HaiEngine.replay(l, 0, data ? data.seeds : []);
+    stateEl.textContent = "state=" + st.state + " name=" + st.name + "  turns=" + st.turns;
     st.lastGraded = st.lastGradedTurn === st.turns;
-    var texts = JSON.parse(localStorage.getItem(KEY + ".text") || "[]");
     feed.innerHTML = "";
-    // Texts are stored per TURN only. Grade rows are not turns: they show as their own line, and they never shift the texts.
-    var ti = 0;
+    // The feed is drawn from the ledger alone: TURN = what you said, SAID = what hai said, WHY = the reason, GRADE = your grade.
     l.forEach(function (row) {
-      var f = row.split("|");
-      if (f[0] === "GRADE") {
-        var gl = document.createElement("div"); gl.className = "quiet"; gl.textContent = "   graded " + f[5] + " (reply " + f[4] + ")";
-        feed.appendChild(gl); return;
-      }
-      if (f[0] !== "TURN") return;
-      var you = document.createElement("div"); you.className = "you"; you.textContent = "you> " + f[2];
-      var hai = document.createElement("div"); hai.className = "hai";
-      hai.textContent = "hai> " + (texts[ti] !== undefined ? texts[ti] : "(reply " + f[4] + ", text not stored)");
-      ti++;
-      feed.appendChild(you); feed.appendChild(hai);
+      var f = row.split("|"), d;
+      if (f[0] === "TURN") { d = document.createElement("div"); d.className = "you"; d.textContent = "you> " + f[2]; feed.appendChild(d); }
+      else if (f[0] === "SAID") { d = document.createElement("div"); d.className = "hai"; d.textContent = "hai> " + f.slice(3).join("|"); feed.appendChild(d); }
+      else if (f[0] === "WHY" && showWhy) { d = document.createElement("div"); d.className = "why"; d.textContent = "   why: " + f.slice(3).join("|"); feed.appendChild(d); }
+      else if (f[0] === "GRADE") { d = document.createElement("div"); d.className = "quiet"; d.textContent = "   graded " + f[5] + " (reply " + f[4] + ")"; feed.appendChild(d); }
     });
-    if (l.length && !st.lastGraded) {
+    if (st.turns && !st.lastGraded) {
       var bar = document.createElement("div"); bar.className = "grade";
       var lbl = document.createElement("span"); lbl.className = "quiet"; lbl.textContent = "grade this reply: ";
       bar.appendChild(lbl);
@@ -158,6 +180,7 @@
       feed.appendChild(bar);
     }
     feed.scrollTop = feed.scrollHeight;
+    drawDash();
   }
 
   function grade(val) {
@@ -171,14 +194,110 @@
 
   function say(text) {
     if (!data) return;
-    var l = ledger();
-    var r = HaiEngine.turn(data, l, text, Math.floor(Date.now() / 1000));
+    var l = ledger(), t = String(text).trim();
+    if (t === "/bank") { var nb = document.getElementById("note"); nb.textContent = ""; HaiEngine.bank(data, l).trim().split("\n").forEach(function (ln) { var p = document.createElement("div"); p.textContent = ln.replace(/\|/g, "  "); nb.appendChild(p); }); return; }
+    var r = HaiEngine.send(data, l, t, Math.floor(Date.now() / 1000));
     save(l);
-    var stored = JSON.parse(localStorage.getItem(KEY + ".text") || "[]");
-    stored.push(r.text); localStorage.setItem(KEY + ".text", JSON.stringify(stored));
+    if (!/^[^\/]/.test(t) || /^\/(grade|mark)/.test(t)) { var no = document.getElementById("note"); if (no) no.textContent = /^\/(grade|mark)/.test(t) ? r.text : ""; }
     paint();
-    if (r.code === 1) msg.disabled = true;
+    if (/^\/(grade)/.test(t) === false && r.code === 0 && HaiEngine.replay(l, 0, data.seeds).state === "done") msg.disabled = true;
   }
+
+  // ---- dashboard: four SVG charts from the engine's viz lines (one line per data point)
+  var NS = "http://www.w3.org/2000/svg", tip = document.getElementById("tip");
+  function el(name, attrs, parent, text) { var e = document.createElementNS(NS, name); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; if (parent) parent.appendChild(e); return e; }
+  function showTip(ev, value, label) {
+    tip.textContent = ""; var b = document.createElement("b"); b.textContent = value; var br = document.createElement("br"); var sp = document.createElement("span"); sp.textContent = label;
+    tip.appendChild(b); tip.appendChild(br); tip.appendChild(sp); tip.style.display = "block";
+    var x = (ev.clientX || 0) + 14, y = (ev.clientY || 0) + 14; if (x > window.innerWidth - 300) x = window.innerWidth - 300; tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.style.display = "none"; }
+  function hit(parent, x, y, w, hgt, value, label) {
+    var r = el("rect", { x: x, y: y, width: w, height: hgt, class: "hit", tabindex: 0, "aria-label": value + ", " + label }, parent);
+    r.addEventListener("pointermove", function (ev) { showTip(ev, value, label); }); r.addEventListener("pointerleave", hideTip);
+    r.addEventListener("focus", function () { var bb = r.getBoundingClientRect(); showTip({ clientX: bb.left, clientY: bb.bottom }, value, label); }); r.addEventListener("blur", hideTip);
+  }
+  function card(title, sub, parent) {
+    var c = document.createElement("div"); c.className = "card";
+    var t = document.createElement("h3"); t.textContent = title; var s = document.createElement("p"); s.className = "quiet sub"; s.textContent = sub;
+    c.appendChild(t); c.appendChild(s); parent.appendChild(c); return c;
+  }
+  function table(c, head, rows) {
+    var d = document.createElement("div"); d.className = "tbl"; var tb = document.createElement("table"), tr = document.createElement("tr");
+    head.forEach(function (x) { var th = document.createElement("th"); th.textContent = x; tr.appendChild(th); }); tb.appendChild(tr);
+    rows.forEach(function (r) { var tr2 = document.createElement("tr"); r.forEach(function (x) { var td = document.createElement("td"); td.textContent = x; tr2.appendChild(td); }); tb.appendChild(tr2); });
+    d.appendChild(tb); c.appendChild(d);
+  }
+  function parseViz(text) {
+    var o = { conf: [], know: [], trust: [], cal: [] };
+    text.split("\n").forEach(function (ln) {
+      var f = ln.split("|");
+      if (f[0] === "CONF") o.conf.push({ n: +f[1], v: +f[2], c: f[3] });
+      else if (f[0] === "KNOW") o.know.push({ n: +f[1], taught: +f[2], alias: +f[3], say: +f[4], marked: +f[5] });
+      else if (f[0] === "TRUST") o.trust.push({ id: f[1], w: +f[2], r: +f[3], p: +f[4] });
+      else if (f[0] === "CAL") o.cal.push({ lo: +f[1], hi: +f[2], n: +f[3], good: +f[4], rate: +f[5], mean: +f[6] });
+    });
+    return o;
+  }
+  function lineChart(c, pts, ymax, yfmt, label) {   // pts: [{x, y, tip}]; x are 1..n turn numbers
+    var W = 520, H = 190, L = 34, R = 10, T = 10, B = 24, svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": label }, c);
+    [0, 0.5, 1].forEach(function (g) { var y = T + (H - T - B) * (1 - g); el("line", { x1: L, x2: W - R, y1: y, y2: y, class: "axis" }, svg); el("text", { x: L - 6, y: y + 4, "text-anchor": "end" }, svg, yfmt(ymax * g)); });
+    var n = pts.length, X = function (i) { return n === 1 ? (L + W - R) / 2 : L + (W - L - R) * i / (n - 1); }, Y = function (v) { return T + (H - T - B) * (1 - v / ymax); };
+    el("polyline", { points: pts.map(function (p, i) { return X(i) + "," + Y(p.y); }).join(" "), fill: "none", stroke: "var(--series-1)", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+    pts.forEach(function (p, i) { el("circle", { cx: X(i), cy: Y(p.y), r: 4, fill: "var(--series-1)", stroke: "var(--surface-1)", "stroke-width": 2 }, svg); });
+    var last = pts[n - 1], ly = Y(last.y) - 9; if (ly < T + 8) ly = Y(last.y) + 18; el("text", { x: Math.min(X(n - 1), W - R - 2), y: ly, "text-anchor": "end", class: "val" }, svg, yfmt(last.y));
+    el("text", { x: L, y: H - 6 }, svg, "turn 1"); el("text", { x: W - R, y: H - 6, "text-anchor": "end" }, svg, "turn " + pts[n - 1].x);
+    var step = n === 1 ? 40 : (W - L - R) / (n - 1);
+    pts.forEach(function (p, i) { hit(svg, X(i) - Math.max(12, step / 2), T, Math.max(24, step), H - T - B, yfmt(p.y), p.tip); });
+  }
+  function drawDash() {
+    var host = document.getElementById("cards"); host.textContent = "";
+    if (!data) return;
+    var l = ledger(), v = parseViz(HaiEngine.viz(data, l)), c;
+    c = card("Confidence per turn", "how sure hai was of each answer: matched words / your words x trust", host);
+    if (!v.conf.length) { var e0 = document.createElement("div"); e0.className = "empty"; e0.textContent = "No turns yet: say something."; c.appendChild(e0); }
+    else { lineChart(c, v.conf.map(function (p) { return { x: p.n, y: p.v, tip: "turn " + p.n + " (" + p.c + ")" }; }), 100, function (y) { return Math.round(y) + "%"; }, "confidence per turn");
+           table(c, ["turn", "confidence %", "meaning used"], v.conf.map(function (p) { return [p.n, p.v, p.c]; })); }
+    c = card("What hai knows over time", "taught words + aliases + answers, counted after each turn", host);
+    if (!v.know.length) { var e1 = document.createElement("div"); e1.className = "empty"; e1.textContent = "Nothing taught yet: try the starter pack, or type a word it does not know."; c.appendChild(e1); }
+    else { var mx = Math.max(1, Math.max.apply(null, v.know.map(function (k) { return k.taught + k.alias + k.say; })));
+           lineChart(c, v.know.map(function (k) { var tot = k.taught + k.alias + k.say; return { x: k.n, y: tot, tip: "after turn " + k.n + ": " + k.taught + " words, " + k.alias + " aliases, " + k.say + " answers" }; }), mx, function (y) { return String(Math.round(y)); }, "things taught over time");
+           table(c, ["after turn", "taught words", "aliases", "answers", "marked"], v.know.map(function (k) { return [k.n, k.taught, k.alias, k.say, k.marked]; })); }
+    c = card("Trust per meaning", "1.00 = always graded good, 0.50 = never graded. Grades move it.", host);
+    var rows = v.trust.slice(0, 16), W2 = 520, rh = 22, H2 = rows.length * rh + 22, svg2 = el("svg", { viewBox: "0 0 " + W2 + " " + H2, role: "img", "aria-label": "trust per meaning" }, c), L2 = 120, R2 = 44;
+    el("line", { x1: L2, x2: L2, y1: 0, y2: H2 - 18, class: "axis" }, svg2);
+    var half = L2 + (W2 - L2 - R2) * 0.5; el("line", { x1: half, x2: half, y1: 0, y2: H2 - 18, class: "axis", "stroke-dasharray": "3 3" }, svg2); el("text", { x: half, y: H2 - 4, "text-anchor": "middle" }, svg2, "0.50 = no grades yet");
+    rows.forEach(function (r, i) {
+      var y = i * rh + 3, w = (W2 - L2 - R2) * r.w;
+      el("text", { x: L2 - 8, y: y + 12, "text-anchor": "end" }, svg2, r.id.length > 16 ? r.id.slice(0, 15) + "…" : r.id);
+      el("path", { d: "M" + L2 + "," + y + " h" + Math.max(0, w - 4) + " a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h-" + Math.max(0, w - 4) + " z", fill: "var(--series-1)" }, svg2);
+      el("text", { x: L2 + w + 6, y: y + 12, class: "val" }, svg2, r.w.toFixed(2));
+      hit(svg2, 0, y - 2, W2, rh, r.w.toFixed(2), r.id + ": " + r.r + " reward, " + r.p + " punish");
+    });
+    table(c, ["meaning", "trust", "reward", "punish"], v.trust.map(function (r) { return [r.id, r.w.toFixed(2), r.r, r.p]; }));
+    c = card("Calibration", "stated confidence against how often you graded that answer good (grade replies to fill this in)", host);
+    if (!v.cal.length) { var e3 = document.createElement("div"); e3.className = "empty"; e3.textContent = "No grades yet. Grade a reply with the buttons or /grade 0 to /grade 4."; c.appendChild(e3); }
+    else {
+      var lg = document.createElement("div"); lg.className = "legend";
+      [["var(--series-1)", "stated confidence (mean)"], ["var(--series-2)", "graded good (rate)"]].forEach(function (k) { var s = document.createElement("span"), i = document.createElement("i"); i.style.background = k[0]; s.appendChild(i); s.appendChild(document.createTextNode(k[1])); lg.appendChild(s); });
+      c.appendChild(lg);
+      var W3 = 520, H3 = 190, L3 = 34, T3 = 14, B3 = 26, svg3 = el("svg", { viewBox: "0 0 " + W3 + " " + H3, role: "img", "aria-label": "calibration" }, c), nb = v.cal.length, gw = (W3 - L3 - 10) / nb;
+      [0, 0.5, 1].forEach(function (g) { var y = T3 + (H3 - T3 - B3) * (1 - g); el("line", { x1: L3, x2: W3 - 10, y1: y, y2: y, class: "axis" }, svg3); el("text", { x: L3 - 6, y: y + 4, "text-anchor": "end" }, svg3, Math.round(g * 100) + "%"); });
+      v.cal.forEach(function (b, i) {
+        var x0 = L3 + gw * i + gw * 0.15, bw = Math.min(40, gw * 0.35), Y3 = function (f) { return T3 + (H3 - T3 - B3) * (1 - f); };
+        [[b.mean, "var(--series-1)"], [b.rate, "var(--series-2)"]].forEach(function (s, k) {
+          var x = x0 + k * (bw + 2), top = Y3(s[0]), bh = Math.max(1, H3 - B3 - top);
+          el("path", { d: "M" + x + "," + (H3 - B3) + " v-" + Math.max(0, bh - 4) + " a4,4 0 0 1 4,-4 h" + (bw - 8) + " a4,4 0 0 1 4,4 v" + Math.max(0, bh - 4) + " z", fill: s[1] }, svg3);
+          el("text", { x: x + bw / 2, y: top - 4, "text-anchor": "middle", class: "val" }, svg3, Math.round(s[0] * 100) + "%");
+        });
+        el("text", { x: x0 + bw, y: H3 - 8, "text-anchor": "middle" }, svg3, b.lo + "-" + b.hi);
+        hit(svg3, L3 + gw * i, T3, gw, H3 - T3 - B3, "said " + Math.round(b.mean * 100) + "%, good " + Math.round(b.rate * 100) + "%", "answers with confidence " + b.lo + "-" + b.hi + "% (n=" + b.n + ", " + b.good + " graded good)");
+      });
+      table(c, ["confidence bin", "answers graded", "graded good", "good rate", "mean stated"], v.cal.map(function (b) { return [b.lo + "-" + b.hi + "%", b.n, b.good, b.rate.toFixed(2), b.mean.toFixed(2)]; }));
+    }
+    document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; });
+  }
+  document.getElementById("tbl-toggle").addEventListener("change", function () { document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; }); });
 
   document.getElementById("say").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -190,7 +309,7 @@
     b.addEventListener("click", function () { say(b.getAttribute("data-say")); });
   });
   document.getElementById("reset").addEventListener("click", function () {
-    localStorage.removeItem(KEY); localStorage.removeItem(KEY + ".text"); msg.disabled = false; paint();
+    localStorage.removeItem(KEY); localStorage.removeItem(KEY + ".text"); msg.disabled = false; document.getElementById("note").textContent = ""; paint();
   });
 
   // ---- events: the same pages as haibot/events, run by docs/event.js ----
@@ -234,9 +353,9 @@
     });
   });
 
-  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl"), load("seeds.pdl")])
+  Promise.all([load("concepts.pdl"), load("replies.pdl"), load("states.pdl"), load("chat_rules.pdl"), load("seeds.pdl"), load("stopwords.pdl"), load("packs/lyfedesk.pdl")])
     .then(function (t) {
-      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3], seeds: t[4] });
+      data = HaiEngine.parseData({ concepts: t[0], replies: t[1], states: t[2], rules: t[3], seeds: t[4], stopwords: t[5], packs: { lyfedesk: t[6] } });
       paint();
       if (!ledger().length) { say("hi"); }
     })
