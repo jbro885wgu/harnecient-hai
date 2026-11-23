@@ -99,3 +99,37 @@ EXPECT_OUT  | 9 | pack-rows-carry-their-origin-in-the-ledger
 RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | forget | driving
 RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/p | have u tried driving it
 EXPECT_OUT  | I do not know "driving" yet | a-pack-word-can-be-forgotten-like-any-other
+
+# ---- transparency (2026-11-23): every reply records WHY, and the bank can be dumped; a tutorial deck takes its slides from these dumps ----
+CASE    | transparency
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -o | $T/hai_chat | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | builds-from-source
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | hi
+RUN | $T/hai_chat | why | $T/l | 1
+EXPECT_OUT  | matched "hi" as greet: 1 of 1 words x trust 0.83 = 83% | a-built-in-match-shows-the-words-the-count-the-trust-and-the-result
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | do u like this house
+RUN | $T/hai_chat | why | $T/l | 2
+EXPECT_OUT  | "house" is a content word that is not a keyword, an alias or a taught word | an-unknown-word-explains-why-it-asks
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | the LyfeDesk desktop
+RUN | $T/hai_chat | why | $T/l | 3
+EXPECT_OUT  | stored your whole answer as its meaning | storing-an-answer-explains-itself
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | do u like the house
+RUN | $T/hai_chat | why | $T/l | last
+EXPECT_OUT  | you taught me "house": 1 hit of 1 content words x trust 0.50 = 50% | a-taught-word-shows-its-arithmetic
+RUN | $T/hai_chat | turn | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | zz qq
+RUN | $T/hai_chat | why | $T/l | last
+EXPECT_OUT  | no new content word to ask about | a-miss-explains-the-fallback
+RUN | $T/hai_chat | why | $T/l | 99
+EXPECT_EXIT | 1 | a-turn-that-does-not-exist-has-no-why
+RUN | $T/hai_chat | bank | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l
+EXPECT_OUT  | CONCEPT\pgreet\phi,hello,hey,hiya\pr_greet\p0.83 | the-bank-lists-the-built-in-concepts-with-their-trust
+EXPECT_OUT  | TAUGHT\phouse\pthe LyfeDesk desktop\p0\p0.50 | the-bank-lists-what-was-taught-and-is-not-marked
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | alias | yo | greet
+RUN | $T/hai_chat | mark | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | house | high
+RUN | $T/hai_chat | bank | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l
+EXPECT_OUT  | ALIAS\pyo\pgreet | the-bank-lists-aliases
+EXPECT_OUT  | TAUGHT\phouse\pthe LyfeDesk desktop\p1\p0.50 | a-marked-word-shows-as-marked
+RUN | $T/hai_chat | cmd | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l | forget | house
+RUN | $T/hai_chat | bank | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat/data | $T/l
+EXPECT_OUT_LACKS  | TAUGHT\phouse | a-forgotten-word-leaves-the-bank

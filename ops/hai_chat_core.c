@@ -316,6 +316,18 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
     const char *concept = best >= 0 ? cs[best].id : "none";
     /* confidence: how much of the input matched the chosen concept, times how much that concept is trusted */
     int conf = (nt > 0 && best_hits > 0) ? (int)((100.0 * best_hits / nt) * best_w + 0.5) : 0;
+    /* WHY: a plain-language record of how this reply was decided (written to the ledger, shown in the window, dumped for tutorials) */
+    char why[600] = "";
+    if (best >= 0) {
+        char m[240] = "";
+        for (int t = 0; t < nt; t++) {
+            int hit = 0;
+            for (int w = 0; w < cs[best].nw && !hit; w++) if (strcmp(toks[t], cs[best].words[w]) == 0) hit = 1;
+            for (int a = 0; a < L.nalias && !hit; a++) if (strcmp(L.alias[a].concept, cs[best].id) == 0 && strcmp(toks[t], L.alias[a].word) == 0) hit = 1;
+            if (hit && strlen(m) + strlen(toks[t]) + 6 < sizeof m) { char piece[96]; snprintf(piece, sizeof piece, "%s\"%s\"", m[0] ? ", " : "", toks[t]); strcat(m, piece); }
+        }
+        snprintf(why, sizeof why, "matched %s as %s: %d of %d words x trust %.2f = %d%%", m, cs[best].id, best_hits, nt, best_w, conf);
+    } else snprintf(why, sizeof why, "no word matched any meaning I know");
 
     /* FSM: the first NEXT row for this state and concept (or *) wins */
     char to[32] = "", action[32] = "none";
@@ -347,6 +359,8 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
             snprintf(to, sizeof to, "idle");
             if (nt == 1 && strcmp(toks[0], "skip") == 0) { snprintf(reply_id, sizeof reply_id, "r_skipped"); snprintf(action, sizeof action, "none"); typed[0] = 0; conf = 0; }
             else { snprintf(reply_id, sizeof reply_id, "r_learned"); snprintf(action, sizeof action, "store_meaning"); snprintf(typed, sizeof typed, "%s", tword); snprintf(tmean, sizeof tmean, "%s", clean); conf = 100; }
+            if (strcmp(action, "store_meaning") == 0) snprintf(why, sizeof why, "I asked what \"%s\" means, so I stored your whole answer as its meaning (certain: you told me)", tword);
+            else snprintf(why, sizeof why, "I asked what \"%s\" means and you passed, so nothing was stored", tword);
         } else {
             int ncontent = 0; for (int t = 0; t < nt; t++) if (!is_stop(datadir, toks[t])) ncontent++;
             int hit_idx = -1, hits = 0, marked_hit = 0;
@@ -366,6 +380,8 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
                 double w = weight_of(L.concepts, L.nconcepts, ov_concept);
                 double c = 100.0 * hits * (marked_hit ? mult : 1) / (ncontent > 0 ? ncontent : 1) * w;
                 conf = c > 100 ? 100 : (int)(c + 0.5);
+                snprintf(why, sizeof why, "you taught me \"%s\"%s: %d hit of %d content words%s x trust %.2f = %d%%", tword, tmean[0] ? "" : " (no meaning, only an answer)", hits, ncontent > 0 ? ncontent : 1,
+                         marked_hit ? " (marked: counts x2 or more)" : "", w, conf);
             } else if (best < 0) {
                 int pick = -1, pick_marked = 0; size_t pick_len = 0;
                 for (int t = 0; t < nt; t++) {
@@ -381,6 +397,7 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
                     snprintf(ov_concept, sizeof ov_concept, "ask"); concept = ov_concept;
                     snprintf(reply_id, sizeof reply_id, "r_ask_meaning"); snprintf(to, sizeof to, "await_meaning");
                     snprintf(action, sizeof action, "ask_word"); snprintf(typed, sizeof typed, "%s", tword); conf = 0;
+                    snprintf(why, sizeof why, "\"%s\" is a content word that is not a keyword, an alias or a taught word, so I ask what it means", tword);
                 }
             }
         }
@@ -401,6 +418,7 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
         snprintf(text, sizeof text, "%s", tmp);
     }
 
+    if (strcmp(reply_id, "r_fallback") == 0 && strncmp(why, "no word matched", 15) == 0) snprintf(why, sizeof why, "no word matched any meaning I know and there is no new content word to ask about, so I offer my top options");
     if (strcmp(reply_id, "r_fallback") == 0) {
         /* options: concepts by weight, highest first; ties keep file order */
         int order[MAXC]; for (int i = 0; i < nc; i++) order[i] = i;
@@ -426,6 +444,8 @@ int hai_chat_turn(const char *datadir, const char *ledger, const char *input, ch
         char said[512]; snprintf(said, sizeof said, "%s", text);
         for (char *p = said; *p; p++) if (*p == '|' || *p == '\n') *p = '/';
         fprintf(f, "SAID|%ld|%d|%s\n", (long)time(NULL), L.turns + 1, said);
+        for (char *p = why; *p; p++) if (*p == '|' || *p == '\n') *p = '/';
+        fprintf(f, "WHY|%ld|%d|%s\n", (long)time(NULL), L.turns + 1, why);
     }
     fclose(f);
 
@@ -621,5 +641,30 @@ int hai_chat_cmd(const char *datadir, const char *ledger, const char *verb, cons
     } else { snprintf(out, out_len, "unknown lever %s", verb); return 4; }
     said_row(f, now, turns, msg); fclose(f);
     snprintf(out, out_len, "%s", msg);
+    return 0;
+}
+
+/* The bank: everything this agent knows, one line per item, for the window's Bank view and for tutorial dumps.
+ *   CONCEPT|id|keywords|reply id|trust   TAUGHT|word|meaning|marked 0/1|trust   ALIAS|word|concept   SAY|word|text
+ * Replayed from the ledger (the same replay as every turn), so it is exactly what the next reply will use. 0 ok, 2 setup. */
+int hai_chat_bank(const char *datadir, const char *ledger, char *out, size_t out_len) {
+    static concept_t cs[MAXC]; static ledger_t L;
+    int nc = load_concepts(datadir, cs, MAXC);
+    if (nc < 0) { snprintf(out, out_len, "setup missing under %s", datadir); return 2; }
+    if (replay(ledger, 0, &L, datadir) != 0) { snprintf(out, out_len, "seed refers to an unknown concept"); return 2; }
+    size_t off = 0; out[0] = 0;
+    #define EMIT(...) do { if (off < out_len) off += (size_t)snprintf(out + off, out_len - off, __VA_ARGS__); } while (0)
+    for (int c = 0; c < nc; c++) {
+        char kw[300] = ""; for (int w = 0; w < cs[c].nw; w++) { strncat(kw, cs[c].words[w], sizeof kw - strlen(kw) - 2); if (w + 1 < cs[c].nw) strncat(kw, ",", sizeof kw - strlen(kw) - 1); }
+        EMIT("CONCEPT|%s|%s|%s|%.2f\n", cs[c].id, kw, cs[c].reply, weight_of(L.concepts, L.nconcepts, cs[c].id));
+    }
+    for (int i = 0; i < L.ntaught; i++) {
+        int mk = 0; for (int m = 0; m < L.nmarked; m++) if (strcmp(L.marked[m], L.taught[i].word) == 0) mk = 1;
+        char key[96]; snprintf(key, sizeof key, "taught:%s", L.taught[i].word);
+        EMIT("TAUGHT|%s|%s|%d|%.2f\n", L.taught[i].word, L.taught[i].meaning, mk, weight_of(L.concepts, L.nconcepts, key));
+    }
+    for (int i = 0; i < L.nalias; i++) EMIT("ALIAS|%s|%s\n", L.alias[i].word, L.alias[i].concept);
+    for (int i = 0; i < L.nsay; i++) EMIT("SAY|%s|%s\n", L.say[i].word, L.say[i].text);
+    #undef EMIT
     return 0;
 }

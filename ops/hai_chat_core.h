@@ -26,4 +26,7 @@ int hai_chat_mark(const char *datadir, const char *ledger, const char *word, con
 /* The teaching levers: define | alias | say | forget | pack (see hai_chat_core.c). 0 ok, 2 setup, 3 write failed, 4 bad input. */
 int hai_chat_cmd(const char *datadir, const char *ledger, const char *verb, const char *arg1, const char *arg2, long now, char *out, size_t out_len);
 
+/* The bank (what this agent knows): CONCEPT / TAUGHT / ALIAS / SAY lines, see hai_chat_core.c. 0 ok, 2 setup. */
+int hai_chat_bank(const char *datadir, const char *ledger, char *out, size_t out_len);
+
 #endif

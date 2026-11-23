@@ -38,6 +38,25 @@ int main(int argc, char **argv) {
         printf("%s\n", out);
         return 0;
     }
+    if (argc == 4 && strcmp(argv[1], "bank") == 0) {             /* hai_chat bank <datadir> <ledger>: everything this agent knows, one line per item */
+        static char out[65536];
+        int rc = hai_chat_bank(argv[2], argv[3], out, sizeof out);
+        fputs(out, stdout); if (rc) putchar('\n');
+        return rc;
+    }
+    if (argc >= 3 && strcmp(argv[1], "why") == 0) {              /* hai_chat why <ledger> [turn number | last]: how that reply was decided */
+        FILE *lf = fopen(argv[2], "r"); if (!lf) { printf("no ledger\n"); return 2; }
+        int want = (argc > 3 && strcmp(argv[3], "last") != 0) ? atoi(argv[3]) : -1, turn = 0, found = 0; char line[2048], inp[512] = "", w[1200] = "";
+        while (fgets(line, sizeof line, lf)) {
+            line[strcspn(line, "\r\n")] = 0;
+            if (strncmp(line, "TURN|", 5) == 0) { turn++; char *p = strchr(line + 5, '|'); if (p) { char *e = strchr(p + 1, '|'); if (e) *e = 0; snprintf(inp, sizeof inp, "%s", p + 1); } }
+            else if (strncmp(line, "WHY|", 4) == 0 && (want < 0 || turn == want)) { char *p = strchr(line + 4, '|'); if (p) p = strchr(p + 1, '|'); snprintf(w, sizeof w, "%s", p ? p + 1 : ""); found = 1; if (want >= 0) break; }
+        }
+        fclose(lf);
+        if (!found) { printf("no WHY row (older ledger, or no such turn)\n"); return 1; }
+        printf("you said: %s\nwhy: %s\n", inp, w);
+        return 0;
+    }
     if (argc >= 6 && strcmp(argv[1], "cmd") == 0) {              /* hai_chat cmd <datadir> <ledger> <lever> <arg1> [arg2] */
         char out[512];
         int rc = hai_chat_cmd(argv[2], argv[3], argv[4], argv[5], argc > 6 ? argv[6] : "", (long)time(NULL), out, sizeof out);
