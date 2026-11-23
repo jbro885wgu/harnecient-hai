@@ -39,19 +39,20 @@ So the honest answer: there is no separate studio for hai yet; the Bank view is 
 3. **Turn text dumps into slides** with ffmpeg drawtext: a 1280x640 background, DejaVu Sans Mono, `expansion=none` so `%` prints literally, lines wrapped at spaces. A card header says "(real output)" and names the command.
 4. **One manifest row per slide** (`snapshots/NN-name.png | seconds | Japanese subtitle ## English voice`) and `make_presentation_video.py <deck> --theme harnecient --font /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc --narrator <Actor1.png>` (niced, through `cpu_gate`). **Without `--font` the Japanese strip renders as empty boxes** (found by opening a frame of the first render, which had to be discarded).
 5. **Verify before delivering:** `ffprobe` (video and audio streams), `volumedetect` (not silent), and OPEN a frame with Japanese text.
-The decks: stakeholder report (results versus desire), tutorial 1 (teach it your words), tutorial 2 (more levers and starter packs), tutorial 3 (agents, sessions, personalities), and this explainer ("how hai answers"). Home: the owner's XO folder `%.HARNECIENT/hai-user-dox/tutorials/` and `31.Nov/nov-22/13.*` to `17.*`.
+The decks: stakeholder report (results versus desire), tutorial 1 (teach it your words), tutorial 2 (more levers and starter packs), tutorial 3 (agents, sessions, personalities), and this explainer ("how hai answers"). Home: the owner's XO folder `%.HARNECIENT/hai-user-dox/tutorials/` and `31.Nov/nov-23/5.hai-videos-2026-11-23`.
 
 ## 6. Window and test traps found today (RAN; each cost time)
 **Layout (khtpm renderer):**
 - The renderer accepts ONE `<sidebar>`. A second one never rendered. For three columns use a **flex page** (`class` with `display:flex; flex-direction:row`, the `canvas-craft` pattern): the sidebar plus N panels sized by `width` and `flex-grow`.
 - **The `<sidebar>` element must never be removed** (`show=` false on it blanked the whole window: the layout trigger needs a sidebar and a panel). Minimize it by narrowing it (a class from data: 200px open, 40px with a `[+]` restore).
+- **Chrome (2026-11-23, owner: make it look like rpg-edit/Teario):** the window now copies rpg-space: a `tabbar` (`tab rp-tb`, tabs Sessions/Agents/Bank/Why, `hai-on`/`hai-off` classes), panel titles `ov-title` with an `ov-min` `_` button, `rp-menu-row` buttons, and a `pchq-footer` with `bars` and one `pchq-ft` button per agent. The tabbar must sit INSIDE the flex page before the sidebar, with `width: 0px`, or it reserves an empty column (`100%` was read as 100px).
 - rpg-edit and rpg-space get their side bars from **overlay rows on a `<canvas>`** (`canvas-overlay-left/right` with `ov-pin`, a `_` minimize, footer toggles). Overlays need that canvas, and the canvas takes the middle, hiding text. For a text window use the flex page instead.
 - A `repeat` variable prefix is its `bind` name (`bind="bk"` reads `bk_0_text`, not `bank_0_text`).
 - The shared footer class clips labels to a letter: give the on/off classes an explicit width.
 **Driving (`relay_drive`):**
 - `tapid` mis-resolves elements in the flex page's panels (the composer, the right column): it clicked x=295 for an item drawn at x=680. Use `tap x y` (window coordinates) there; sidebar items and the footer resolve fine.
 - The first click after a sidebar action (or on an unfocused window) only focuses: tap the composer twice before typing, or the typed line goes nowhere and Enter re-presses the focused item.
-- A relay `tapid` on a sidebar item fired its action **twice within a second** (seen with `NEW`; I did NOT test whether a real mouse click does the same). `hai_session NEW` used the same `session_<epoch>` name and truncated the ledger it was inheriting from: sessions are never overwritten now, and `NEW` on an empty session is a no-op.
+- A relay `tapid` on a sidebar item fired its action **twice per click, intermittently** (a toggle went 1, 0, 1 in a 50 ms watch of `ui_prefs.txt`; seen with `NEW` too). I did NOT test a real mouse click. `hai_session` now ignores an identical request repeated within 600 ms when the renderer calls it (argc 4+; cases are never debounced). No case covers the debounce. `hai_session NEW` used the same `session_<epoch>` name and truncated the ledger it was inheriting from: sessions are never overwritten now, and `NEW` on an empty session is a no-op.
 **Harness (`harness_case_op`):**
 - **`EXPECT_FILE` takes FOUR fields (path | exact text | label); a three-field row is silently ignored** (no PASS, no FAIL). Existence is `EXPECT_EXISTS`. Six of my checks were no-ops until I compared the number of check rows with the number of PASS lines. Do that comparison on every new case.
 - A bare `|` in an `EXPECT_OUT` / `EXPECT_HAS` text must be written `\p`.
@@ -63,5 +64,5 @@ The decks: stakeholder report (results versus desire), tutorial 1 (teach it your
 - The Bank shows the active agent only; there is no side-by-side comparison of two agents.
 - Inherited rows in a new session still show as `you: /teach ...` (their origin is in the row, the window does not distinguish it).
 - Lever confirmations are fixed text, not in the agent's voice.
-- The web demo has none of this.
+- **The web demo (`docs/index.html`, `docs/engine.js`, 202 lines, no teach or DEFINE code) has none of this: not updated, not started.** C and JS are no longer in parity.
 - The Japanese subtitles and narration lines are mine and have not been reviewed by a native speaker.
