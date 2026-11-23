@@ -133,8 +133,8 @@
     </form>
 <div id="dash" class="viz-root" aria-label="dashboard" style="display:none">
   <h2 id="dash-title">Dashboard</h2>
-  <p class="sub" id="dash-sub">Four charts of this browser's ledger, from the same numbers as <code>hai_chat viz</code>. Click a bar in <b>Trust per meaning</b> to open that word or meaning on its own.
-    <label><input type="checkbox" id="tbl-toggle"> show as tables</label></p>
+  <p class="sub"><span id="dash-sub">Four charts of this browser's ledger, from the same numbers as <code>hai_chat viz</code>. Click a bar in <b>Trust per meaning</b> to open that word or meaning on its own.
+    </span> <label><input type="checkbox" id="tbl-toggle"> show as tables</label></p>
   <div class="cards" id="cards"></div>
 </div>
   </section>
@@ -257,6 +257,7 @@
     var step = n === 1 ? 40 : (W - L - R) / (n - 1);
     pts.forEach(function (p, i) { hit(svg, X(i) - Math.max(12, step / 2), T, Math.max(24, step), H - T - B, yfmt(p.y), p.tip); });
   }
+  function tblOn() { var c = document.getElementById("tbl-toggle"); return !!(c && c.checked); }
   var detailItem = null, tab = "chat";
   function setTab(t) {
     tab = t; var dash = document.getElementById("dash");
@@ -301,7 +302,7 @@
         hit(svg4, 0, y - 2, W4, rh, u.c + "%", "turn " + u.n + ": " + u.t); });
       table(c, ["turn", "confidence %", "what you said"], d.use.map(function (u) { return [u.n, u.c, u.t]; }));
     }
-    document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; });
+    document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = tblOn() ? "block" : "none"; });
   }
   function drawDash() {
     var host = document.getElementById("cards"); host.textContent = "";
@@ -350,11 +351,11 @@
       });
       table(c, ["confidence bin", "answers graded", "graded good", "good rate", "mean stated"], v.cal.map(function (b) { return [b.lo + "-" + b.hi + "%", b.n, b.good, b.rate.toFixed(2), b.mean.toFixed(2)]; }));
     }
-    document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; });
+    document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = tblOn() ? "block" : "none"; });
   }
   document.getElementById("tab-chat").addEventListener("click", function () { setTab("chat"); });
   document.getElementById("tab-dash").addEventListener("click", function () { detailItem = null; setTab("dash"); });
-  document.getElementById("tbl-toggle").addEventListener("change", function () { document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = document.getElementById("tbl-toggle").checked ? "block" : "none"; }); });
+  document.getElementById("tbl-toggle").addEventListener("change", function () { document.querySelectorAll(".tbl").forEach(function (t) { t.style.display = tblOn() ? "block" : "none"; }); });
 
   document.getElementById("say").addEventListener("submit", function (e) {
     e.preventDefault();
