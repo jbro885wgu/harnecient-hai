@@ -16,7 +16,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 
-#define ROWMAX 14
+#define ROWMAX 30
 static volatile sig_atomic_t stop = 0;
 static void on_term(int sig) { (void)sig; stop = 1; }
 
@@ -53,6 +53,20 @@ static void fill_key(char *text, size_t cap, const char *key, const char *val) {
     }
 }
 
+/* window preferences (state/ui_prefs.txt: left=1 right=1 view=chat why=1). They change what the window SHOWS, never what an agent knows. */
+static void read_prefs(const char *pkg, int *left, int *right, int *bank, int *why) {
+    *left = 1; *right = 1; *bank = 0; *why = 1;
+    char path[1100], line[128]; snprintf(path, sizeof path, "%s/state/ui_prefs.txt", pkg);
+    FILE *f = fopen(path, "r"); if (!f) return;
+    while (fgets(line, sizeof line, f)) {
+        if (strncmp(line, "left=", 5) == 0) *left = atoi(line + 5);
+        else if (strncmp(line, "right=", 6) == 0) *right = atoi(line + 6);
+        else if (strncmp(line, "why=", 4) == 0) *why = atoi(line + 4);
+        else if (strncmp(line, "view=bank", 9) == 0) *bank = 1;
+    }
+    fclose(f);
+}
+
 static int cmp_name(const void *a, const void *b) { return strcmp((const char *)a, (const char *)b); }
 
 /* label of a session: the first thing the person typed in it (like a chat list), else its name */
@@ -77,19 +91,20 @@ static void publish(const char *pkg) {
     snprintf(tmp, sizeof tmp, "%s.tmp", ui);
     hai_chat_state(ledger, state, sizeof state);            /* "state=... name=..." */
 
+    int pl, pr, pbank, show_why; read_prefs(pkg, &pl, &pr, &pbank, &show_why);
     int said_mode = 0;                       /* a ledger written since 2026-11-23 records what hai said (SAID rows); an older one is looked up in replies.pdl */
     { FILE *pf = fopen(ledger, "r"); if (pf) { char l2[2048]; while (fgets(l2, sizeof l2, pf)) if (strncmp(l2, "SAID|", 5) == 0) { said_mode = 1; break; } fclose(pf); } }
     FILE *f = fopen(ledger, "r");
-    char rows[ROWMAX][320]; int nrows = 0, nturns = 0;
+    char rows[ROWMAX][360]; int nrows = 0, nturns = 0;
     static char tw[32][64], tm[32][200]; int ntw = 0;       /* words taught so far, rebuilt from the ledger on every pass */
     if (f) {
         char line[2048];
         while (fgets(line, sizeof line, f)) {
             int is_turn = strncmp(line, "TURN|", 5) == 0, is_grade = strncmp(line, "GRADE|", 6) == 0, is_mark = strncmp(line, "MARK|", 5) == 0;
-            int is_said = strncmp(line, "SAID|", 5) == 0;
+            int is_said = strncmp(line, "SAID|", 5) == 0, is_why = strncmp(line, "WHY|", 4) == 0;
             const char *cmdname = strncmp(line, "DEFINE|", 7) == 0 ? "/teach" : strncmp(line, "ALIAS|", 6) == 0 ? "/alias" : strncmp(line, "SAY|", 4) == 0 ? "/say" :
                                   strncmp(line, "FORGET|", 7) == 0 ? "/forget" : strncmp(line, "PACK|", 5) == 0 ? "/pack" : NULL;
-            if (!is_turn && !is_grade && !is_mark && !is_said && !cmdname) continue;
+            if (!is_turn && !is_grade && !is_mark && !is_said && !is_why && !cmdname) continue;
             line[strcspn(line, "\r\n")] = 0;
             char *fld[12]; int n = 0; char *p = line;
             fld[n++] = p;
@@ -110,6 +125,9 @@ static void publish(const char *pkg) {
                     const char *wd = n >= 8 ? fld[7] : "", *mn = fld[2];
                     if (strncmp(fld[3], "taught:", 7) == 0) { wd = fld[3] + 7; mn = ""; for (int i = 0; i < ntw; i++) if (strcmp(tw[i], wd) == 0) mn = tm[i]; }
                     fill_key(rt, sizeof rt, "word", wd); fill_key(rt, sizeof rt, "meaning", mn); snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    hai: %s", rt); nrows++; }
+            } else if (is_why && n >= 4) {
+                if (!show_why) continue;
+                snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    why: %s", fld[3]); nrows++;
             } else if (is_said && n >= 4) {
                 snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    hai: %s", fld[3]); nrows++;
             } else if (cmdname && n >= 3) {
@@ -137,11 +155,34 @@ static void publish(const char *pkg) {
     for (int i = 0; i < shown; i++) {
         int idx = nrows < ROWMAX ? i : (nrows - ROWMAX + i) % ROWMAX;
         /* colour class: the person, hai, or a lever/grade note (css in hai.css) */
-        const char *cls = strncmp(rows[idx], "    hai:", 8) == 0 ? "chat-hai" : strncmp(rows[idx], "you: /", 6) == 0 ? "chat-note" : strncmp(rows[idx], "you:", 4) == 0 ? "chat-you" : "chat-note";
+        const char *cls = strncmp(rows[idx], "    why:", 8) == 0 ? "chat-why" : strncmp(rows[idx], "    hai:", 8) == 0 ? "chat-hai" : strncmp(rows[idx], "you: /", 6) == 0 ? "chat-note" : strncmp(rows[idx], "you:", 4) == 0 ? "chat-you" : "chat-note";
         fprintf(o, "row_%d_text=%s\nrow_%d_cls=%s\n", i, rows[idx], i, cls);
     }
     fprintf(o, "rows_count=%d\n", shown);
     fprintf(o, "no_rows=%d\n", shown == 0 ? 1 : 0);
+    {   /* layout flags (preferences), and the Bank view: everything the active agent knows, from the core's own replay */
+        char act0[64]; hai_agent_active(pkg, act0, sizeof act0);
+        fprintf(o, "left_open=%d\nright_open=%d\nbank_on=%d\nchat_on=%d\nwhy_on=%d\n", pl, pr, pbank, !pbank, show_why);
+        fprintf(o, "left_closed=%d\nleft_cls=%s\n", !pl, pl ? "hai-left-on" : "hai-left-off");   /* the sidebar element must always exist (the layout trigger), so closing it only narrows it */
+        fprintf(o, "pad_cls=%s\n", pl && pr ? "pad-lr" : pl ? "pad-l" : pr ? "pad-r" : "pad-none");
+        fprintf(o, "tg_left_cls=%s\ntg_right_cls=%s\ntg_bank_cls=%s\ntg_why_cls=%s\n", pl ? "hai-on" : "hai-off", pr ? "hai-on" : "hai-off", pbank ? "hai-on" : "hai-off", show_why ? "hai-on" : "hai-off");
+        char dd[1200], lg[1300]; hai_data_of(pkg, act0, dd, sizeof dd); hai_active_ledger(pkg, lg, sizeof lg);
+        static char bank[65536]; int nb = 0, ncon = 0, ntau = 0, nali = 0;
+        if (hai_chat_bank(dd, lg, bank, sizeof bank) == 0) {
+            char *save = NULL;
+            for (char *ln = strtok_r(bank, "\n", &save); ln && nb < 120; ln = strtok_r(NULL, "\n", &save)) {
+                char *f[6]; int nf = 0; char *p = ln; f[nf++] = p; while (*p && nf < 6) { if (*p == '|') { *p = 0; f[nf++] = p + 1; } p++; }
+                char text[400] = "", cl[16] = "bank-note";
+                if (!strcmp(f[0], "CONCEPT") && nf >= 5) { snprintf(text, sizeof text, "meaning  %s  =  %s   (trust %s)", f[1], f[2], f[4]); snprintf(cl, sizeof cl, "bank-core"); ncon++; }
+                else if (!strcmp(f[0], "TAUGHT") && nf >= 5) { snprintf(text, sizeof text, "taught  %s  =  %s%s   (trust %s)", f[1], f[2], f[3][0] == '1' ? "   [marked]" : "", f[4]); snprintf(cl, sizeof cl, "bank-learned"); ntau++; }
+                else if (!strcmp(f[0], "ALIAS") && nf >= 3) { snprintf(text, sizeof text, "alias  %s  means the same as  %s", f[1], f[2]); snprintf(cl, sizeof cl, "bank-learned"); nali++; }
+                else if (!strcmp(f[0], "SAY") && nf >= 3) { snprintf(text, sizeof text, "answer  when you say %s:  %s", f[1], f[2]); snprintf(cl, sizeof cl, "bank-learned"); }
+                else continue;
+                fprintf(o, "bank_%d_text=%s\nbank_%d_cls=%s\n", nb, text, nb, cl); nb++;
+            }
+        }
+        fprintf(o, "bank_count=%d\nbank_title=Bank of %s: %d built-in meanings, %d taught words, %d aliases (the ledger replayed: exactly what the next reply will use)\n", nb, act0, ncon, ntau, nali);
+    }
     {   /* sidebar: the agents (each a folder with its own corpus and personality) and the active agent's sessions */
         char act[64], asess[64]; hai_agent_active(pkg, act, sizeof act); hai_session_active(pkg, act, asess, sizeof asess);
         char names[32][64]; int na = 0; snprintf(names[na++], 64, "hai");

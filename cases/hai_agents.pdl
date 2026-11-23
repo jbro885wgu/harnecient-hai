@@ -17,7 +17,7 @@ EXPECT_EXIT | 0 | send-builds
 # ---- birth ----
 RUN | $T/window/bin/hai_session | NEWAGENT curio curious | $T/window
 EXPECT_EXIT | 0 | a-curious-agent-is-born
-EXPECT_FILE | chat/agents/curio/data/concepts.pdl | its-corpus-is-its-own-copy
+EXPECT_EXISTS | chat/agents/curio/data/concepts.pdl | its-corpus-is-its-own-copy
 EXPECT_HAS | chat/agents/curio/agent.pdl | AGENT \p curio \p curious | the-agent-card-names-the-persona
 EXPECT_HAS | chat/agents/curio/data/chat_rules.pdl | RULE \p attn_high_mult \p 3 | the-persona-changed-a-rule-number
 EXPECT_HAS | chat/agents/curio/data/replies.pdl | Ooh, "{word}"! | the-persona-changed-the-voice
@@ -39,11 +39,11 @@ RUN | $T/window/bin/hai_send | $T/window | /tmp | hello
 EXPECT_OUT  | Hello! I love learning | the-curious-agent-greets-in-its-own-voice
 RUN | $T/window/bin/hai_send | $T/window | /tmp | do u like this house
 EXPECT_OUT  | Ooh, "house"! | the-curious-agent-asks-in-its-own-voice
-EXPECT_FILE | state/agents/curio/chat.ledger | its-ledger-is-under-its-own-state
-EXPECT_NOFILE | state/chat.ledger | the-original-agents-ledger-was-not-written
+EXPECT_EXISTS | window/state/agents/curio/chat.ledger | its-ledger-is-under-its-own-state
+EXPECT_NOFILE | window/state/chat.ledger | the-original-agents-ledger-was-not-written
 RUN | $T/window/bin/hai_session | AGENT hai | $T/window
 RUN | $T/window/bin/hai_send | $T/window | /tmp | hello
-EXPECT_FILE | state/chat.ledger | the-original-agent-writes-its-own-ledger
+EXPECT_EXISTS | window/state/chat.ledger | the-original-agent-writes-its-own-ledger
 RUN | grep | -c | Hello! I love | $T/window/state/chat.ledger
 EXPECT_OUT  | 0 | the-original-agent-does-not-speak-the-curious-voice
 RUN | grep | -c | ^SAID | $T/window/state/chat.ledger
@@ -89,3 +89,43 @@ EXPECT_OUT  | xx | three-quick-new-presses-leave-exactly-one-new-session
 EXPECT_OUT_LACKS | xxx | an-empty-session-is-reused-not-piled-up
 RUN | $T/window/bin/hai_send | $T/window | /tmp | the house
 EXPECT_OUT  | I remember "house"! You told me: the desktop | the-new-session-kept-what-was-taught-after-the-quick-presses
+
+# ---- the layout's controls (2026-11-23): window preferences and one-click New+ agents ----
+CASE    | controls
+SCRATCH |
+RUN | mkdir | -p | $T/window/bin | $T/window/state
+RUN | cp | -r | /home/no/Desktop/github/work/#.hai/harnecient-hai/chat | $T/chat
+RUN | rm | -rf | $T/chat/agents
+RUN | mkdir | -p | $T/chat/agents
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -I/home/no/Desktop/github/work/#.hai/harnecient-hai/ops | -o | $T/window/bin/hai_session | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/hai_session.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | session-op-builds
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -O2 | -I/home/no/Desktop/github/work/#.hai/harnecient-hai/ops | -o | $T/window/bin/hai_send | /home/no/Desktop/github/work/#.hai/harnecient-hai/window/hai_send.c | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_chat_core.c
+EXPECT_EXIT | 0 | send-builds
+RUN | $T/window/bin/hai_session | TOGGLE left | $T/window
+EXPECT_EXIT | 0 | a-toggle-is-accepted
+EXPECT_HAS | window/state/ui_prefs.txt | left=0 | the-left-column-is-now-hidden-in-the-preferences
+RUN | $T/window/bin/hai_session | TOGGLE left | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | left=1 | a-second-toggle-brings-it-back
+RUN | $T/window/bin/hai_session | TOGGLE right | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | right=0 | the-right-column-toggles-on-its-own
+EXPECT_HAS | window/state/ui_prefs.txt | left=1 | toggling-the-right-leaves-the-left-alone
+RUN | $T/window/bin/hai_session | VIEW bank | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | view=bank | the-bank-view-is-chosen
+RUN | $T/window/bin/hai_send | $T/window | /tmp | /chat
+EXPECT_HAS | window/state/ui_prefs.txt | view=chat | the-typed-chat-command-goes-back-to-the-chat
+RUN | $T/window/bin/hai_send | $T/window | /tmp | /bank
+EXPECT_HAS | window/state/ui_prefs.txt | view=bank | the-typed-bank-command-shows-the-bank
+RUN | $T/window/bin/hai_session | TOGGLE nonsense | $T/window
+EXPECT_EXIT | 4 | an-unknown-toggle-is-refused
+RUN | $T/window/bin/hai_session | NEWAGENT_AUTO curious | $T/window
+EXPECT_EXISTS | chat/agents/curious_1/data/concepts.pdl | one-click-new-makes-curious-1
+RUN | $T/window/bin/hai_session | NEWAGENT_AUTO curious | $T/window
+EXPECT_EXISTS | chat/agents/curious_2/data/concepts.pdl | the-second-click-makes-curious-2-not-a-duplicate
+RUN | $T/window/bin/hai_session | NEWAGENT_AUTO plain | $T/window
+EXPECT_EXISTS | chat/agents/agent_1/data/concepts.pdl | a-plain-agent-has-no-persona
+RUN | grep | -c | AGENT \p agent_1 \p plain | $T/chat/agents/agent_1/agent.pdl
+EXPECT_OUT  | 1 | its-card-says-plain
+RUN | $T/window/bin/hai_session | NEWAGENT_AUTO ../evil | $T/window
+EXPECT_EXIT | 4 | a-path-as-a-persona-is-refused
+RUN | $T/window/bin/hai_session | NEWAGENT_AUTO nosuchpersona | $T/window
+EXPECT_EXIT | 4 | an-unknown-persona-is-refused

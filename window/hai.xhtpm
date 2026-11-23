@@ -1,18 +1,16 @@
-<!-- hai.xhtpm - hai-cli window (W1): the hai chat transcript and state, plus a typed composer (cli_io) that runs bin/hai_send. The module is the compiled
-     hai_manager (publishes state/ui.txt from the chat ledger through the engine). Built from the
-     _template-hq shape: sidebar + panel (chrome and taskbar entry), database-window (persistent). -->
+<!-- hai.xhtpm - the hai-cli window: three columns, authored the HTML way like canvas-craft (the page is a flex row, see hai.css): a left sidebar of Sessions, a centre panel that is
+     the chat or the Bank, and a right panel of Agents with New+. Each side column has a hide button and a bottom-bar toggle brings it back (the owner prefers optional,
+     minimizable sidebars, as in rpg-edit). The module is the compiled hai_manager (state/ui.txt from the ledger); every click runs the SAME small op, hai_session, or the typed
+     sender hai_send. Shared khtpm_core_render.+x, zero renderer C. RULES: no angle brackets inside comments. -->
 <window label="hai-cli" class="hai database-window" vars="state/ui.txt">
   <module id="manager" src="bin/hai_manager"/>
-  <page name="main">
-    <sidebar id="sidebar" class="sidebar">
-      <text label="Agents" class="block-title"/>
-      <repeat count="${agents_count}" bind="agent">
-          <item id="a${agent.#}" class="${agent.cls}" label="${agent.label}"
-                action="'${PKG}/bin/hai_session' 'AGENT ${agent.name}'"/>
-        </repeat>
-      <text label="Sessions" class="block-title"/>
-      <item id="new" class="data-item" label="+ New Session" action="'${PKG}/bin/hai_session' 'NEW'"/>
-      <scrolllist class="from-top">
+  <page name="main" class="hai-cols">
+    <sidebar id="sidebar" class="hai-left ${left_cls}">
+      <item id="side-open" class="data-item" label="[+]" show="${left_closed}" action="'${PKG}/bin/hai_session' 'TOGGLE left'"/>
+      <text label="Sessions" class="block-title" show="${left_open}"/>
+      <item id="side-min" class="data-item" label="[-] hide sessions" show="${left_open}" action="'${PKG}/bin/hai_session' 'TOGGLE left'"/>
+      <item id="new" class="data-item" label="+ New Session" show="${left_open}" action="'${PKG}/bin/hai_session' 'NEW'"/>
+      <scrolllist class="from-top" show="${left_open}">
         <repeat count="${sessions_count}" bind="session">
           <item id="s${session.#}" class="${session.cls}" label="${session.label}"
                 action="'${PKG}/bin/hai_session' 'SWITCH ${session.name}'"
@@ -21,16 +19,40 @@
         </repeat>
       </scrolllist>
     </sidebar>
-    <panel id="detail" class="settings-block">
+    <panel id="detail" class="hai-mid">
       <text label="agent: ${agent}   ${state}   turns: ${turns}   ${stamp}" class="block-title"/>
-      <text label="Type a line + Enter to chat. Teach: /teach w = meaning  /alias w = concept  /say w = text  /mark w  /forget w  /pack lyfedesk  /grade 0..4.  Agents: /agent new <id> [curious|terse|scholar]  /agent <id>" class="quiet"/>
-      <scrolllist>
-          <repeat count="${rows_count}" bind="row">
-            <item id="row${row.#}" class="data-item ${row.cls}" label="${row.text}"/>
-          </repeat>
-          <text label="(no turns yet: type below)" class="quiet" show="${no_rows}"/>
-        </scrolllist>
-        <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>
+      <text label="Type a line + Enter to chat. Teach: /teach w = meaning  /alias w = concept  /say w = text  /mark w  /forget w  /pack lyfedesk  /grade 0..4.  /bank  /chat" class="quiet"/>
+      <scrolllist show="${chat_on}">
+        <repeat count="${rows_count}" bind="row">
+          <item id="row${row.#}" class="data-item ${row.cls}" label="${row.text}"/>
+        </repeat>
+        <text label="(no turns yet: type below)" class="quiet" show="${no_rows}"/>
+      </scrolllist>
+      <text label="${bank_title}" class="block-title" show="${bank_on}"/>
+      <scrolllist show="${bank_on}">
+        <repeat count="${bank_count}" bind="bk">
+          <item id="bk${bk.#}" class="data-item ${bk.cls}" label="${bk.text}"/>
+        </repeat>
+      </scrolllist>
+      <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>
     </panel>
+    <panel id="agents" class="hai-right" show="${right_open}">
+      <text label="Agents" class="block-title"/>
+      <item id="agents-min" class="data-item" label="[-] hide agents" action="'${PKG}/bin/hai_session' 'TOGGLE right'"/>
+      <repeat count="${agents_count}" bind="agent">
+        <item id="a${agent.#}" class="${agent.cls}" label="${agent.label}" action="'${PKG}/bin/hai_session' 'AGENT ${agent.name}'"/>
+      </repeat>
+      <text label="New +" class="block-title"/>
+      <item id="na-plain" class="data-item" label="+ plain" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO plain'"/>
+      <item id="na-curious" class="data-item" label="+ curious" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO curious'"/>
+      <item id="na-terse" class="data-item" label="+ terse" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO terse'"/>
+      <item id="na-scholar" class="data-item" label="+ scholar" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO scholar'"/>
+    </panel>
+    <footer id="statusbar" class="pchq-footer">
+      <item id="tg-left" class="pchq-ft skin-bar ${tg_left_cls}" label="left" action="'${PKG}/bin/hai_session' 'TOGGLE left'"/>
+      <item id="tg-right" class="pchq-ft skin-bar ${tg_right_cls}" label="right" action="'${PKG}/bin/hai_session' 'TOGGLE right'"/>
+      <item id="tg-bank" class="pchq-ft skin-bar ${tg_bank_cls}" label="bank" action="'${PKG}/bin/hai_session' 'TOGGLE bank'"/>
+      <item id="tg-why" class="pchq-ft skin-bar ${tg_why_cls}" label="why" action="'${PKG}/bin/hai_session' 'TOGGLE why'"/>
+    </footer>
   </page>
 </window>

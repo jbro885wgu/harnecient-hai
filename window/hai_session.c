@@ -148,6 +148,22 @@ int main(int argc, char **argv) {
         return strcmp(act, name) == 0 ? write_pointer(sdir, "active.txt", "main") : 0;
     }
     char st[1300]; snprintf(st, sizeof st, "%s/state", pkg);
+    if (strncmp(req, "TOGGLE ", 7) == 0 || strncmp(req, "VIEW ", 5) == 0) {          /* window preferences, never agent knowledge */
+        int vals[3] = {1, 1, 1}, bank = 0; char line[128], path[1400]; snprintf(path, sizeof path, "%s/ui_prefs.txt", st);
+        FILE *pf = fopen(path, "r");
+        if (pf) { while (fgets(line, sizeof line, pf)) { if (!strncmp(line, "left=", 5)) vals[0] = atoi(line + 5); else if (!strncmp(line, "right=", 6)) vals[1] = atoi(line + 6); else if (!strncmp(line, "why=", 4)) vals[2] = atoi(line + 4); else if (!strncmp(line, "view=bank", 9)) bank = 1; } fclose(pf); }
+        if (!strcmp(req, "TOGGLE left")) vals[0] = !vals[0]; else if (!strcmp(req, "TOGGLE right")) vals[1] = !vals[1]; else if (!strcmp(req, "TOGGLE why")) vals[2] = !vals[2];
+        else if (!strcmp(req, "TOGGLE bank")) bank = !bank; else if (!strcmp(req, "VIEW bank")) bank = 1; else if (!strcmp(req, "VIEW chat")) bank = 0; else return 4;
+        mkdir(st, 0755); char tmp[1500]; snprintf(tmp, sizeof tmp, "%s.tmp", path); FILE *o = fopen(tmp, "w"); if (!o) return 3;
+        fprintf(o, "left=%d\nright=%d\nwhy=%d\nview=%s\n", vals[0], vals[1], vals[2], bank ? "bank" : "chat"); fclose(o);
+        return rename(tmp, path) == 0 ? 0 : 3;
+    }
+    if (strncmp(req, "NEWAGENT_AUTO ", 14) == 0) {                                   /* the sidebar's New+ buttons: an id is made, nothing to type */
+        char persona[64] = ""; sscanf(req + 14, "%63s", persona); if (!hai_name_ok(persona)) return 4;
+        const char *base = strcmp(persona, "plain") == 0 ? "agent" : persona; char id[96], chk[1500];
+        for (int k = 1; k < 100; k++) { snprintf(id, sizeof id, "%s_%d", base, k); hai_data_of(pkg, id, chk, sizeof chk); strncat(chk, "/concepts.pdl", sizeof chk - strlen(chk) - 1); if (access(chk, F_OK) != 0) break; }
+        return new_agent(pkg, id, strcmp(persona, "plain") == 0 ? "" : persona);
+    }
     if (strncmp(req, "AGENT ", 6) == 0 && hai_name_ok(req + 6)) {
         if (strcmp(req + 6, "hai") != 0) { hai_data_of(pkg, req + 6, dst, sizeof dst); char chk[1500]; snprintf(chk, sizeof chk, "%s/concepts.pdl", dst); if (access(chk, F_OK) != 0) return 4; }
         return write_pointer(st, "active_agent.txt", req + 6);

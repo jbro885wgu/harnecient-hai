@@ -23,3 +23,34 @@
 /* sidebar lists: agents and sessions (the active one is highlighted) */
 .session-item   { color: #cfd8e3; }
 .session-active { color: #ffffff; background-color: #2f5f8f; }
+
+/* WHY lines under each answer, and the Bank view (built-in meanings in grey-green, what you taught in gold) */
+.chat-why     { color: #7f8c99; }
+.bank-core    { color: #8fd19e; }
+.bank-learned { color: #e0c26a; }
+.bank-note    { color: #b8a95a; }
+/* bottom bar toggles (rpg-space style) */
+.hai-footer { background-color: #101820; border-top: 1px solid #2a3a4a; }
+.hai-ft     { color: #cfd8e3; background-color: #1d2a38; }
+
+.hai-on  { color: #ffffff; background-color: #2f5f8f; }
+.hai-off { color: #7f8c99; }
+.hai-agents-ov { background-color: #2a2f36; border: 1px solid #4a5560; }
+
+/* the overlays float over the centre (rpg-edit style); the centre keeps clear of the ones that are open */
+.hai-side-ov { background-color: #2a2f36; border: 1px solid #4a5560; width: 190px; }
+.pad-l  { margin-left: 195px; }
+.pad-r  { margin-right: 195px; }
+.pad-lr { margin-left: 195px; margin-right: 195px; }
+.pad-none { margin-left: 0px; }
+
+/* the 3-column page (the canvas-craft pattern): the shared flexbox engine sizes the columns from width and flex-grow */
+.hai-cols  { display: flex; flex-direction: row; }
+.hai-left  { background-color: #161616; border: 1px solid #2a2d3a; border-color: #2a2d3a; }
+.hai-mid   { flex-grow: 3; background-color: #181818; border: 1px solid #2a2a2a; border-color: #2a2a2a; }
+.hai-right { width: 190px; background-color: #161616; border: 1px solid #2a2d3a; border-color: #2a2d3a; }
+/* footer toggles: wide enough for the label (the shared footer class clips to a letter), colour = on or off */
+.hai-on, .hai-off { width: 96px; }
+
+.hai-left-on  { width: 200px; }
+.hai-left-off { width: 40px; }
