@@ -177,17 +177,11 @@ static void l_forget(ledger_t *L, const char *word) {
     for (int i = 0; i < L->nmarked; i++) if (strcmp(L->marked[i], word) == 0) { snprintf(L->marked[i], 64, "%s", L->marked[--L->nmarked]); break; }
 }
 
-static int replay(const char *ledger, long today, ledger_t *L, const char *datadir) {
-    memset(L, 0, sizeof *L);
-    snprintf(L->state, sizeof L->state, "start");
-    L->last_graded_turn = -1;
-    if (datadir && apply_seeds(datadir, L) != 0) return -1;
-    FILE *f = fopen(ledger, "r"); if (!f) return 0;
-    char line[LINE];
-    while (fgets(line, sizeof line, f)) {
+/* One ledger line applied to the replayed state (replay() calls it per line; the viz verb calls it to look at the state after each turn). */
+static void replay_line(ledger_t *L, char *line, long today) {
         if (strncmp(line, "TURN|", 5) == 0) {
             char *fld[9]; int nf = split_keep(line, fld, 9);
-            if (nf < 8) continue;
+            if (nf < 8) return;
             L->turns++;
             snprintf(L->state, sizeof L->state, "%s", fld[5]);
             snprintf(L->last_concept, sizeof L->last_concept, "%s", fld[3]);
@@ -220,13 +214,13 @@ static int replay(const char *ledger, long today, ledger_t *L, const char *datad
             if (nf >= 3) l_forget(L, fld[2]);
         } else if (strncmp(line, "MARK|", 5) == 0) {
             char *fld[5]; int nf = split_keep(line, fld, 5);          /* MARK|unix|word|level */
-            if (nf < 4) continue;
+            if (nf < 4) return;
             int k = -1; for (int i = 0; i < L->nmarked; i++) if (strcmp(L->marked[i], fld[2]) == 0) k = i;
             if (strcmp(fld[3], "high") == 0) { if (k < 0 && L->nmarked < TMAX) snprintf(L->marked[L->nmarked++], 64, "%s", fld[2]); }
             else if (k >= 0) { for (int i = k; i + 1 < L->nmarked; i++) snprintf(L->marked[i], 64, "%s", L->marked[i + 1]); L->nmarked--; }
         } else if (strncmp(line, "GRADE|", 6) == 0) {
             char *fld[9]; int nf = split_keep(line, fld, 9);
-            if (nf < 9) continue;
+            if (nf < 9) return;
             long day = atol(fld[8]);
             if (day == today) L->grades_today++;
             L->last_graded_turn = atoi(fld[2]);
@@ -236,7 +230,16 @@ static int replay(const char *ledger, long today, ledger_t *L, const char *datad
             count_t *r = count_for(L->replies, &L->nreplies, MAXC, fld[4]);
             if (r) { r->r += rw; r->p += pu; }
         }
-    }
+}
+
+static int replay(const char *ledger, long today, ledger_t *L, const char *datadir) {
+    memset(L, 0, sizeof *L);
+    snprintf(L->state, sizeof L->state, "start");
+    L->last_graded_turn = -1;
+    if (datadir && apply_seeds(datadir, L) != 0) return -1;
+    FILE *f = fopen(ledger, "r"); if (!f) return 0;
+    char line[LINE];
+    while (fgets(line, sizeof line, f)) replay_line(L, line, today);
     fclose(f);
     return 0;
 }
@@ -666,5 +669,46 @@ int hai_chat_bank(const char *datadir, const char *ledger, char *out, size_t out
     for (int i = 0; i < L.nalias; i++) EMIT("ALIAS|%s|%s\n", L.alias[i].word, L.alias[i].concept);
     for (int i = 0; i < L.nsay; i++) EMIT("SAY|%s|%s\n", L.say[i].word, L.say[i].text);
     #undef EMIT
+    return 0;
+}
+
+int hai_chat_viz(const char *datadir, const char *ledger, char *out, size_t out_len) {
+    static concept_t cs[MAXC]; static ledger_t L;
+    int nc = load_concepts(datadir, cs, MAXC);
+    if (nc < 0) { snprintf(out, out_len, "setup missing under %s", datadir); return 2; }
+    memset(&L, 0, sizeof L); snprintf(L.state, sizeof L.state, "start"); L.last_graded_turn = -1;
+    if (apply_seeds(datadir, &L) != 0) { snprintf(out, out_len, "seed refers to an unknown concept"); return 2; }
+    size_t off = 0; out[0] = 0;
+    #define VEMIT(...) do { if (off < out_len) off += (size_t)snprintf(out + off, out_len - off, __VA_ARGS__); } while (0)
+    FILE *f = fopen(ledger, "r");
+    if (f) {
+        char line[LINE], copy[LINE];
+        while (fgets(line, sizeof line, f)) {
+            int is_turn = strncmp(line, "TURN|", 5) == 0; char cpt[64] = ""; int conf = 0;
+            if (is_turn) { snprintf(copy, sizeof copy, "%s", line); char *fld[9]; int nf = split_keep(copy, fld, 9); if (nf >= 8) { snprintf(cpt, sizeof cpt, "%s", fld[3]); conf = nf >= 9 ? atoi(fld[8]) : 0; } else is_turn = 0; }
+            replay_line(&L, line, 0);
+            if (is_turn) { VEMIT("CONF|%d|%d|%s\n", L.turns, conf, cpt); VEMIT("KNOW|%d|%d|%d|%d|%d\n", L.turns, L.ntaught, L.nalias, L.nsay, L.nmarked); }
+        }
+        fclose(f);
+    }
+    for (int c = 0; c < nc; c++) {
+        double r = 0, p = 0; for (int i = 0; i < L.nconcepts; i++) if (strcmp(L.concepts[i].id, cs[c].id) == 0) { r = L.concepts[i].r; p = L.concepts[i].p; }
+        VEMIT("TRUST|%s|%.2f|%.0f|%.0f\n", cs[c].id, weight_of(L.concepts, L.nconcepts, cs[c].id), r, p);
+    }
+    for (int i = 0; i < L.ntaught; i++) {
+        char key[96]; snprintf(key, sizeof key, "taught:%s", L.taught[i].word); double r = 0, p = 0;
+        for (int k = 0; k < L.nconcepts; k++) if (strcmp(L.concepts[k].id, key) == 0) { r = L.concepts[k].r; p = L.concepts[k].p; }
+        VEMIT("TRUST|%s|%.2f|%.0f|%.0f\n", key, weight_of(L.concepts, L.nconcepts, key), r, p);
+    }
+    {   /* calibration bins, from the same function the calib verb uses */
+        static char cal[8192];
+        if (hai_chat_calibration(datadir, ledger, cal, sizeof cal) == 0) {
+            for (char *ln = strtok(cal, "\n"); ln; ln = strtok(NULL, "\n")) {
+                int lo, hi, n, good; double rate, mc;
+                if (sscanf(ln, "BIN lo=%d hi=%d n=%d good=%d rate=%lf mean_conf=%lf", &lo, &hi, &n, &good, &rate, &mc) == 6) VEMIT("CAL|%d|%d|%d|%d|%.4f|%.4f\n", lo, hi, n, good, rate, mc);
+            }
+        }
+    }
+    #undef VEMIT
     return 0;
 }

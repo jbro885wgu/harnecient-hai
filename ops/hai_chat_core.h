@@ -28,5 +28,8 @@ int hai_chat_cmd(const char *datadir, const char *ledger, const char *verb, cons
 
 /* The bank (what this agent knows): CONCEPT / TAUGHT / ALIAS / SAY lines, see hai_chat_core.c. 0 ok, 2 setup. */
 int hai_chat_bank(const char *datadir, const char *ledger, char *out, size_t out_len);
+/* The dashboard data, one line per point, replayed from the ledger (the window draws text bars from it, the web demo draws SVG):
+ *   CONF|turn|confidence|concept   KNOW|turn|taught|aliases|says|marked (after that turn)   TRUST|id|weight|reward|punish   CAL|lo|hi|n|good|rate|mean_conf. 0 ok, 2 setup. */
+int hai_chat_viz(const char *datadir, const char *ledger, char *out, size_t out_len);
 
 #endif

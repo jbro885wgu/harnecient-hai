@@ -161,11 +161,11 @@ int main(int argc, char **argv) {
     if (strncmp(req, "TOGGLE ", 7) == 0 || strncmp(req, "VIEW ", 5) == 0) {          /* window preferences, never agent knowledge */
         int vals[3] = {1, 1, 1}, bank = 0; char line[128], path[1400]; snprintf(path, sizeof path, "%s/ui_prefs.txt", st);
         FILE *pf = fopen(path, "r");
-        if (pf) { while (fgets(line, sizeof line, pf)) { if (!strncmp(line, "left=", 5)) vals[0] = atoi(line + 5); else if (!strncmp(line, "right=", 6)) vals[1] = atoi(line + 6); else if (!strncmp(line, "why=", 4)) vals[2] = atoi(line + 4); else if (!strncmp(line, "view=bank", 9)) bank = 1; } fclose(pf); }
+        if (pf) { while (fgets(line, sizeof line, pf)) { if (!strncmp(line, "left=", 5)) vals[0] = atoi(line + 5); else if (!strncmp(line, "right=", 6)) vals[1] = atoi(line + 6); else if (!strncmp(line, "why=", 4)) vals[2] = atoi(line + 4); else if (!strncmp(line, "view=bank", 9)) bank = 1; else if (!strncmp(line, "view=viz", 8)) bank = 2; } fclose(pf); }
         if (!strcmp(req, "TOGGLE left")) vals[0] = !vals[0]; else if (!strcmp(req, "TOGGLE right")) vals[1] = !vals[1]; else if (!strcmp(req, "TOGGLE why")) vals[2] = !vals[2];
-        else if (!strcmp(req, "TOGGLE bank")) bank = !bank; else if (!strcmp(req, "VIEW bank")) bank = 1; else if (!strcmp(req, "VIEW chat")) bank = 0; else return 4;
+        else if (!strcmp(req, "TOGGLE bank")) bank = bank == 1 ? 0 : 1; else if (!strcmp(req, "TOGGLE viz")) bank = bank == 2 ? 0 : 2; else if (!strcmp(req, "VIEW bank")) bank = 1; else if (!strcmp(req, "VIEW viz")) bank = 2; else if (!strcmp(req, "VIEW chat")) bank = 0; else return 4;
         mkdir(st, 0755); char tmp[1500]; snprintf(tmp, sizeof tmp, "%s.tmp", path); FILE *o = fopen(tmp, "w"); if (!o) return 3;
-        fprintf(o, "left=%d\nright=%d\nwhy=%d\nview=%s\n", vals[0], vals[1], vals[2], bank ? "bank" : "chat"); fclose(o);
+        fprintf(o, "left=%d\nright=%d\nwhy=%d\nview=%s\n", vals[0], vals[1], vals[2], bank == 2 ? "viz" : bank == 1 ? "bank" : "chat"); fclose(o);
         return rename(tmp, path) == 0 ? 0 : 3;
     }
     if (strncmp(req, "NEWAGENT_AUTO ", 14) == 0) {                                   /* the sidebar's New+ buttons: an id is made, nothing to type */

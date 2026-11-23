@@ -115,6 +115,15 @@ RUN | $T/window/bin/hai_send | $T/window | /tmp | /chat
 EXPECT_HAS | window/state/ui_prefs.txt | view=chat | the-typed-chat-command-goes-back-to-the-chat
 RUN | $T/window/bin/hai_send | $T/window | /tmp | /bank
 EXPECT_HAS | window/state/ui_prefs.txt | view=bank | the-typed-bank-command-shows-the-bank
+RUN | $T/window/bin/hai_session | VIEW viz | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | view=viz | the-dashboard-view-is-chosen
+RUN | $T/window/bin/hai_session | TOGGLE viz | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | view=chat | toggling-the-dashboard-again-goes-back-to-the-chat
+RUN | $T/window/bin/hai_session | TOGGLE viz | $T/window
+RUN | $T/window/bin/hai_session | TOGGLE bank | $T/window
+EXPECT_HAS | window/state/ui_prefs.txt | view=bank | the-bank-tab-replaces-the-dashboard-not-both
+RUN | $T/window/bin/hai_send | $T/window | /tmp | /viz
+EXPECT_HAS | window/state/ui_prefs.txt | view=viz | the-typed-viz-command-shows-the-dashboard
 RUN | $T/window/bin/hai_session | TOGGLE nonsense | $T/window
 EXPECT_EXIT | 4 | an-unknown-toggle-is-refused
 RUN | $T/window/bin/hai_session | NEWAGENT_AUTO curious | $T/window

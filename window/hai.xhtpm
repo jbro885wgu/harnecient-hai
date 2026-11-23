@@ -9,6 +9,7 @@
       <tab id="tg-left" class="tab rp-tb ${tg_left_cls}" label="Sessions" onclick="'${PKG}/bin/hai_session' 'TOGGLE left'"/>
       <tab id="tg-right" class="tab rp-tb ${tg_right_cls}" label="Agents" onclick="'${PKG}/bin/hai_session' 'TOGGLE right'"/>
       <tab id="tg-bank" class="tab rp-tb ${tg_bank_cls}" label="Bank" onclick="'${PKG}/bin/hai_session' 'TOGGLE bank'"/>
+      <tab id="tg-viz" class="tab rp-tb ${tg_viz_cls}" label="Viz" onclick="'${PKG}/bin/hai_session' 'TOGGLE viz'"/>
       <tab id="tg-why" class="tab rp-tb ${tg_why_cls}" label="Why" onclick="'${PKG}/bin/hai_session' 'TOGGLE why'"/>
     </tabbar>
     <sidebar id="sidebar" class="hai-left ${left_cls}">
@@ -38,6 +39,11 @@
       <scrolllist show="${bank_on}">
         <repeat count="${bank_count}" bind="bk">
           <item id="bk${bk.#}" class="data-item ${bk.cls}" label="${bk.text}"/>
+        </repeat>
+      </scrolllist>
+      <scrolllist class="from-top" show="${viz_on}">
+        <repeat count="${vz_count}" bind="vz">
+          <item id="vz${vz.#}" class="data-item ${vz.cls}" label="${vz.text}"/>
         </repeat>
       </scrolllist>
       <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>

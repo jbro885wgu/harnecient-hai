@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
     char ledger[1100], data[1100], out[2048];
     hai_active_ledger(pkg, ledger, sizeof ledger);       /* the active session’s ledger ("main" = state/chat.ledger) */
     hai_active_data(pkg, data, sizeof data);                 /* the active agent’s own data (corpus, replies, rules, packs) */
-    if (strncmp(t, "/view ", 6) == 0 || strncmp(t, "/toggle ", 8) == 0 || strcmp(t, "/bank") == 0 || strcmp(t, "/chat") == 0) {   /* window preferences */
-        char req[120]; if (!strcmp(t, "/bank")) snprintf(req, sizeof req, "VIEW bank"); else if (!strcmp(t, "/chat")) snprintf(req, sizeof req, "VIEW chat");
+    if (strncmp(t, "/view ", 6) == 0 || strncmp(t, "/toggle ", 8) == 0 || strcmp(t, "/bank") == 0 || strcmp(t, "/viz") == 0 || strcmp(t, "/chat") == 0) {   /* window preferences */
+        char req[120]; if (!strcmp(t, "/bank")) snprintf(req, sizeof req, "VIEW bank"); else if (!strcmp(t, "/viz")) snprintf(req, sizeof req, "VIEW viz"); else if (!strcmp(t, "/chat")) snprintf(req, sizeof req, "VIEW chat");
         else snprintf(req, sizeof req, "%s%.100s", strncmp(t, "/view ", 6) == 0 ? "VIEW " : "TOGGLE ", t + (strncmp(t, "/view ", 6) == 0 ? 6 : 8));
         char helper[1200]; snprintf(helper, sizeof helper, "%s/bin/hai_session", pkg);
         pid_t pid = fork(); if (pid == 0) { execl(helper, "hai_session", req, pkg, (char *)NULL); _exit(127); }

@@ -8,7 +8,7 @@
  * Data: the same .pdl files as chat/data/ (copies in docs/data/; case hai_web_parity runs the C engine and this one on the same inputs
  * and requires identical output). Works in a browser (window.HaiEngine) and in node (module.exports). Command line (node docs/engine.js):
  *   turn <datadir> <ledger> <input...> | grade <datadir> <ledger> <0-4> | state <ledger> | stats <datadir> <ledger> | calib <datadir> <ledger>
- *   bank <datadir> <ledger> | why <ledger> [turn|last] | cmd <datadir> <ledger> <define|alias|say|forget|pack> <arg1> [arg2] | mark <datadir> <ledger> <word> [high|normal]
+ *   bank <datadir> <ledger> | viz <datadir> <ledger> | why <ledger> [turn|last] | cmd <datadir> <ledger> <define|alias|say|forget|pack> <arg1> [arg2] | mark <datadir> <ledger> <word> [high|normal]
  * (the same verbs, output and exit codes as the C tool hai_chat; HAI_NOW=<unix> fixes the clock for a test). */
 (function (root) {
   "use strict";
@@ -339,6 +339,29 @@
     return out;
   }
 
+  // The dashboard data, one line per point (same lines as hai_chat viz in C): CONF|turn|confidence|concept  KNOW|turn|taught|aliases|says|marked  TRUST|id|weight|reward|punish  CAL|lo|hi|n|good|rate|mean_conf.
+  function viz(data, ledger) {
+    var out = "", i, st;
+    for (i = 0; i < ledger.length; i++) {
+      if (ledger[i].indexOf("TURN|") !== 0) continue;
+      var f = splitKeep(ledger[i]);
+      if (f.length < 8) continue;
+      st = replay(ledger.slice(0, i + 1), 0, data.seeds);
+      out += "CONF|" + st.turns + "|" + (f.length >= 9 ? (parseInt(f[8], 10) || 0) : 0) + "|" + f[3] + "\n";
+      out += "KNOW|" + st.turns + "|" + st.taught.length + "|" + st.alias.length + "|" + st.say.length + "|" + st.marked.length + "\n";
+    }
+    st = replay(ledger, 0, data.seeds);
+    function tr(id) { var k = st.concepts[id] || { r: 0, p: 0 }; return "TRUST|" + id + "|" + fmt(weightOf(st.concepts, id), 2) + "|" + k.r + "|" + k.p + "\n"; }
+    data.concepts.forEach(function (c) { out += tr(c.id); });
+    st.taught.forEach(function (tt) { out += tr("taught:" + tt.word); });
+    var cal = calibration(data, ledger);
+    if (cal.code === 0) cal.text.split("\n").forEach(function (ln) {
+      var m = ln.match(/^BIN lo=(\d+) hi=(\d+) n=(\d+) good=(\d+) rate=([\d.]+) mean_conf=([\d.]+)$/);
+      if (m) out += "CAL|" + m[1] + "|" + m[2] + "|" + m[3] + "|" + m[4] + "|" + m[5] + "|" + m[6] + "\n";
+    });
+    return out;
+  }
+
   // hai_chat why: what you said and why hai answered as it did (turn number, or -1 for the last).
   function why(ledger, want) {
     var turnNo = 0, inp = "", w = "", found = false;
@@ -407,7 +430,7 @@
   }
 
   var api = { parseData: parseData, turn: turn, grade: grade, stats: stats, calibration: calibration, replay: replay, tokens: tokens,
-              mark: mark, cmd: cmd, bank: bank, why: why, send: send, fmt: fmt };
+              mark: mark, cmd: cmd, bank: bank, why: why, send: send, fmt: fmt, viz: viz };
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
     if (require.main === module) {
@@ -428,6 +451,7 @@
         else if (v === "state" && a.length === 2) { var s = replay(led(a[1]), 0, []); done({ code: 0, text: "state=" + s.state + " name=" + s.name }); }
         else if (v === "stats" && a.length === 3) done({ code: 0, text: stats(load(a[1]), led(a[2])) });
         else if (v === "calib" && a.length === 3) done(calibration(load(a[1]), led(a[2])));
+        else if (v === "viz" && a.length === 3) done({ code: 0, text: viz(load(a[1]), led(a[2])) });
         else if (v === "bank" && a.length === 3) done({ code: 0, text: bank(load(a[1]), led(a[2])) });
         else if (v === "why" && a.length >= 2) done(why(led(a[1]), (a[2] && a[2] !== "last") ? parseInt(a[2], 10) : -1));
         else if (v === "cmd" && a.length >= 5) { var d3 = load(a[1]), l3 = led(a[2]), n3 = l3.length, r3 = cmd(d3, l3, a[3], a[4], a[5] || "", now); save(a[2], n3, l3); done(r3); }

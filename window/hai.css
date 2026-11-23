@@ -71,3 +71,10 @@
 .pchq-ft.active { background-color: #2f5f8f; color: #ffffff; }
 .pchq-ft.session-active { background-color: #2f5f8f; color: #ffffff; }
 .tab-bar { width: 0px; }
+
+/* dashboard (Viz view): text-bar charts. Series colors are the validated dark pair (blue #3987e5, orange #d95926); labels stay in ink, only the bar marks are colored. */
+.viz-title { color: #e8e8e8; font-weight: bold; }
+.viz-note { color: #8a8a8a; }
+.viz-line { color: #3987e5; font-size: 16px; }
+.viz-bar { color: #3987e5; }
+.viz-bar2 { color: #d95926; }

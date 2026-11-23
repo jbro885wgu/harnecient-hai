@@ -63,6 +63,7 @@ static void read_prefs(const char *pkg, int *left, int *right, int *bank, int *w
         else if (strncmp(line, "right=", 6) == 0) *right = atoi(line + 6);
         else if (strncmp(line, "why=", 4) == 0) *why = atoi(line + 4);
         else if (strncmp(line, "view=bank", 9) == 0) *bank = 1;
+        else if (strncmp(line, "view=viz", 8) == 0) *bank = 2;   /* 0 chat, 1 bank, 2 viz */
     }
     fclose(f);
 }
@@ -162,10 +163,10 @@ static void publish(const char *pkg) {
     fprintf(o, "no_rows=%d\n", shown == 0 ? 1 : 0);
     {   /* layout flags (preferences), and the Bank view: everything the active agent knows, from the core's own replay */
         char act0[64]; hai_agent_active(pkg, act0, sizeof act0);
-        fprintf(o, "left_open=%d\nright_open=%d\nbank_on=%d\nchat_on=%d\nwhy_on=%d\n", pl, pr, pbank, !pbank, show_why);
+        fprintf(o, "left_open=%d\nright_open=%d\nbank_on=%d\nviz_on=%d\nchat_on=%d\nwhy_on=%d\n", pl, pr, pbank == 1, pbank == 2, pbank == 0, show_why);
         fprintf(o, "left_closed=%d\nleft_cls=%s\n", !pl, pl ? "hai-left-on" : "hai-left-off");   /* the sidebar element must always exist (the layout trigger), so closing it only narrows it */
         fprintf(o, "pad_cls=%s\n", pl && pr ? "pad-lr" : pl ? "pad-l" : pr ? "pad-r" : "pad-none");
-        fprintf(o, "tg_left_cls=%s\ntg_right_cls=%s\ntg_bank_cls=%s\ntg_why_cls=%s\n", pl ? "hai-on" : "hai-off", pr ? "hai-on" : "hai-off", pbank ? "hai-on" : "hai-off", show_why ? "hai-on" : "hai-off");
+        fprintf(o, "tg_left_cls=%s\ntg_right_cls=%s\ntg_bank_cls=%s\ntg_viz_cls=%s\ntg_why_cls=%s\n", pl ? "hai-on" : "hai-off", pr ? "hai-on" : "hai-off", pbank == 1 ? "hai-on" : "hai-off", pbank == 2 ? "hai-on" : "hai-off", show_why ? "hai-on" : "hai-off");
         char dd[1200], lg[1300]; hai_data_of(pkg, act0, dd, sizeof dd); hai_active_ledger(pkg, lg, sizeof lg);
         static char bank[65536]; int nb = 0, ncon = 0, ntau = 0, nali = 0;
         if (hai_chat_bank(dd, lg, bank, sizeof bank) == 0) {
@@ -183,6 +184,56 @@ static void publish(const char *pkg) {
         }
         fprintf(o, "bank_count=%d\nbank_title=Bank of %s: %d built-in meanings, %d taught words, %d aliases (the ledger replayed: exactly what the next reply will use)\n", nb, act0, ncon, ntau, nali);
     }
+    {   /* the dashboard (view=viz): text-bar charts drawn from the core own viz lines (hai_chat_viz), the same data the web demo draws as SVG */
+        char act1[64]; hai_agent_active(pkg, act1, sizeof act1);
+        char dd2[1200], lg2[1300]; hai_data_of(pkg, act1, dd2, sizeof dd2); hai_active_ledger(pkg, lg2, sizeof lg2);
+        static char vz[65536]; int nv = 0;
+        static const char *spk[8] = { "\xe2\x96\x81", "\xe2\x96\x82", "\xe2\x96\x83", "\xe2\x96\x84", "\xe2\x96\x85", "\xe2\x96\x86", "\xe2\x96\x87", "\xe2\x96\x88" };
+        #define VROW(cls_, ...) do { if (nv < 60) { char t_[420]; snprintf(t_, sizeof t_, __VA_ARGS__); fprintf(o, "vz_%d_text=%s\nvz_%d_cls=%s\n", nv, t_, nv, cls_); nv++; } } while (0)
+        #define VBAR(buf_, frac_) do { int fl_ = (int)((frac_) * 12 + 0.5); if (fl_ < 0) fl_ = 0; if (fl_ > 12) fl_ = 12; buf_[0] = 0; for (int q_ = 0; q_ < 12; q_++) strcat(buf_, q_ < fl_ ? "\xe2\x96\x88" : "\xe2\x96\x91"); } while (0)
+        if (hai_chat_viz(dd2, lg2, vz, sizeof vz) == 0) {
+            int conf[512], taught[512], nturn = 0; char names[40][96]; double tw[40]; int ntr = 0; int calb[16][4]; double calr[16][2]; int ncal = 0;
+            char *save = NULL;
+            for (char *ln = strtok_r(vz, "\n", &save); ln; ln = strtok_r(NULL, "\n", &save)) {
+                char *f[7]; int nf = 0; char *p = ln; f[nf++] = p; while (*p && nf < 7) { if (*p == '|') { *p = 0; f[nf++] = p + 1; } p++; }
+                if (!strcmp(f[0], "CONF") && nf >= 4 && nturn < 512) { conf[nturn] = atoi(f[2]); taught[nturn] = 0; nturn++; }
+                else if (!strcmp(f[0], "KNOW") && nf >= 6 && nturn > 0) taught[nturn - 1] = atoi(f[2]) + atoi(f[3]) + atoi(f[4]);
+                else if (!strcmp(f[0], "TRUST") && nf >= 5 && ntr < 40) { snprintf(names[ntr], 96, "%s", f[1]); tw[ntr] = atof(f[2]); ntr++; }
+                else if (!strcmp(f[0], "CAL") && nf >= 7 && ncal < 16) { calb[ncal][0] = atoi(f[1]); calb[ncal][1] = atoi(f[2]); calb[ncal][2] = atoi(f[3]); calb[ncal][3] = atoi(f[4]); calr[ncal][0] = atof(f[5]); calr[ncal][1] = atof(f[6]); ncal++; }
+            }
+            VROW("viz-title", "Confidence per turn (how sure hai was; the last 40 turns)");
+            if (nturn == 0) VROW("viz-note", "(no turns yet: say something, and this fills in)");
+            else {
+                char line[420] = ""; int from = nturn > 40 ? nturn - 40 : 0; long sum = 0;
+                for (int i = from; i < nturn; i++) { int lv = conf[i] * 7 / 100; if (lv < 0) lv = 0; if (lv > 7) lv = 7; strcat(line, spk[lv]); }
+                for (int i = 0; i < nturn; i++) sum += conf[i];
+                VROW("viz-line", "%s", line);
+                VROW("viz-note", "turn %d: %d%%    average %ld%%    (%d turns; a tall bar is a confident answer)", nturn, conf[nturn - 1], sum / nturn, nturn);
+            }
+            VROW("viz-title", "What hai knows over time (taught words + aliases + answers, after each turn)");
+            if (nturn == 0) VROW("viz-note", "(nothing yet)");
+            else {
+                char line[420] = ""; int from = nturn > 40 ? nturn - 40 : 0, mx = 1;
+                for (int i = from; i < nturn; i++) if (taught[i] > mx) mx = taught[i];
+                for (int i = from; i < nturn; i++) { int lv = taught[i] * 7 / mx; if (lv < 0) lv = 0; if (lv > 7) lv = 7; strcat(line, spk[lv]); }
+                VROW("viz-line", "%s", line);
+                VROW("viz-note", "now %d things taught (the tallest bar is %d)", taught[nturn - 1], mx);
+            }
+            VROW("viz-title", "Trust per meaning (1.00 = always graded good, 0.50 = never graded)");
+            for (int i = 0; i < ntr && i < 14; i++) { char bar[120]; VBAR(bar, tw[i]); VROW("viz-bar", "%-12.12s %s %.2f", names[i], bar, tw[i]); }
+            VROW("viz-title", "Calibration (stated confidence against how often you graded it good)");
+            if (ncal == 0) VROW("viz-note", "(grade replies with /grade 0 to 4 and this shows whether hai is as sure as it should be)");
+            for (int i = 0; i < ncal; i++) {
+                char b1[120], b2[120]; VBAR(b1, calr[i][1]); VBAR(b2, calr[i][0]);
+                VROW("viz-bar", "%d-%d%% said %s %.0f%%", calb[i][0], calb[i][1], b1, calr[i][1] * 100);
+                VROW("viz-bar2", "n=%d good %s %.0f%%", calb[i][2], b2, calr[i][0] * 100);
+            }
+        } else VROW("viz-note", "the dashboard data is not available (setup missing)");
+        #undef VROW
+        #undef VBAR
+        fprintf(o, "vz_count=%d\n", nv);
+    }
+
     {   /* sidebar: the agents (each a folder with its own corpus and personality) and the active agent's sessions */
         char act[64], asess[64]; hai_agent_active(pkg, act, sizeof act); hai_session_active(pkg, act, asess, sizeof asess);
         char names[32][64]; int na = 0; snprintf(names[na++], 64, "hai");
