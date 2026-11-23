@@ -8,18 +8,16 @@
       <text label="hai ${stamp}" class="quiet"/>
       <text label="${state}" class="block-title"/>
       <text label="turns = ${turns}" class="quiet"/>
-      <scrolllist>
-        <repeat count="${rows_count}" bind="row">
-          <item id="row${row.#}" class="data-item" label="${row.text}"/>
-        </repeat>
-        <text label="(no turns yet: type below)" class="quiet" show="${no_rows}"/>
-      </scrolllist>
     </sidebar>
     <panel id="detail" class="settings-block">
-      <text label="hai-cli (W1)" class="block-title"/>
-      <text label="Type a line and press Enter: one chat turn. Type /grade 0..4 to grade the last reply." class="quiet"/>
-      <text label="Each row is one ledger line: what you typed, the reply id and the confidence, or a grade." class="quiet"/>
-      <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>
+      <text label="hai-cli (W1): type a line, press Enter. /grade 0..4 grades the last reply." class="quiet"/>
+      <scrolllist>
+          <repeat count="${rows_count}" bind="row">
+            <item id="row${row.#}" class="data-item" label="${row.text}"/>
+          </repeat>
+          <text label="(no turns yet: type below)" class="quiet" show="${no_rows}"/>
+        </scrolllist>
+        <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>
     </panel>
   </page>
 </window>

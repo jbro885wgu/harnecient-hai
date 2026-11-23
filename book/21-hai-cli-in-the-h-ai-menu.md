@@ -34,3 +34,25 @@ Real result in it: "hi" went from 83% to 90% confidence after it was graded 4 (t
 - The window ledger (`window/state/chat.ledger`, gitignored) holds the recorded session.
 - The reply TEXT is not shown in the window (only id and confidence).
 - I opened tomom by mistake (section 3); a request to close it by pid was denied, so that window stays open until the owner closes it.
+
+## 7. Why the window shows no reply text, and why confidence is low (owner question 2026-11-23; RAN, checked in the ledger and code)
+Owner: "those confidence levels seem very low. but i still think it should do an attempted chat response in that open window (where the other chat happens?) or is that intentionally not done?"
+
+**The reply text is not shown because W1 stopped one step short. It was not a design decision.** Section 6 lists it under "Not done". What exists:
+- Every turn already writes its reply to the ledger: `TURN|ts|input|concept|reply|...|confidence`, for example `TURN|hey , how are u ?|greet|r_greet|...|21`. The reply field is an id (`r_greet`); the words live in `chat/data/replies.pdl` (`REPLY | r_greet | Hi. I can chat with fixed replies for now. Type help.`).
+- `window/hai_manager.c` builds the list row from the input, the reply id and the confidence only (`you: hi  ->  r_greet  (83%)`), so the person never sees the sentence hai answered. The headless command `hai_chat turn` prints the sentence; the window does not.
+- So the window is a ledger viewer with a composer, not yet a chat. The fix is small and needs no engine change: look the reply id up in `replies.pdl` and show `hai: <text>` under each `you:` row (and in the right pane for the selected row). To build, with a relay-injection check that the sentence appears on screen (a ledger check alone is not enough, per the compendium).
+
+**Why the confidence is low (by the formula, not a fault):** `confidence = round(100 x matched words / input words x concept weight)`. "hey , how are u ?" has about 5 words and only "hey" matches the greet concept, so about 20 x weight = 21%. "what should i call u ?" matched only "what" (help) = 15%. A short, exact word ("hi") scores 83% to 90%; a natural sentence scores low because most of its words are not keywords. The number is honest about how little of the sentence hai understood. It is NOT calibrated yet: with 2 grades the calibration check printed ECE 0.585 and says nothing.
+
+**Two real problems the owner's example shows (RAN):**
+1. Wrong answers get a confident-looking reply: "what should i call u ?" is answered with the help list because the word "what" is a help keyword. A reply chosen on one weak word should be shown as unsure ("I think you want help, say yes?"), not as a flat answer.
+2. When nothing matches (the fallback), the reply is only "I don't know that yet." plus a menu. The owner's idea (ask what an unknown word means, store the answer) replaces that dead end. See `16.game/presentations/HAI-RESULTS-VS-DESIRE-2026-11-23.md` and the lab notebook DIRECTION NOTE.
+
+**Next (not built):** (a) show reply text in the window; (b) low-confidence replies phrase themselves as a question; (c) the teach loop (`/mark`, "what do you mean by X?"). Done in that order, each with a relay-injection check.
+
+### 7b. FIXED the same day (RAN 2026-11-23): hai's reply is shown, and the chat is above the input
+- `window/hai_manager.c` now looks each reply id up in `chat/data/replies.pdl` (fills `{name}` from the ledger row) and publishes a `hai: <text>` row after each `you:` row; row buffer 8 to 12. Headless check on a scratch copy: 10 rows for 5 turns; a mutant with `replies.pdl` hidden gives 0 `hai:` rows.
+- `window/hai.xhtpm`: the transcript list moved from the narrow sidebar into the wide panel, above the composer (the owner's rule: "chat should be in the window above the text input"). The sidebar keeps the stamp, state and turn count.
+- Seen in the real window by relay injection: the owner's six lines show `you:` and `hai:` rows, all five turns on screen (photograph `p03-five-lines.png`; 22 of 22 relay steps pass).
+- NOT DONE: reply sentences are fixed text (by design); the low-confidence "ask, don't assert" phrasing and the teach loop are still to build. The case `window/tests/hai-window-type.pdl` still asserts the old row format (`you: ... -> r_x (N%)` still appears, so it should pass; not re-run after this change).

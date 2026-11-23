@@ -13,8 +13,30 @@
 #include <unistd.h>
 #include "hai_chat_core.h"
 
+#define ROWMAX 12
 static volatile sig_atomic_t stop = 0;
 static void on_term(int sig) { (void)sig; stop = 1; }
+
+/* Look a reply id up in <pkg>/../chat/data/replies.pdl ("REPLY | id | text"); fills {name}. Returns 1 if found. */
+static int reply_text(const char *pkg, const char *id, const char *name, char *out, size_t cap) {
+    char path[1100]; snprintf(path, sizeof path, "%s/../chat/data/replies.pdl", pkg);
+    FILE *f = fopen(path, "r"); if (!f) return 0;
+    char line[1024]; int found = 0;
+    while (fgets(line, sizeof line, f)) {
+        if (strncmp(line, "REPLY |", 7) != 0) continue;
+        char *a = line + 7; while (*a == ' ') a++;
+        char *bar = strchr(a, '|'); if (!bar) continue;
+        char *e = bar; while (e > a && e[-1] == ' ') e--;
+        if ((size_t)(e - a) != strlen(id) || strncmp(a, id, (size_t)(e - a)) != 0) continue;
+        char *t = bar + 1; while (*t == ' ') t++;
+        t[strcspn(t, "\r\n")] = 0;
+        char *nm = strstr(t, "{name}");
+        if (nm && name && name[0]) snprintf(out, cap, "%.*s%s%s", (int)(nm - t), t, name, nm + 6);
+        else snprintf(out, cap, "%s", t);
+        found = 1; break;
+    }
+    fclose(f); return found;
+}
 
 static void publish(const char *pkg) {
     char ledger[1024], ui[1024], tmp[1100], state[160];
@@ -24,7 +46,7 @@ static void publish(const char *pkg) {
     hai_chat_state(ledger, state, sizeof state);            /* "state=... name=..." */
 
     FILE *f = fopen(ledger, "r");
-    char rows[8][256]; int nrows = 0, nturns = 0;
+    char rows[ROWMAX][256]; int nrows = 0, nturns = 0;
     if (f) {
         char line[2048];
         while (fgets(line, sizeof line, f)) {
@@ -36,12 +58,14 @@ static void publish(const char *pkg) {
             while (*p && n < 12) { if (*p == '|') { *p = 0; fld[n++] = p + 1; } p++; }
             if (is_turn && n >= 5) {
                 /* TURN|ts|input|concept|reply|state_after|action|typed_name|confidence (the confidence field is missing on older rows) */
-                if (n >= 9 && fld[8][0]) snprintf(rows[nrows % 8], sizeof rows[0], "you: %s  ->  %s  (%s%%)", fld[2], fld[4], fld[8]);
-                else snprintf(rows[nrows % 8], sizeof rows[0], "you: %s  ->  %s", fld[2], fld[4]);
+                if (n >= 9 && fld[8][0]) snprintf(rows[nrows % ROWMAX], sizeof rows[0], "you: %s  ->  %s  (%s%%)", fld[2], fld[4], fld[8]);
+                else snprintf(rows[nrows % ROWMAX], sizeof rows[0], "you: %s  ->  %s", fld[2], fld[4]);
                 nrows++; nturns++;
+                char rt[200];   /* the sentence hai answered, from replies.pdl (not stored in the ledger, only its id is) */
+                if (reply_text(pkg, fld[4], n >= 8 ? fld[7] : "", rt, sizeof rt)) { snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    hai: %s", rt); nrows++; }
             } else if (is_grade && n >= 6) {
                 /* GRADE|ts|turn_no|concept|reply|grade|reward|punish|day */
-                snprintf(rows[nrows % 8], sizeof rows[0], "    graded %s  (%s)", fld[5], fld[4]);
+                snprintf(rows[nrows % ROWMAX], sizeof rows[0], "    graded %s  (%s)", fld[5], fld[4]);
                 nrows++;
             }
         }
@@ -51,10 +75,10 @@ static void publish(const char *pkg) {
     if (!o) return;
     char stamp[32]; time_t now = time(NULL); strftime(stamp, sizeof stamp, "%H:%M:%S", localtime(&now));
     fprintf(o, "stamp=%s\n%s\n", stamp, state);
-    int shown = nrows < 8 ? nrows : 8;
+    int shown = nrows < ROWMAX ? nrows : ROWMAX;
     fprintf(o, "turns=%d\n", nturns);
     for (int i = 0; i < shown; i++) {
-        int idx = nrows < 8 ? i : (nrows - 8 + i) % 8;
+        int idx = nrows < ROWMAX ? i : (nrows - ROWMAX + i) % ROWMAX;
         fprintf(o, "row_%d_text=%s\n", i, rows[idx]);
     }
     fprintf(o, "rows_count=%d\n", shown);
