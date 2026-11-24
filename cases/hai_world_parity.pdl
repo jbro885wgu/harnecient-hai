@@ -1,0 +1,344 @@
+# hai_world_parity (2026-11-23): the JavaScript port (docs/world.js) and the C op (ops/hai_world.c) run the SAME commands and must give the SAME words, the same exit codes, byte-identical ledgers
+# and BYTE-IDENTICAL FRAMES (the canvas RGBA). The expected text was recorded once from the C op (whose rules case hai_world checks) and is literal: a mutant in EITHER implementation turns a row red.
+# Steps cover every wall edge, the inner wall block, diagonals, a taken cell, teleport and bad input. Needs node and cmp. DEBT: absolute repo paths.
+RESULTS | ../results/hai_world_parity.txt
+ENV | LC_ALL | C
+
+CASE    | parity
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_world | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_world.c
+EXPECT_EXIT | 0 | c-op-builds-without-warnings
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | hai | home | 3 | 3
+EXPECT_EXIT | 0 | c-01-SPAWN-hai-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-01-SPAWN-hai-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | hai | home | 3 | 3
+EXPECT_EXIT | 0 | js-01-SPAWN-hai-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-01-SPAWN-hai-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | prof | home | 5 | 3
+EXPECT_EXIT | 0 | c-02-SPAWN-prof-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-02-SPAWN-prof-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | prof | home | 5 | 3
+EXPECT_EXIT | 0 | js-02-SPAWN-prof-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-02-SPAWN-prof-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | hai | home | 9 | 6
+EXPECT_EXIT | 3 | c-03-SPAWN-hai-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: name already used | c-03-SPAWN-hai-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | hai | home | 9 | 6
+EXPECT_EXIT | 3 | js-03-SPAWN-hai-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: name already used | js-03-SPAWN-hai-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | Bad_Name | home | 9 | 6
+EXPECT_EXIT | 3 | c-04-SPAWN-Bad_Name-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: bad name | c-04-SPAWN-Bad_Name-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | Bad_Name | home | 9 | 6
+EXPECT_EXIT | 3 | js-04-SPAWN-Bad_Name-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: bad name | js-04-SPAWN-Bad_Name-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | third | home | 5 | 3
+EXPECT_EXIT | 3 | c-05-SPAWN-third-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is taken | c-05-SPAWN-third-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | third | home | 5 | 3
+EXPECT_EXIT | 3 | js-05-SPAWN-third-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is taken | js-05-SPAWN-third-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | third | home | 0 | 3
+EXPECT_EXIT | 3 | c-06-SPAWN-third-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is a wall | c-06-SPAWN-third-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | third | home | 0 | 3
+EXPECT_EXIT | 3 | js-06-SPAWN-third-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is a wall | js-06-SPAWN-third-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | third | home | 7 | 4
+EXPECT_EXIT | 3 | c-07-SPAWN-third-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is a wall | c-07-SPAWN-third-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | third | home | 7 | 4
+EXPECT_EXIT | 3 | js-07-SPAWN-third-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is a wall | js-07-SPAWN-third-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | third | garden | 7 | 4
+EXPECT_EXIT | 0 | c-08-SPAWN-third-garden-exit
+EXPECT_OUT_IS | ok SPAWN | c-08-SPAWN-third-garden-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | third | garden | 7 | 4
+EXPECT_EXIT | 0 | js-08-SPAWN-third-garden-exit
+EXPECT_OUT_IS | ok SPAWN | js-08-SPAWN-third-garden-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | 1 | 0
+EXPECT_EXIT | 0 | c-09-MOVE-hai-1-exit
+EXPECT_OUT_IS | ok MOVE | c-09-MOVE-hai-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | 1 | 0
+EXPECT_EXIT | 0 | js-09-MOVE-hai-1-exit
+EXPECT_OUT_IS | ok MOVE | js-09-MOVE-hai-1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | 1 | 0
+EXPECT_EXIT | 3 | c-10-MOVE-hai-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: another agent is in the way | c-10-MOVE-hai-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | 1 | 0
+EXPECT_EXIT | 3 | js-10-MOVE-hai-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: another agent is in the way | js-10-MOVE-hai-1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | 0 | 5
+EXPECT_EXIT | 3 | c-11-MOVE-hai-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: one step only | c-11-MOVE-hai-0-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | 0 | 5
+EXPECT_EXIT | 3 | js-11-MOVE-hai-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: one step only | js-11-MOVE-hai-0-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | nobody | 1 | 0
+EXPECT_EXIT | 3 | c-12-MOVE-nobody-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: no such agent | c-12-MOVE-nobody-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | nobody | 1 | 0
+EXPECT_EXIT | 3 | js-12-MOVE-nobody-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: no such agent | js-12-MOVE-nobody-1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | 0 | 1
+EXPECT_EXIT | 0 | c-13-MOVE-hai-0-exit
+EXPECT_OUT_IS | ok MOVE | c-13-MOVE-hai-0-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | 0 | 1
+EXPECT_EXIT | 0 | js-13-MOVE-hai-0-exit
+EXPECT_OUT_IS | ok MOVE | js-13-MOVE-hai-0-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 0 | c-14-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | c-14-MOVE-hai--1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 0 | js-14-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | js-14-MOVE-hai--1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 0 | c-15-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | c-15-MOVE-hai--1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 0 | js-15-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | js-15-MOVE-hai--1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 0 | c-16-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | c-16-MOVE-hai--1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 0 | js-16-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | js-16-MOVE-hai--1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 3 | c-17-MOVE-hai--1-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | c-17-MOVE-hai--1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 3 | js-17-MOVE-hai--1-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | js-17-MOVE-hai--1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | 0 | 0
+EXPECT_EXIT | 3 | c-18-MOVE-hai-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: one step only | c-18-MOVE-hai-0-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | 0 | 0
+EXPECT_EXIT | 3 | js-18-MOVE-hai-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: one step only | js-18-MOVE-hai-0-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | 1 | 1
+EXPECT_EXIT | 0 | c-19-MOVE-hai-1-exit
+EXPECT_OUT_IS | ok MOVE | c-19-MOVE-hai-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | 1 | 1
+EXPECT_EXIT | 0 | js-19-MOVE-hai-1-exit
+EXPECT_OUT_IS | ok MOVE | js-19-MOVE-hai-1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | hai | -1 | -1
+EXPECT_EXIT | 0 | c-20-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | c-20-MOVE-hai--1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | hai | -1 | -1
+EXPECT_EXIT | 0 | js-20-MOVE-hai--1-exit
+EXPECT_OUT_IS | ok MOVE | js-20-MOVE-hai--1-words
+RUN | $T/hai_world | do | $T/c.ledger | TELEPORT | prof | garden | 2 | 2
+EXPECT_EXIT | 0 | c-21-TELEPORT-prof-garden-exit
+EXPECT_OUT_IS | ok TELEPORT | c-21-TELEPORT-prof-garden-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | TELEPORT | prof | garden | 2 | 2
+EXPECT_EXIT | 0 | js-21-TELEPORT-prof-garden-exit
+EXPECT_OUT_IS | ok TELEPORT | js-21-TELEPORT-prof-garden-words
+RUN | $T/hai_world | do | $T/c.ledger | TELEPORT | prof | garden | 9 | 6
+EXPECT_EXIT | 0 | c-22-TELEPORT-prof-garden-exit
+EXPECT_OUT_IS | ok TELEPORT | c-22-TELEPORT-prof-garden-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | TELEPORT | prof | garden | 9 | 6
+EXPECT_EXIT | 0 | js-22-TELEPORT-prof-garden-exit
+EXPECT_OUT_IS | ok TELEPORT | js-22-TELEPORT-prof-garden-words
+RUN | $T/hai_world | do | $T/c.ledger | TELEPORT | ghost | garden | 3 | 3
+EXPECT_EXIT | 3 | c-23-TELEPORT-ghost-garden-exit
+EXPECT_OUT_IS | REFUSED TELEPORT: no such agent | c-23-TELEPORT-ghost-garden-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | TELEPORT | ghost | garden | 3 | 3
+EXPECT_EXIT | 3 | js-23-TELEPORT-ghost-garden-exit
+EXPECT_OUT_IS | REFUSED TELEPORT: no such agent | js-23-TELEPORT-ghost-garden-words
+RUN | $T/hai_world | do | $T/c.ledger | TELEPORT | prof | garden | 9 | 6
+EXPECT_EXIT | 3 | c-24-TELEPORT-prof-garden-exit
+EXPECT_OUT_IS | REFUSED TELEPORT: that cell is taken | c-24-TELEPORT-prof-garden-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | TELEPORT | prof | garden | 9 | 6
+EXPECT_EXIT | 3 | js-24-TELEPORT-prof-garden-exit
+EXPECT_OUT_IS | REFUSED TELEPORT: that cell is taken | js-24-TELEPORT-prof-garden-words
+RUN | $T/hai_world | do | $T/c.ledger | TELEPORT | prof | Bad | garden | 9 | 6
+EXPECT_EXIT | 3 | c-25-TELEPORT-prof-Bad-exit
+EXPECT_OUT_IS | REFUSED TELEPORT: bad page name | c-25-TELEPORT-prof-Bad-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | TELEPORT | prof | Bad | garden | 9 | 6
+EXPECT_EXIT | 3 | js-25-TELEPORT-prof-Bad-exit
+EXPECT_OUT_IS | REFUSED TELEPORT: bad page name | js-25-TELEPORT-prof-Bad-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | a1 | home | 14 | 8
+EXPECT_EXIT | 0 | c-26-SPAWN-a1-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-26-SPAWN-a1-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | a1 | home | 14 | 8
+EXPECT_EXIT | 0 | js-26-SPAWN-a1-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-26-SPAWN-a1-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | a2 | home | 15 | 8
+EXPECT_EXIT | 3 | c-27-SPAWN-a2-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is a wall | c-27-SPAWN-a2-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | a2 | home | 15 | 8
+EXPECT_EXIT | 3 | js-27-SPAWN-a2-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: that cell is a wall | js-27-SPAWN-a2-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | short | home | 3
+EXPECT_EXIT | 3 | c-28-SPAWN-short-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: missing arguments | c-28-SPAWN-short-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | short | home | 3
+EXPECT_EXIT | 3 | js-28-SPAWN-short-home-exit
+EXPECT_OUT_IS | REFUSED SPAWN: missing arguments | js-28-SPAWN-short-home-words
+RUN | $T/hai_world | do | $T/c.ledger | JUMP | hai | 1 | 1
+EXPECT_EXIT | 3 | c-29-JUMP-hai-1-exit
+EXPECT_OUT_IS | REFUSED JUMP: unknown verb | c-29-JUMP-hai-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | JUMP | hai | 1 | 1
+EXPECT_EXIT | 3 | js-29-JUMP-hai-1-exit
+EXPECT_OUT_IS | REFUSED JUMP: unknown verb | js-29-JUMP-hai-1-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | rt | home | 14 | 5
+EXPECT_EXIT | 0 | c-30-SPAWN-rt-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-30-SPAWN-rt-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | rt | home | 14 | 5
+EXPECT_EXIT | 0 | js-30-SPAWN-rt-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-30-SPAWN-rt-home-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | rt | 1 | 0
+EXPECT_EXIT | 3 | c-31-MOVE-rt-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | c-31-MOVE-rt-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | rt | 1 | 0
+EXPECT_EXIT | 3 | js-31-MOVE-rt-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | js-31-MOVE-rt-1-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | tp | home | 5 | 1
+EXPECT_EXIT | 0 | c-32-SPAWN-tp-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-32-SPAWN-tp-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | tp | home | 5 | 1
+EXPECT_EXIT | 0 | js-32-SPAWN-tp-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-32-SPAWN-tp-home-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | tp | 0 | -1
+EXPECT_EXIT | 3 | c-33-MOVE-tp-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | c-33-MOVE-tp-0-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | tp | 0 | -1
+EXPECT_EXIT | 3 | js-33-MOVE-tp-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | js-33-MOVE-tp-0-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | bt | home | 5 | 8
+EXPECT_EXIT | 0 | c-34-SPAWN-bt-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-34-SPAWN-bt-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | bt | home | 5 | 8
+EXPECT_EXIT | 0 | js-34-SPAWN-bt-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-34-SPAWN-bt-home-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | bt | 0 | 1
+EXPECT_EXIT | 3 | c-35-MOVE-bt-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | c-35-MOVE-bt-0-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | bt | 0 | 1
+EXPECT_EXIT | 3 | js-35-MOVE-bt-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | js-35-MOVE-bt-0-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | blk | home | 7 | 3
+EXPECT_EXIT | 0 | c-36-SPAWN-blk-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-36-SPAWN-blk-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | blk | home | 7 | 3
+EXPECT_EXIT | 0 | js-36-SPAWN-blk-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-36-SPAWN-blk-home-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | blk | 0 | 1
+EXPECT_EXIT | 3 | c-37-MOVE-blk-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | c-37-MOVE-blk-0-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | blk | 0 | 1
+EXPECT_EXIT | 3 | js-37-MOVE-blk-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | js-37-MOVE-blk-0-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | blk2 | home | 8 | 3
+EXPECT_EXIT | 0 | c-38-SPAWN-blk2-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-38-SPAWN-blk2-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | blk2 | home | 8 | 3
+EXPECT_EXIT | 0 | js-38-SPAWN-blk2-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-38-SPAWN-blk2-home-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | blk2 | 0 | 1
+EXPECT_EXIT | 3 | c-39-MOVE-blk2-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | c-39-MOVE-blk2-0-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | blk2 | 0 | 1
+EXPECT_EXIT | 3 | js-39-MOVE-blk2-0-exit
+EXPECT_OUT_IS | REFUSED MOVE: a wall is in the way | js-39-MOVE-blk2-0-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | blk | 1 | 0
+EXPECT_EXIT | 3 | c-40-MOVE-blk-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: another agent is in the way | c-40-MOVE-blk-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | blk | 1 | 0
+EXPECT_EXIT | 3 | js-40-MOVE-blk-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: another agent is in the way | js-40-MOVE-blk-1-words
+RUN | $T/hai_world | do | $T/c.ledger | MOVE | blk | 1 | 0
+EXPECT_EXIT | 3 | c-41-MOVE-blk-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: another agent is in the way | c-41-MOVE-blk-1-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | MOVE | blk | 1 | 0
+EXPECT_EXIT | 3 | js-41-MOVE-blk-1-exit
+EXPECT_OUT_IS | REFUSED MOVE: another agent is in the way | js-41-MOVE-blk-1-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | gr | garden | 14 | 5
+EXPECT_EXIT | 0 | c-42-SPAWN-gr-garden-exit
+EXPECT_OUT_IS | ok SPAWN | c-42-SPAWN-gr-garden-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | gr | garden | 14 | 5
+EXPECT_EXIT | 0 | js-42-SPAWN-gr-garden-exit
+EXPECT_OUT_IS | ok SPAWN | js-42-SPAWN-gr-garden-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | pa4 | home | 10 | 2
+EXPECT_EXIT | 0 | c-43-SPAWN-pa4-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-43-SPAWN-pa4-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | pa4 | home | 10 | 2
+EXPECT_EXIT | 0 | js-43-SPAWN-pa4-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-43-SPAWN-pa4-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | pa6 | home | 11 | 2
+EXPECT_EXIT | 0 | c-44-SPAWN-pa6-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-44-SPAWN-pa6-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | pa6 | home | 11 | 2
+EXPECT_EXIT | 0 | js-44-SPAWN-pa6-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-44-SPAWN-pa6-home-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | pa7 | home | 12 | 2
+EXPECT_EXIT | 0 | c-45-SPAWN-pa7-home-exit
+EXPECT_OUT_IS | ok SPAWN | c-45-SPAWN-pa7-home-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | pa7 | home | 12 | 2
+EXPECT_EXIT | 0 | js-45-SPAWN-pa7-home-exit
+EXPECT_OUT_IS | ok SPAWN | js-45-SPAWN-pa7-home-words
+RUN | cmp | $T/c.ledger | $T/js.ledger
+EXPECT_EXIT | 0 | the-two-ledgers-are-byte-identical
+RUN | $T/hai_world | dump | $T/js.ledger
+EXPECT_OUT_IS | hai home 1 4\nprof garden 9 6\nthird garden 7 4\na1 home 14 8\nrt home 14 5\ntp home 5 1\nbt home 5 8\nblk home 7 3\nblk2 home 8 3\ngr garden 14 5\npa4 home 10 2\npa6 home 11 2\npa7 home 12 2 | c-replays-the-js-ledger-same-dump
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | dump | $T/c.ledger
+EXPECT_OUT_IS | hai home 1 4\nprof garden 9 6\nthird garden 7 4\na1 home 14 8\nrt home 14 5\ntp home 5 1\nbt home 5 8\nblk home 7 3\nblk2 home 8 3\ngr garden 14 5\npa4 home 10 2\npa6 home 11 2\npa7 home 12 2 | js-replays-the-c-ledger-same-dump
+RUN | $T/hai_world | pages | $T/js.ledger
+EXPECT_OUT_IS | home\ngarden | c-replays-the-js-ledger-same-pages
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | pages | $T/c.ledger
+EXPECT_OUT_IS | home\ngarden | js-replays-the-c-ledger-same-pages
+RUN | $T/hai_world | frame | $T/c.ledger | home | $T/fc_home_hai | hai
+EXPECT_EXIT | 0 | c-frame-home_hai-written
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/js.ledger | home | $T/fj_home_hai | hai
+EXPECT_EXIT | 0 | js-frame-home_hai-written
+RUN | cmp | $T/fc_home_hai.raw | $T/fj_home_hai.raw
+EXPECT_EXIT | 0 | frame-home_hai-is-byte-identical
+RUN | cmp | $T/fc_home_hai.receipt.txt | $T/fj_home_hai.receipt.txt
+EXPECT_EXIT | 0 | receipt-home_hai-is-identical
+RUN | $T/hai_world | frame | $T/c.ledger | home | $T/fc_home_prof | prof
+EXPECT_EXIT | 0 | c-frame-home_prof-written
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/js.ledger | home | $T/fj_home_prof | prof
+EXPECT_EXIT | 0 | js-frame-home_prof-written
+RUN | cmp | $T/fc_home_prof.raw | $T/fj_home_prof.raw
+EXPECT_EXIT | 0 | frame-home_prof-is-byte-identical
+RUN | cmp | $T/fc_home_prof.receipt.txt | $T/fj_home_prof.receipt.txt
+EXPECT_EXIT | 0 | receipt-home_prof-is-identical
+RUN | $T/hai_world | frame | $T/c.ledger | garden | $T/fc_garden_prof | prof
+EXPECT_EXIT | 0 | c-frame-garden_prof-written
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/js.ledger | garden | $T/fj_garden_prof | prof
+EXPECT_EXIT | 0 | js-frame-garden_prof-written
+RUN | cmp | $T/fc_garden_prof.raw | $T/fj_garden_prof.raw
+EXPECT_EXIT | 0 | frame-garden_prof-is-byte-identical
+RUN | cmp | $T/fc_garden_prof.receipt.txt | $T/fj_garden_prof.receipt.txt
+EXPECT_EXIT | 0 | receipt-garden_prof-is-identical
+RUN | $T/hai_world | frame | $T/c.ledger | garden | $T/fc_garden_none
+EXPECT_EXIT | 0 | c-frame-garden_none-written
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/js.ledger | garden | $T/fj_garden_none
+EXPECT_EXIT | 0 | js-frame-garden_none-written
+RUN | cmp | $T/fc_garden_none.raw | $T/fj_garden_none.raw
+EXPECT_EXIT | 0 | frame-garden_none-is-byte-identical
+RUN | cmp | $T/fc_garden_none.receipt.txt | $T/fj_garden_none.receipt.txt
+EXPECT_EXIT | 0 | receipt-garden_none-is-identical
+RUN | $T/hai_world | frame | $T/c.ledger | home | $T/fc_home_none
+EXPECT_EXIT | 0 | c-frame-home_none-written
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/js.ledger | home | $T/fj_home_none
+EXPECT_EXIT | 0 | js-frame-home_none-written
+RUN | cmp | $T/fc_home_none.raw | $T/fj_home_none.raw
+EXPECT_EXIT | 0 | frame-home_none-is-byte-identical
+RUN | cmp | $T/fc_home_none.receipt.txt | $T/fj_home_none.receipt.txt
+EXPECT_EXIT | 0 | receipt-home_none-is-identical
+RUN | $T/hai_world | frame | $T/c.ledger | nowhere | $T/fc_nowhere_x | x
+EXPECT_EXIT | 0 | c-frame-nowhere_x-written
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/js.ledger | nowhere | $T/fj_nowhere_x | x
+EXPECT_EXIT | 0 | js-frame-nowhere_x-written
+RUN | cmp | $T/fc_nowhere_x.raw | $T/fj_nowhere_x.raw
+EXPECT_EXIT | 0 | frame-nowhere_x-is-byte-identical
+RUN | cmp | $T/fc_nowhere_x.receipt.txt | $T/fj_nowhere_x.receipt.txt
+EXPECT_EXIT | 0 | receipt-nowhere_x-is-identical
+RUN | od | -An | -tx1 | -j | 0 | -N | 3 | $T/fj_home_hai.raw
+EXPECT_OUT | 5c 62 70 | the-js-frame-has-a-wall-pixel
+RUN | wc | -c | $T/fj_home_hai.raw
+EXPECT_OUT | 655360 | the-js-frame-is-512-by-320-by-4-bytes
+RUN | od | -An | -tx1 | -j | 295104 | -N | 4 | $T/fj_home_hai.raw
+EXPECT_OUT | f0 82 be ff | the-js-frame-draws-hai-in-its-own-colour
