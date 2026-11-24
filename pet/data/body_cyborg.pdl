@@ -1,8 +1,0 @@
-# body_cyborg.pdl - a cyborg (book 26): both kinds of need and both kinds of items; rates are a little lower because each system carries half the load.
-BODY|cyborg
-RATE|hunger|6|60
-RATE|drain|5|60
-USE|food.apple|eat|hunger|-40
-USE|food.bread|eat|hunger|-60
-USE|cell.small|charge|drain|-50
-USE|cell.full|charge|drain|-100
