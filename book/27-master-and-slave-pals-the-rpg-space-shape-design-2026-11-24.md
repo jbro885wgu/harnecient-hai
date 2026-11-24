@@ -1,0 +1,39 @@
+# 27. Master and slave pals, the rpg-space shape, and what "acceptable" means for hai-pal in rpg-edit (DESIGN, 2026-11-24)
+
+**DESIGN, except section 2 (READ and OBS, labelled).** Labels: **BUILT**, **READ** (file read today), **OBS** (run or seen today), **DESIGN**, **OPEN** (owner decides), **NOT VERIFIED**.
+
+## 0. Owner's words (2026-11-24), kept because the build must match them
+> "do u see how rpg-space has pals (petslike) it can be just like that, and the pets chat with each other as well, which is why for now we may stick to only 1 or 2 pets, a master and a slave?"
+> (pasted by the owner) *"first 'pal' in 'pokeballs' should 'control other pets and be the one u talk 2 as interface and 'doesn't fight' its treated as master, not one of the slaves, u are its master but its supposed to be almost as if user doesn't exist, master should really be the 'user's hands and will'"*
+> Earlier the same day: *"i would like 'pals' on the left sidebar instead of palettes"*, and: *"let me know when rpg-edit hai-pal is at an acceptable level."*
+The pasted quote was searched for in the house docs and is **not** there (only "Party of 6 ... Battle uses first living Actor; Items 'Pokeball' later", `08-roadmap/design-docs/PIECECRAFT-HQ-GAME-EDITOR-AND-PLAY.md` lines 788 and 790). Treat it as new owner direction.
+
+## 1. The model (DESIGN)
+- **Two pals first: one master, one slave.** More later; the model must not break at 2, 3 or 6 (the house party is 6).
+- **The master is the FIRST pal of the party** ("the first pal in the pokeballs"). It is **the interface**: the one the human talks to. It **does not fight** (it is not one of the slaves; in the house a battle uses the first living actor, so "never fights" is a rule row for the master, not an accident). It **controls the other pets**.
+- **The master is the user's hands and will.** The human gives intent in words; the master turns it into verbs on the slaves (and on itself where it may). It acts "almost as if the user does not exist": it carries on with the user's standing wishes without being told each step, and the human steers by talking to it, not by driving slaves by hand. Every action it takes is a ledger row with the actor `master` (so what it did on the user's behalf can be read, graded and undone), and its permissions are the settings of book 25 section 4 (hard rules, hand-tuned biases, permission growth).
+- **The slave** does the body work (walk, fetch, plant, carry ...). It takes orders from the master, may be taught words by the master, and is graded like any hai agent.
+- **The pals chat with each other.** Pal-to-pal speech is a ledger row `SAY|from|to|text`; each pal answers from its own bank (each is a hai agent folder, so it answers with its own corpus and trust weights and leaves a WHY row). The house already has a pet-to-pet channel (see section 2), shipped OFF; hai-pal's own channel is rows in its ledger so it is replayable and visible in the Viz tab.
+- **Relation to book 25 section 7 (the main agent).** Book 25 said hai-cli is the entity in slot 1, **not embodied**, with the application-level memory. The owner's master is a pal of the party. **OPEN (owner):** are they the same entity (the master has a body on the map but never fights) or two roles (hai-cli = the app-level memory agent with no body; the master = party slot 1 with a body)? **Default I will build:** the master has a body, never fights, and holds the global memory rows (book 25 section 7); a user who prefers a CLI-only experience still gets the master as a text interface with no map.
+
+## 2. What the house already has (READ + OBS 2026-11-24)
+- **A party of named pals as data:** `@.apps/rpg-space/party.pdl` rows `PET | name | sheet | index | art id | letter | red | green | blue | spawn x | spawn y` (rpg-space has Ember, Glacine, Murmur, Solvent); `@.apps/rpg-edit-hq/pals.pdl` appends more (`PAL | id | name | picture index`). The editor header has a **Pals** cell (nav 5) listing the party, and the left slot has a **pets bar** ("the entities of the world", `layouts.pdl` `BAR | pets | side_left | left | edit,play | edit=off,play=on | left`).
+- **The left slot is shared by bars** in an exclusive group: `BAR | palettes | side_pal | left | edit | on | left` and the pets bar. `ui_mode_op` (`&.widgits/_shared-lib/ops/ui_mode_op.c`) reads `BAR` rows from layouts files (`--bars <layouts.pdl>`, several allowed) and flips `sides.txt` keys; bars with the same slot and group are exclusive, the first that would be on wins. Owner decision 2026-11-07 (quoted in that file): a book declares its bars in its own `layouts.pdl`. The generated books ship an empty `layouts.pdl`.
+- **Pets talk to each other on the game clock:** `@.apps/rpg-edit-hq/net_say.pdl` (and the `pet_say` clock event in `time.pdl`: `AT | pet_say | +30m | every:30min`) lets `PER_TICK` pets speak per firing, round-robin, **never the controlled one**, in an IRC room `pets`; shipped OFF (`ENABLED | 0`), driven by `ops/pet_net_say.c`.
+- **OBS:** the live editor opened with hai-pal as a book (book 26 section 10 and the house doc). Its left bar showed **palettes** (Canvas-Craft, My Palettes, ...), not pals.
+- **NOT VERIFIED:** whether the board reads the OPEN BOOK's `layouts.pdl` or only the editor's own; where the pets bar gets its list (the editor's `party.pdl`, not the book's); whether a book can supply its own party. These three decide how much of "pals on the left" is data and how much needs a small change in the shared board code (which the house rules forbid for per-project reasons, so it would have to be generic).
+
+## 3. What "acceptable" means for hai-pal in rpg-edit (the checklist the owner asked for; DESIGN, each item needs a check that can fail and a frame opened by eye)
+1. **Pals on the left sidebar instead of palettes** when the hai-pal book is open, in edit and in play, with the master first and marked as master. (Data first: the book's `layouts.pdl`; the list comes from the book's own pals, not the editor's four.)
+2. **Master and one slave on the map** as figures at the cells the ledger says, in their colours; the master never walks into a fight (there is none yet) and is shown first in the list.
+3. **Talk to the master** in the right chat bar (the editor has one) and see it answer from its own bank with the WHY line; **the master orders the slave** and the slave's figure moves (ledger rows by actor `master`).
+4. **The pals speak to each other**, visible as rows and in the chat, switchable off (a rate of 0 or an ENABLED row).
+5. **Play starts the agents' loop** (a `GAME | driver` row), Stop pauses it, and a Play press never changes the user's saved book.
+6. **The book is conformant** (`book_check` A1 to A10 and B1 to B4 pass) so it is a citizen of the page file, not a skin.
+7. **Every rule is an op behind an event page** (blueprintz can show it); the world rows are the house EVENT shape (owner choice 2026-11-24).
+8. **Both entry points** (standalone `hai-cli` and the book) open the same session and give the same world; one case replays one ledger through both.
+9. **A real frame of the live window for each of 1 to 5**, opened and described, with the user's saved state restored by hash afterwards.
+Until these pass, hai-pal is a **first slice** (book 26 section 10 and the house doc section 10), not "acceptable". I will say which items pass when I report.
+
+## 4. Order of work (DESIGN)
+(a) the left bar as pals via data (find out first whether the book's layouts file is read: a read of the board's loader plus a scratch test, then the live frame); (b) a book-owned party with master and slave; (c) the world rows moved to the house EVENT shape and wired as event pages; (d) the Play driver; (e) master orders and pal-to-pal speech; (f) conformance; (g) the same session in the standalone window; (h) the web pet and the video, as the tracker says.
