@@ -49,3 +49,17 @@ The web demo gets: one room with the pet drawn on a grid (the same frame idea as
 - **Opt-in body layer (later):** a small part tree per pet as `NODE` rows (`mouth`, `stomach`, `gut`, `lungs`, `heart`, `brain`), checked by `tree_lint`. Eating moves a food item mouth to stomach to gut over `digest` events (minutes of game time), producing energy and then waste; `lungs` give breath; a missing or damaged part changes what the pet can do. Each stage is an event row; the part tree is data, so another game can swap in a different body.
 - **Why it fits teaching:** "digest", "waste", "breathe" become concepts with meanings and weights like "eat", so the pet can be taught to use the right verb ("go" / "clean up") when its waste level is high, and a person can watch the chain in the Viz tab.
 - **OPEN (owner):** (a) is waste visible in the world (an entity on the map the user can clean, which can feed a plant, closing the farm loop) or only a number? (b) does a sick or full-of-waste pet only get sad, or can it fall ill? (c) is the part-tree layer in the first web version or later? My defaults: visible waste entity that fertilises a plant; sad not ill; part tree later.
+
+## 8. Body type: organic or robot (owner 2026-11-23: "we can try both at first"; DESIGN)
+A body type is DATA, one file per type (`body_organic.pdl`, `body_robot.pdl`), chosen when the pet is born and recorded as a row; the same core, verbs and ledger serve both, so nothing is hard-coded per type (the opt-in fidelity rule of section 7). A type names: its **needs** (with rates), the **items that satisfy each need**, its **parts** (the optional part tree), and its **waste**.
+| | organic | robot |
+|---|---|---|
+| main need | `hunger` (rises with time) | `battery` (falls with time and with moving) |
+| what restores it | food items (`USE\|item\|eat\|hunger\|-40`) | power items (a charged cell, a charging pad entity, fuel) |
+| second need | `waste` (rises when it eats, falls when it "goes") | `heat` (rises when it moves, falls when it rests) |
+| third need | `breath` (fine on land by default) | `wear` (rises with use, falls with repair) |
+| farm loop | seed, water, plant, harvest, eat | plant, harvest, **press into fuel** (a recipe), refuel; or place a solar panel entity |
+| parts (later layer) | mouth, stomach, gut, lungs, heart, brain | power cell, motor, sensors, cooling, core |
+| "cooking" | recipes make better food | recipes make better cells |
+Both types share the teach loop, so "feed", "charge", "rest" are words the user teaches and grades. The needs of a type are rows, so a user can switch one off (rate 0) or switch every need off. The two types must give the SAME result for the same verbs on the shared parts (walk, pick up, create an entity); what differs is only which needs tick and what an item does when used. **Case:** one case runs the same script of verbs on an organic and a robot pet and checks the shared outcomes are equal and the type-specific ones differ in exactly the data-named way; a mutant that swaps the two files must turn it red.
+**OPEN (owner):** (a) is the type chosen at birth only, or can a pet be rebuilt from one into the other (the terumon design has forms and shapeshift; a rebuild would be a row and a cost)? (b) do robots get a charging pad on the map for free, or must the user make one? (c) can the two types live in one session and share the farm? Defaults: chosen at birth only; the user makes the pad; yes, one shared world.
