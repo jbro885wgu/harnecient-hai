@@ -9,3 +9,37 @@ Status: **runs, and learns what you teach it.** It asks about words it does not 
 - Teach it: `/teach word = meaning`, `/alias word = concept`, `/say word = text`, `/mark word`, `/pack lyfedesk`, `/grade 0` to `/grade 4`; see `/bank` (what it knows) and `/why` (why it answered).
 - Licence: pending the owner's choice (source-available, read and run for non-commercial use). See `LICENSE` once added.
 - Docs: `book/00-INDEX.md`.
+
+## The pet (proof of concept, 2026-11-23)
+
+![hai pet proof of concept: body types as data, checked against the house needs op, ported to JavaScript](docs/media/hai-pet-proof.gif)
+
+A pet whose **body is data**: an organic body, a robot body or a cyborg, each one small file (`pet/data/body_*.pdl`) that says which needs rise, how fast, and which items satisfy them. The same code runs every body; a weight (0 to 40 tenths) speeds a need up, slows it down, or switches it off. Everything the pet is comes from rows in one ledger, so replaying the rows gives exactly the same pet. Every slide above is a real run, not a mock-up.
+
+| What | Where | Checked by |
+|---|---|---|
+| the needs core in C | `ops/hai_pet.c`, data in `pet/data/` | case `cases/hai_pet.pdl`: 34 checks, and the tick arithmetic is compared with the house needs op on the same minutes |
+| the JavaScript port | `docs/pet.js` (also a command line) | case `cases/hai_pet_parity.pdl`: 188 checks, same words and exit codes, byte-identical ledgers, each side replays the other's ledger |
+| the design | `book/25-...` (embodied agents) and `book/26-...` (needs, food, farming, bodies, cyborgs) | design only, labelled as such |
+
+Try it (needs a C compiler, or node):
+
+```sh
+cc -std=gnu11 -O2 -o hai_pet ops/hai_pet.c
+./hai_pet pet/data /tmp/pet.ledger born rex organic
+./hai_pet pet/data /tmp/pet.ledger give rex food.apple 2
+./hai_pet pet/data /tmp/pet.ledger tick rex 240      # four hours pass
+./hai_pet pet/data /tmp/pet.ledger status rex        # NEEDS rex hunger=40
+node docs/pet.js pet/data /tmp/pet2.ledger born bolt robot    # the same verbs in JavaScript
+```
+
+Every check can fail: breaking either implementation on purpose (dropping the carried remainder, changing a limit, changing a clamp) turns the cases red, and that was run. **Not done yet:** the pet on the web page, a world to walk in, planting and cooking, anatomy parts, evolving a body. Those are in the design chapters, not in code.
+
+<details><summary>Stills</summary>
+
+![the three body files](docs/media/pet-03-files.png)
+![the house needs op and hai_pet agree](docs/media/pet-08-oracle.png)
+![the test can fail](docs/media/pet-09-mutants.png)
+![the JavaScript port says the same words](docs/media/pet-10-parity.png)
+
+</details>
