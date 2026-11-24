@@ -1,0 +1,114 @@
+# hai_pet (2026-11-23): PROOF OF CONCEPT of the pet needs core (book 26): body types as data (organic, robot, cyborg), needs that tick with a carried remainder, items that satisfy needs,
+# per-need weights (0 = off), refusals as rows, replay from the ledger. The house needs op (survivor_op) is the ORACLE for the tick arithmetic: both are run on the same minutes against the same rates and
+# must give the same literal numbers. NOT covered: eating through the item ledger (survivor_op eat is not compared), the world, farming, anatomy parts, evolution. DEBT: absolute repo paths.
+RESULTS | ../results/hai_pet.txt
+ENV | LC_ALL | C
+ENV | ITEM_LEDGER_TS | 1700000000
+
+CASE    | pet
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_pet.c
+EXPECT_EXIT | 0 | pet-op-builds-without-warnings
+COPYDIR | @.apps/rpg-edit-hq/books/ledger-lab | lab
+MKDIR | odata
+WRITE | lab/needs.pdl | RATE\phunger\p7\p45\nRATE\pthirst\p0\p60\nRATE\pfatigue\p0\p60\n
+WRITE | odata/body_organic.pdl | BODY\porganic\nRATE\phunger\p7\p45\n
+# ---- oracle: the same ticks on the real needs op and on hai_pet; rate 7 points per 45 minutes (not a round number on purpose) ----
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+EXPECT_OUT | hunger=1 | oracle-one-ten-minute-tick-gives-1
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | born | zed | organic
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | status | zed
+EXPECT_OUT | hunger=1 | pet-one-ten-minute-tick-gives-1
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 10
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 10
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 1
+EXPECT_OUT | hunger=15 | oracle-the-remainder-is-carried-across-ten-ticks-and-one-more
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 1
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | status | zed
+EXPECT_OUT | hunger=15 | pet-carries-the-same-remainder
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 37
+EXPECT_OUT | hunger=21 | oracle-after-37-more-minutes
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 37
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | status | zed
+EXPECT_OUT | hunger=21 | pet-after-37-more-minutes
+RUN | $HOUSE/@.apps/rpg-edit-hq/ops/+x/survivor_op.+x | $T/lab | tick | zed | 1000
+EXPECT_OUT | hunger=100 | oracle-clamps-at-100
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | tick | zed | 1000
+RUN | $T/hai_pet | $T/odata | $T/o.ledger | status | zed
+EXPECT_OUT | hunger=100 | pet-clamps-at-100
+# ---- the three bodies from the shipped data: same four hours, different needs ----
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | born | rex | organic
+EXPECT_EXIT | 0 | an-organic-pet-is-born
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | born | bolt | robot
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | born | cy | cyborg
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | born | rex | robot
+EXPECT_EXIT | 3 | a-name-cannot-be-used-twice
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | born | ghost | wizard
+EXPECT_EXIT | 3 | an-unknown-body-type-is-refused
+EXPECT_OUT | no such body type | the-reason-is-given
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | tick | rex | 240
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | tick | bolt | 240
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | tick | cy | 240
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | status | rex
+EXPECT_OUT | NEEDS rex hunger=40 | organic-hunger-after-4-hours
+EXPECT_OUT_LACKS | drain | an-organic-body-has-no-battery
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | status | bolt
+EXPECT_OUT | NEEDS bolt drain=32 heat=16 | robot-drain-and-heat-after-4-hours
+EXPECT_OUT_LACKS | hunger | a-robot-has-no-hunger
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | status | cy
+EXPECT_OUT | NEEDS cy hunger=24 drain=20 | a-cyborg-has-both-needs-at-its-own-rates
+# ---- items: only what the body knows, only what it holds ----
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | give | rex | food.apple | 2
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | give | bolt | food.apple | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | give | bolt | cell.small | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | use | rex | food.apple
+EXPECT_EXIT | 0 | an-organic-pet-eats-an-apple
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | status | rex
+EXPECT_OUT | NEEDS rex hunger=0 | the-apple-lowered-hunger-by-40
+EXPECT_OUT | food.apple:1 | one-apple-was-burned
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | use | bolt | food.apple
+EXPECT_EXIT | 3 | a-robot-cannot-eat
+EXPECT_OUT | this body cannot use that item | the-robot-reason
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | use | bolt | cell.small
+EXPECT_EXIT | 0 | a-robot-uses-a-cell
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | use | cy | cell.small
+EXPECT_EXIT | 3 | nothing-held-nothing-used
+EXPECT_OUT | holds none of that item | the-holds-none-reason
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | status | bolt
+EXPECT_OUT | NEEDS bolt drain=0 heat=16 | the-cell-emptied-the-drain-and-left-the-heat
+# ---- weights: 0 turns a need off, 40 is four times as fast ----
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | weight | rex | hunger | 0
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | tick | rex | 600
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | status | rex
+EXPECT_OUT | NEEDS rex hunger=0 | weight-0-turns-hunger-off
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | weight | cy | hunger | 40
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | tick | cy | 60
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | status | cy
+EXPECT_OUT | NEEDS cy hunger=48 drain=25 | weight-40-makes-hunger-four-times-faster-and-leaves-drain
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | weight | cy | hunger | 41
+EXPECT_EXIT | 3 | a-weight-over-40-is-refused
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/b.ledger | weight | cy | thirst | 10
+EXPECT_EXIT | 3 | a-weight-for-a-need-the-body-lacks-is-refused
+# ---- the ledger is the authority: a refusal is a row; a hand-edited ledger cannot cheat ----
+EXPECT_HAS | b.ledger | REFUSED\pUSE\pbolt\pthis body cannot use that item | a-refusal-is-a-row
+WRITE | cheat.ledger | GIVE\pa\pfood.apple\p5\nBORN\pa\porganic\nTICK\pa\p0\nUSE\pa\pfood.apple\nWEIGHT\pa\phunger\p99\nTICK\pa\p60\n
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/cheat.ledger | status | a
+EXPECT_OUT | NEEDS a hunger=10 | rows-that-break-the-rules-are-skipped-on-replay
+EXPECT_OUT_LACKS | food.apple | the-apple-given-before-birth-never-existed
