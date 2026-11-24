@@ -1,0 +1,95 @@
+# hai_world (2026-11-23): the world of hai-pal (book 25, first slice). One ledger of rows; replay gives the agents and where they stand; the frame is a projection.
+# Built from source in a scratch folder. Every check can FAIL (mutants in book 25 section 11). NOT covered: permissions, real folders and the sandbox (not built), the window.
+# DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
+RESULTS | ../results/hai_world.txt
+ENV | LC_ALL | C
+
+CASE    | world
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_world | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_world.c
+EXPECT_EXIT | 0 | world-op-builds-without-warnings
+# ---- spawn and the rules for a name ----
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | hai | home | 3 | 3
+EXPECT_EXIT | 0 | an-agent-can-spawn
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | prof | home | 5 | 3
+EXPECT_EXIT | 0 | a-second-agent-can-spawn
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | hai | home | 9 | 6
+EXPECT_EXIT | 3 | a-used-name-is-refused
+EXPECT_OUT | name already used | the-reason-is-given
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | Bad Name | home | 9 | 6
+EXPECT_EXIT | 3 | a-bad-name-is-refused
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | third | home | 5 | 3
+EXPECT_EXIT | 3 | a-taken-cell-is-refused
+EXPECT_OUT | that cell is taken | the-taken-reason
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | third | home | 0 | 3
+EXPECT_EXIT | 3 | the-border-is-a-wall
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | third | home | 7 | 4
+EXPECT_EXIT | 3 | the-inner-wall-block-is-a-wall
+RUN | $T/hai_world | do | $T/w.ledger | SPAWN | third | garden | 7 | 4
+EXPECT_EXIT | 0 | the-same-cell-is-floor-on-another-page
+# ---- moving ----
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | 1 | 0
+EXPECT_EXIT | 0 | a-step-onto-free-floor-works
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | 1 | 0
+EXPECT_EXIT | 3 | another-agent-blocks-a-step
+EXPECT_OUT | another agent is in the way | the-blocking-reason
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | 0 | 5
+EXPECT_EXIT | 3 | only-one-step-at-a-time
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | nobody | 1 | 0
+EXPECT_EXIT | 3 | an-unknown-agent-cannot-move
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | 0 | 1
+EXPECT_EXIT | 0 | a-step-down-works
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | -1 | 0
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | -1 | 0
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 0 | the-last-floor-cell-before-the-border-is-reachable
+RUN | $T/hai_world | do | $T/w.ledger | MOVE | hai | -1 | 0
+EXPECT_EXIT | 3 | the-left-border-stops-an-agent
+# ---- teleport is the only way to change page ----
+RUN | $T/hai_world | do | $T/w.ledger | TELEPORT | prof | garden | 2 | 2
+EXPECT_EXIT | 0 | teleport-moves-an-agent-to-another-page
+RUN | $T/hai_world | do | $T/w.ledger | TELEPORT | prof | garden | 9 | 6
+EXPECT_EXIT | 0 | an-agent-can-teleport-again-on-the-same-page
+RUN | $T/hai_world | do | $T/w.ledger | TELEPORT | ghost | garden | 3 | 3
+EXPECT_EXIT | 3 | only-a-real-agent-can-teleport
+# ---- the world is what replay says ----
+RUN | $T/hai_world | dump | $T/w.ledger
+EXPECT_OUT | hai home 1 4 | hai-stands-where-the-steps-left-it
+EXPECT_OUT | prof garden 9 6 | prof-is-on-the-garden-page
+EXPECT_OUT | third garden 7 4 | the-agent-spawned-on-the-garden-is-there
+RUN | $T/hai_world | pages | $T/w.ledger
+EXPECT_OUT | garden | the-garden-page-exists
+EXPECT_HAS | w.ledger | REFUSED\pMOVE\phai\panother agent is in the way | a-refusal-is-a-row
+EXPECT_HAS | w.ledger | TELEPORT\pprof\pgarden\p2\p2 | an-accepted-verb-is-a-row
+# ---- a hand-edited ledger cannot cheat: a row that breaks the rules is skipped on replay ----
+WRITE | cheat.ledger | SPAWN\pa\phome\p3\p3\nSPAWN\pb\phome\p3\p3\nMOVE\pa\p9\p9\nSPAWN\pc\phome\p0\p0\nMOVE\pa\p1\p0\n
+RUN | $T/hai_world | dump | $T/cheat.ledger
+EXPECT_OUT | a home 4 3 | the-legal-rows-still-apply
+EXPECT_OUT_LACKS | b home | a-cheating-spawn-is-not-in-the-world
+EXPECT_OUT_LACKS | c home | a-wall-spawn-is-not-in-the-world
+# ---- the frame (the canvas format of the house: RGBA, plus a receipt with the size) ----
+RUN | $T/hai_world | frame | $T/w.ledger | home | $T/f | hai
+EXPECT_EXIT | 0 | a-frame-is-written
+EXPECT_HAS | f.receipt.txt | frame_w=512 | the-receipt-gives-the-width
+EXPECT_HAS | f.receipt.txt | frame_h=320 | the-receipt-gives-the-height
+RUN | wc | -c | $T/f.raw
+EXPECT_OUT | 655360 | the-frame-is-512-by-320-by-4-bytes
+# offsets are (y*512+x)*4. hai (colour 240 130 190) is active at cell 1,4: centre pixel 48,144; a corner pixel 32,128 is the white outline; origin is a wall cell; cell 5,5 is floor (44 48 56)
+RUN | od | -An | -tx1 | -j | 295104 | -N | 4 | $T/f.raw
+EXPECT_OUT | f0 82 be ff | the-agent-pixel-is-its-own-opaque-colour
+RUN | od | -An | -tx1 | -j | 262272 | -N | 3 | $T/f.raw
+EXPECT_OUT | ff ff ff | the-active-agent-has-a-white-outline
+RUN | od | -An | -tx1 | -j | 0 | -N | 3 | $T/f.raw
+EXPECT_OUT | 5c 62 70 | a-wall-cell-is-wall-grey
+RUN | od | -An | -tx1 | -j | 338580 | -N | 3 | $T/f.raw
+EXPECT_OUT | 2c 30 38 | a-floor-cell-is-floor
+# home has a wall block at cells 7,4 and 8,4 (pixel 272,144); the garden does not (floor 44 48 56 at cell 8,4), and prof (80 200 220) is drawn at cell 9,6 in the garden only
+RUN | od | -An | -tx1 | -j | 296000 | -N | 3 | $T/f.raw
+EXPECT_OUT | 5c 62 70 | home-shows-its-wall-block
+RUN | $T/hai_world | frame | $T/w.ledger | garden | $T/g | prof
+RUN | od | -An | -tx1 | -j | 296000 | -N | 3 | $T/g.raw
+EXPECT_OUT | 2c 30 38 | the-garden-has-no-wall-block
+RUN | od | -An | -tx1 | -j | 427200 | -N | 4 | $T/g.raw
+EXPECT_OUT | 50 c8 dc ff | prof-is-drawn-in-the-garden
+RUN | od | -An | -tx1 | -j | 427200 | -N | 4 | $T/f.raw
+EXPECT_OUT | 26 2a 32 ff | prof-is-not-drawn-on-the-home-page
