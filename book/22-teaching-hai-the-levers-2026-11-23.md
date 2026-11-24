@@ -31,7 +31,7 @@ SAY    | word | the exact answer you want
 `/pack <name>` appends one row per line to your ledger with origin `pack:<name>`, so you can still grade, mark and forget them. The shipped pack `lyfedesk` has 9 definitions (house, driving, confidence, harness, ledger, hai, harnecient, entity, attention) and 4 aliases (yo, howdy, options, commands). A pack is data: add one, never edit C.
 
 ## 4. Tutorials (RAN: recorded in the real window by relay injection)
-Two narrated videos (English voice, Japanese subtitles, narrator face), in the owner's XO folder `%.HARNECIENT/hai-user-dox/tutorials/` and `31.Nov/nov-22/14.*`, `15.*`: Tutorial 1 "teach hai your words" (ask, explain, recall, grade, mark) and Tutorial 2 "more levers and starter packs" (alias, say, forget, pack). A stakeholder report with the before and after is `13.*`. House text: `16.game/presentations/HAI-RESULTS-VS-DESIRE-2026-11-23.md`.
+Two narrated videos (English voice, Japanese subtitles, narrator face), in the owner's XO folder `%.HARNECIENT/hai-user-dox/hai-videos-2026-11-23/` and `31.Nov/nov-22/14.*`, `15.*`: Tutorial 1 "teach hai your words" (ask, explain, recall, grade, mark) and Tutorial 2 "more levers and starter packs" (alias, say, forget, pack). A stakeholder report with the before and after is `13.*`. House text: `16.game/presentations/HAI-RESULTS-VS-DESIRE-2026-11-23.md`.
 
 ## 5. What is NOT done (said plainly)
 - **Inflections are not recognised:** a taught word does not cover its plural or other forms (measured: 1 of 8 inflected sentences recognised; "houses", "driven", "harnesses" all get asked about again). A candidate fix, not built: when an unknown word shares a stem with a taught word, ask "is this a form of <word>?" and store an alias.

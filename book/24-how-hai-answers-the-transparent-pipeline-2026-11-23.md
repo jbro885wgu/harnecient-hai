@@ -39,7 +39,7 @@ So the honest answer: there is no separate studio for hai yet; the Bank view is 
 3. **Turn text dumps into slides** with ffmpeg drawtext: a 1280x640 background, DejaVu Sans Mono, `expansion=none` so `%` prints literally, lines wrapped at spaces. A card header says "(real output)" and names the command.
 4. **One manifest row per slide** (`snapshots/NN-name.png | seconds | Japanese subtitle ## English voice`) and `make_presentation_video.py <deck> --theme harnecient --font /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc --narrator <Actor1.png>` (niced, through `cpu_gate`). **Without `--font` the Japanese strip renders as empty boxes** (found by opening a frame of the first render, which had to be discarded).
 5. **Verify before delivering:** `ffprobe` (video and audio streams), `volumedetect` (not silent), and OPEN a frame with Japanese text.
-The decks: stakeholder report (results versus desire), tutorial 1 (teach it your words), tutorial 2 (more levers and starter packs), tutorial 3 (agents, sessions, personalities), and this explainer ("how hai answers"). Home: the owner's XO folder `%.HARNECIENT/hai-user-dox/tutorials/` and `31.Nov/nov-23/5.hai-videos-2026-11-23`.
+The decks: stakeholder report (results versus desire), tutorial 1 (teach it your words), tutorial 2 (more levers and starter packs), tutorial 3 (agents, sessions, personalities), and this explainer ("how hai answers"). Home: the owner's XO folder `%.HARNECIENT/hai-user-dox/hai-videos-2026-11-23/` and `31.Nov/nov-23/5.hai-videos-2026-11-23`.
 
 ## 6. Window and test traps found today (RAN; each cost time)
 **Layout (khtpm renderer):**
