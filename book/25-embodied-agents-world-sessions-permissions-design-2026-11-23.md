@@ -74,3 +74,6 @@ Reordering (section 8) is added after step 5.
 - **OPEN:** whether permissions can ever be granted by the agent itself (default: never; only the user or a trust rule the user wrote).
 - **NOT BUILT:** all of this. **NOT CHECKED:** how the board engine takes entities from a ledger (needs a read of the board input before step 5).
 - **RISK:** real folders. Treated as the first thing to build and test (step 1); no verb that writes to disk ships before the escape cases pass.
+
+## 11. Opening it in rpg-edit (pointer, 2026-11-23)
+The research and the recipe for opening this as a BOOK in rpg-edit (book = session, page = map, agent = pal row, rules as ops behind event pages, Play runs the driver) are in the house doc `16.game/OPEN-A-PROJECT-AS-A-BOOK-IN-RPG-EDIT-EVENT-BASED-PAGES-AS-SESSIONS-2026-11-23.md`. Built so far on that road: `ops/hai_world.c` (the world rules, case `hai_world`, 43 checks). Not built: the book, event pages, the driver, permissions, the sandbox.
