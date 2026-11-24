@@ -12,6 +12,50 @@ Status: **runs, and learns what you teach it.** It asks about words it does not 
 - Licence: pending the owner's choice (source-available, read and run for non-commercial use). See `LICENSE` once added.
 - Docs: `book/00-INDEX.md`.
 
+## hai-pal: a world, a party and a pet (2026-11-24)
+
+hai-pal puts hai in a small world. **Pals** (small agents) live on **pages** (rooms), walk, hold items and have needs. They are led by a **master**. Three ideas carry everything:
+
+1. **One ledger is the truth.** Every event is a row in an append-only text file (`SPAWN|pip|home|5|3`, `MOVE|pip|1|0`, `TICK|pip|540`). The room, the hunger bars and the order of the pals are derived by replaying the rows. A request the rules refuse is kept as a `REFUSED` row, so nothing is hidden.
+2. **The order is the role.** The party is an ordered list. **Whoever is first is the master**; the rest follow. Move another pal to the front and it becomes the master.
+3. **Bodies are data.** A pet is organic, robot or cyborg because of a small file of needs and items, not because of code.
+
+**Try it now:** [the pet page](https://jbro885wgu.github.io/harnecient-hai/pet.html) (walk, feed, let time pass, turn needs off, chat with the master, save and reopen) and [the textbook](https://jbro885wgu.github.io/harnecient-hai/textbook.html) (how to use everything, the evidence, the roadmap).
+
+### In the LyfeDesk editor (rpg-edit)
+
+hai-pal opens as a book. It appears in the Books list, draws its rooms, and the pets bar on the left lists the party the book ships: **hai** (the master) then **pip**.
+
+![the Books list in the editor now includes hai-pal](docs/media/hai-pal-books-list.png)
+
+![the editor with the hai-pal book open: the room, and hai and pip in the pets bar on the left](docs/media/hai-pal-left-pals.png)
+
+### The order is the role (a real run)
+
+![hai_world: moving bolt to slot 1 makes bolt the master; bad requests are refused with a reason](docs/media/hai-pal-order-run.png)
+
+### One set of rules, two languages
+
+The same rules run in C and in JavaScript, read their numbers from one data file (`docs/world.rules.pdl`), and are checked against each other: 3000 hostile random commands per run, and the ledgers and end states must be **byte-identical**.
+
+![C and JavaScript give byte-identical results on the same 3000 hostile commands](docs/media/hai-pal-compat-run.png)
+
+| Case | Checks | Proves |
+|---|---|---|
+| `hai_world`, `hai_world_parity`, `hai_world_reorder` | 62, 213, 134 | the rules, and C = JavaScript |
+| `hai_compat` | 205 | the differential test, two different worlds, every refusal reached |
+| `hai_pet`, `hai_pet_parity` | 34, 188 | the needs rules, checked against the house needs program |
+
+836 checks pass, and 13 deliberate one-sided breakages each turned the differential test red.
+
+### What is not done yet
+
+![not done yet: Play does not run the world, no reorder key yet, farming, master permissions](docs/media/hai-pal-not-done.png)
+
+**Roadmap (full list in the textbook, Part 8):** (A) the `m` move mode with the arrow keys, and the party file written from the ledger; (B) event rows with hash checkpoints, the Play driver, one session through two doors; (C) permissions for the master, interface verbs, plain-language requests, pals talking to each other; (D) farming and cooking, anatomy and bodies, real-folder bodies, shared data, texting; (E) one shared implementation of the rules for C and the web.
+
+**Run the tests:** `harness_case_op.+x <case>.pdl <house>` from `cases/` (the LyfeDesk house harness), then compare the number of `EXPECT_` rows with the `PASS` lines in `results/<case>.txt`.
+
 ## The pet (proof of concept, 2026-11-23)
 
 **Textbook:** [`docs/textbook.html`](docs/textbook.html) ([markdown](docs/textbook.md)): how to use hai-pal, how it works, the test evidence, the house integration map and the roadmap.
