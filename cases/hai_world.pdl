@@ -93,3 +93,33 @@ RUN | od | -An | -tx1 | -j | 427200 | -N | 4 | $T/g.raw
 EXPECT_OUT | 50 c8 dc ff | prof-is-drawn-in-the-garden
 RUN | od | -An | -tx1 | -j | 427200 | -N | 4 | $T/f.raw
 EXPECT_OUT | 26 2a 32 ff | prof-is-not-drawn-on-the-home-page
+# ---- the editor desk of a page (2026-11-24): a PROJECTION of the ledger that rpg-edit draws; the final positions here are hai home 1 4, prof garden 9 6, third garden 7 4 ----
+MKDIR | dh
+MKDIR | dg
+COPY | @.apps/chutes/chutes-pchq/pieces/system/maps/chutes/board/cells.rgba | atlas.rgba
+RUN | $T/hai_world | desk | $T/w.ledger | home | $T/dh | $T/atlas.rgba
+EXPECT_EXIT | 0 | the-home-desk-is-written
+EXPECT_OUT | figures=1 | home-has-one-figure
+RUN | $T/hai_world | desk | $T/w.ledger | garden | $T/dg | $T/atlas.rgba
+EXPECT_OUT | figures=2 | the-garden-has-two-figures
+EXPECT_HAS | dh/events.txt | 1 4 240 130 190 People1 7 2 1 A | hai-is-a-token-at-its-cell-in-its-colour
+EXPECT_HAS | dg/events.txt | 9 6 80 200 220 People1 4 2 1 A | prof-is-a-token-on-the-garden
+EXPECT_HAS | dg/events.txt | 7 4 230 90 90 People1 0 2 1 B | third-is-the-second-token-with-the-next-letter
+EXPECT_LACKS | dh/events.txt | People1 4 | home-has-no-token-for-the-agents-who-left
+EXPECT_HAS | dh/cells.txt | width=16 | the-desk-is-16-cells-wide
+EXPECT_HAS | dh/cells.txt | height=10 | the-desk-is-10-cells-high
+EXPECT_HAS | dh/cells.txt | rock_slot=36 | the-atlas-facts-are-written
+EXPECT_HAS | dh/cells.txt | 36,0,2 42,0,1 39,0,1 42,0,1 39,0,1 42,0,1 39,0,1 36,0,2 36,0,2 42,0,1 39,0,1 42,0,1 39,0,1 42,0,1 39,0,1 36,0,2 | home-row-4-has-the-inner-wall-block-and-the-two-floor-tiles
+EXPECT_HAS | dg/cells.txt | 36,0,2 42,0,1 39,0,1 42,0,1 39,0,1 42,0,1 39,0,1 42,0,1 39,0,1 42,0,1 39,0,1 42,0,1 39,0,1 42,0,1 39,0,1 36,0,2 | garden-row-4-has-no-inner-wall-block
+EXPECT_HAS | dh/map.txt | ................ | the-map-is-dots
+EXPECT_HAS | dh/skin.txt | rmmv | the-skin-is-rmmv
+RUN | wc | -c | $T/dh/cells.rgba
+EXPECT_OUT | 110592 | the-atlas-was-copied-whole
+RUN | wc | -c | $T/dh/cells.marker
+EXPECT_OUT | 1 | the-marker-has-one-byte-after-one-write
+RUN | $T/hai_world | desk | $T/w.ledger | home | $T/dh | $T/atlas.rgba
+RUN | wc | -c | $T/dh/cells.marker
+EXPECT_OUT | 2 | the-marker-grows-by-one-byte-per-rewrite-the-house-reload-rule
+RUN | $T/hai_world | desk | $T/w.ledger | home | $T/nodir | $T/atlas.rgba
+EXPECT_EXIT | 2 | a-missing-desk-folder-is-refused
+EXPECT_OUT | the desk folder does not exist | the-reason-is-given

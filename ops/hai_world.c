@@ -15,12 +15,14 @@
  *   hai_world dump <ledger>                                text: one line per agent  name page x y
  *   hai_world frame <ledger> <page> <out_base> [active]    write <out_base>.raw (512x320 RGBA) and <out_base>.receipt.txt (frame_w, frame_h); active gets a white outline
  *   hai_world pages <ledger>                               the page names that exist (home plus any teleported to), one per line
+ *   hai_world desk <ledger> <page> <desk_dir> <atlas.rgba> the editor desk of a page (cells, figure tokens), a projection for rpg-edit (2026-11-24)
  * Build: gcc -std=gnu11 -Wall -Wextra -O2 -o hai_world hai_world.c */
 #define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #define COLS 16
 #define ROWS 10
@@ -92,6 +94,8 @@ static void colour_of(const char *name, unsigned char *r, unsigned char *g, unsi
 }
 static void px(unsigned char *fr, int x, int y, int r, int g, int b) { if (x < 0 || y < 0 || x >= COLS * CELL || y >= ROWS * CELL) return; unsigned char *p = fr + ((size_t)y * COLS * CELL + x) * 4; p[0] = (unsigned char)r; p[1] = (unsigned char)g; p[2] = (unsigned char)b; p[3] = 255; }
 
+static int write_atomic(const char *path, const char *text) { char tmp[1200]; snprintf(tmp, sizeof tmp, "%s.tmp", path); FILE *o = fopen(tmp, "w"); if (!o) return -1; fputs(text, o); if (fclose(o) != 0) return -1; return rename(tmp, path); }
+
 int main(int argc, char **argv) {
     if (argc < 3) { fprintf(stderr, "usage: hai_world do|dump|frame|pages <ledger> ...\n"); return 2; }
     const char *cmd = argv[1], *ledger = argv[2]; world_t w;
@@ -134,6 +138,29 @@ int main(int argc, char **argv) {
         if (rename(tmp, p) != 0) { perror("rename"); return 2; }
         snprintf(p, sizeof p, "%s.receipt.txt", base); o = fopen(p, "w"); if (!o) return 2; fprintf(o, "frame_w=%d\nframe_h=%d\n", COLS * CELL, ROWS * CELL); fclose(o);
         return 0;
+    }
+    if (strcmp(cmd, "desk") == 0) {
+        /* desk <ledger> <page> <desk_dir> <atlas.rgba>: the editor desk of one page, a PROJECTION of the ledger (safe to delete, rewritten byte for byte): cells.txt (tiles: floor 39 or 42, wall 36), cells.marker (grows by one
+         * byte per rewrite, the house reload rule), map.txt (dots), events.txt (one figure token per agent: x y r g b People1 index 2 1 letter), and skin.txt, extrusion.pdl, cells.rgba written only if missing. */
+        if (argc < 6) { fprintf(stderr, "usage: hai_world desk <ledger> <page> <desk_dir> <atlas.rgba>\n"); return 2; }
+        const char *page = argv[3], *dd = argv[4], *atlas = argv[5]; struct stat sb;
+        if (stat(dd, &sb) != 0 || !S_ISDIR(sb.st_mode)) { fprintf(stderr, "desk: the desk folder does not exist (make it first)\n"); return 2; }
+        static char buf[COLS * ROWS * 14 + 512]; size_t n = 0; char q[1100];
+        n += (size_t)snprintf(buf + n, sizeof buf - n, "width=%d\nheight=%d\ntile_px=24\natlas_cols=16\natlas_tiles=43\nrock_slot=36\ncells\n", COLS, ROWS);
+        for (int y = 0; y < ROWS; y++) { for (int x = 0; x < COLS; x++) { int t = is_wall(page, x, y) ? 36 : (((x + y) & 1) ? 42 : 39); int z = is_wall(page, x, y) ? 2 : 1; n += (size_t)snprintf(buf + n, sizeof buf - n, "%s%d,0,%d", x ? " " : "", t, z); } buf[n++] = '\n'; }
+        buf[n] = 0; snprintf(q, sizeof q, "%s/cells.txt", dd); if (write_atomic(q, buf) != 0) { fprintf(stderr, "desk: cannot write cells.txt\n"); return 2; }
+        { char mk[1100]; struct stat ms; snprintf(mk, sizeof mk, "%s/cells.marker", dd); FILE *mf = fopen(mk, (!stat(mk, &ms) && ms.st_size >= 4096) ? "w" : "a"); if (mf) { fputc('1', mf); fclose(mf); } }
+        n = 0; for (int y = 0; y < ROWS; y++) { for (int x = 0; x < COLS; x++) buf[n++] = '.'; buf[n++] = '\n'; } buf[n] = 0; snprintf(q, sizeof q, "%s/map.txt", dd); if (write_atomic(q, buf) != 0) return 2;
+        n = 0; buf[0] = 0; int shown = 0;
+        for (int i = 0; i < w.n && shown < 26; i++) { if (strcmp(w.a[i].page, page) != 0) continue; unsigned char r, g, b; colour_of(w.a[i].name, &r, &g, &b);
+            unsigned hsh = 5381; for (const char *p = w.a[i].name; *p; p++) hsh = hsh * 33 + (unsigned char)*p;
+            n += (size_t)snprintf(buf + n, sizeof buf - n, "%d %d %u %u %u People1 %u 2 1 %c\n", w.a[i].x, w.a[i].y, r, g, b, hsh % 8, (char)('A' + shown)); shown++; }
+        snprintf(q, sizeof q, "%s/events.txt", dd); if (write_atomic(q, buf) != 0) return 2;
+        snprintf(q, sizeof q, "%s/skin.txt", dd); if (stat(q, &sb) != 0) write_atomic(q, "rmmv\n");
+        snprintf(q, sizeof q, "%s/extrusion.pdl", dd); if (stat(q, &sb) != 0) write_atomic(q, "SECTION      | KEY                | VALUE\n----------------------------------------------------------------------\nMETA         | map_id             | hai-pal\nMETA         | desk_id            | play\nMETA         | note               | a page of hai-pal drawn from its ledger by hai_world desk\n");
+        snprintf(q, sizeof q, "%s/cells.rgba", dd);
+        if (stat(q, &sb) != 0) { FILE *a = fopen(atlas, "rb"); if (!a) { fprintf(stderr, "desk: cannot read the atlas\n"); return 2; } FILE *o = fopen(q, "wb"); if (!o) { fclose(a); return 2; } char bb[8192]; size_t k; while ((k = fread(bb, 1, sizeof bb, a)) > 0) fwrite(bb, 1, k, o); fclose(a); fclose(o); }
+        printf("DESK %s page=%s %dx%d figures=%d\n", dd, page, COLS, ROWS, shown); return 0;
     }
     fprintf(stderr, "unknown command %s\n", cmd); return 2;
 }
