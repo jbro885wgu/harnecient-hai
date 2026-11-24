@@ -1,0 +1,299 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>hai-pal: the textbook</title><style>
+:root{--bg:#f6f8f7;--fg:#14211a;--card:#fff;--line:#cfd9d2;--code:#e9f0ec;--acc:#0b6f8c}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1713;--fg:#e4f0e8;--card:#17231c;--line:#2b3d33;--code:#1d2b23;--acc:#7fd0e8}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,sans-serif}
+.wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:28px;max-width:1180px;margin:0 auto;padding:20px}
+nav{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:6px;font-size:14px;max-height:92vh;overflow:auto}nav a{color:var(--fg);text-decoration:none;padding:3px 8px;border-left:3px solid var(--line)}nav a:hover{border-color:var(--acc);color:var(--acc)}
+main{min-width:0}h1{font-size:30px;margin-top:0}h2{margin-top:34px;padding-top:6px;border-top:1px solid var(--line)}h3{margin-top:24px}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.9em}pre{background:var(--code);padding:12px 14px;border-radius:8px;overflow:auto;border:1px solid var(--line)}pre code{background:none;padding:0}
+.tw{overflow:auto}table{border-collapse:collapse;width:100%;margin:12px 0;background:var(--card)}th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top;font-size:14.5px}th{background:var(--code)}
+a{color:var(--acc)}hr{border:0;border-top:1px solid var(--line);margin:26px 0}
+@media(max-width:820px){.wrap{grid-template-columns:1fr}nav{position:static;max-height:none}}
+</style></head><body><div class="wrap"><nav aria-label="contents"><b>Contents</b><a href="#part-1-what-hai-pal-is-in-five-minutes">1. What hai-pal is, in five minutes</a><a href="#part-2-the-web-pet-pet-html">2. The web pet (pet.html)</a><a href="#part-3-the-command-line-tools-c-and-the-same-in-javascript">3. The command-line tools (C, and the same in JavaScript)</a><a href="#part-4-hai-pal-inside-the-lyfedesk-editor-rpg-edit">4. hai-pal inside the LyfeDesk editor (rpg-edit)</a><a href="#part-5-the-data-files-what-is-where">5. The data files (what is where)</a><a href="#part-6-testing-what-is-proved-and-how-to-run-it">6. Testing: what is proved and how to run it</a><a href="#part-7-how-hai-pal-fits-the-house-integration-map">7. How hai-pal fits the house (integration map)</a><a href="#part-8-roadmap">8. Roadmap</a><a href="#part-9-troubleshooting-and-traps">9. Troubleshooting and traps</a><a href="#part-10-glossary">10. Glossary</a><a href="#part-11-where-to-read-more">11. Where to read more</a></nav><main><h1 id="hai-pal-the-textbook-how-to-use-it-how-it-works-where-it-goes-next">hai-pal: the textbook (how to use it, how it works, where it goes next)</h1>
+
+<p>Written 2026-11-24. For users, for builders, and for the next agent. <b>Every statement is labelled:</b> <b>WORKS</b> (run and checked, with the evidence named), <b>PARTLY</b> (works with a stated limit), <b>DESIGN</b> (decided, not built), <b>NOT BUILT</b>. Where an example shows output, it is real output from the run named beside it.</p>
+
+<p>Live pages: the pet <a href="https://jbro885wgu.github.io/harnecient-hai/pet.html">https://jbro885wgu.github.io/harnecient-hai/pet.html</a> and hai itself <a href="https://jbro885wgu.github.io/harnecient-hai/">https://jbro885wgu.github.io/harnecient-hai/</a>. Code and every test: <a href="https://github.com/jbro885wgu/harnecient-hai">https://github.com/jbro885wgu/harnecient-hai</a> (branch <code>hai</code>).</p>
+
+<hr>
+
+<h2 id="part-1-what-hai-pal-is-in-five-minutes">Part 1. What hai-pal is, in five minutes</h2>
+
+<p><b>hai</b> is a small private learning chat that has no language model inside: it matches words you taught it, shows <i>why</i> it chose a reply, and learns from your grades. <b>hai-pal</b> puts hai in a world: small agents ("pals") that live on pages (rooms), walk, hold items, have needs, and are led by a <b>master</b>.</p>
+
+<p>Three ideas carry everything:</p>
+
+<ol>
+<li><b>One ledger is the truth.</b> Everything that happens is a row in an append-only text file (<code>SPAWN|pip|home|5|3</code>, <code>MOVE|pip|1|0</code>, <code>TICK|pip|540</code>). The room you see, the hunger bar, the order of the pals are all <i>derived</i> by replaying those rows. Delete the picture and it comes back identical; edit a row by hand and the rules refuse the forged world.</li>
+</ol>
+<ol>
+<li><b>The order is the role.</b> The party is an ordered list. <b>Whoever is first is the master</b>; the rest follow. Move another pal to the front and it becomes the master.</li>
+</ol>
+<ol>
+<li><b>Bodies are data.</b> A pet is organic, robot or cyborg because of a small file listing its needs and what satisfies them, not because of code.</li>
+</ol>
+<p><b>What you can do today</b></p>
+
+<div class="tw"><table><tr><th>You want to</th><th>Do this</th><th>Status</th></tr><tr><td>Look after a pet in your browser</td><td>open <code>pet.html</code> (Part 2)</td><td>WORKS (live, driven by real clicks in headless Chrome)</td></tr><tr><td>Talk to the master and have it act for you</td><td>the chat on the right of <code>pet.html</code>, <code>/do ...</code></td><td>WORKS for the six <code>/do</code> verbs; replies are the starter ones</td></tr><tr><td>See the world inside the LyfeDesk editor</td><td>open the book <code>hai-pal</code> in rpg-edit (Part 4)</td><td>PARTLY (you see rooms, figures and the pals list; Play does nothing yet)</td></tr><tr><td>Run the rules from a terminal</td><td><code>hai_world</code>, <code>hai_pet</code> (Part 3)</td><td>WORKS</td></tr><tr><td>Check C and JavaScript agree</td><td>case <code>hai_compat</code> (Part 6)</td><td>WORKS</td></tr></table></div>
+
+<hr>
+
+<h2 id="part-2-the-web-pet-pet-html">Part 2. The web pet (<code>pet.html</code>)</h2>
+
+<p>Open it in any modern browser. Nothing is installed and nothing leaves your page (it fetches its own rules and data files and keeps your save in the browser's local storage).</p>
+
+<h3 id="2-1-the-one-view">2.1 The one view</h3>
+
+<p>Like the editor, everything is in one view:</p>
+
+<ul>
+<li><b>Left: the pals</b> (the order is the role: slot 1 is the master, marked "master"), the <b>pet</b> (its body type and its need bars) and the <b>pantry &amp; inventory</b>.</li>
+</ul>
+<ul>
+<li><b>Centre: the world</b> (the room, drawn from the ledger), the arrow pad, the <b>time</b> buttons and a status line.</li>
+</ul>
+<ul>
+<li><b>Right: chat with the master</b>, with your <b>save</b> (the ledger table, download, open, clear) below the world.</li>
+</ul>
+<h3 id="2-2-controls">2.2 Controls</h3>
+
+<div class="tw"><table><tr><th>Control</th><th>Effect</th><th>Row it writes</th></tr><tr><td>Arrow keys or the pad</td><td>the pet walks one cell</td><td>`MOVE</td><td>pip</td><td>dx</td><td>dy` (world)</td></tr><tr><td><code>+10 min</code>, <code>+1 hour</code>, <code>+1 day</code></td><td>time passes; needs rise</td><td>`TICK</td><td>pip</td><td>minutes` (pet)</td></tr><tr><td>"run time"</td><td>10 game minutes each real second (off by default)</td><td>`TICK</td><td>pip</td><td>10`</td></tr><tr><td><code>give 1</code> on an item</td><td>puts one item in the pet's inventory</td><td>`GIVE</td><td>pip</td><td>item</td><td>1`</td></tr><tr><td><code>eat (n)</code> / <code>charge (n)</code> / <code>cool (n)</code></td><td>uses one held item</td><td>`USE</td><td>pip</td><td>item`</td></tr><tr><td>the "on" box on a need</td><td>turns that need off (weight 0) or on (weight 10 = normal)</td><td>`WEIGHT</td><td>pip</td><td>need</td><td>tenths`</td></tr><tr><td><code>body</code> selector + <code>new pet</code></td><td>a new pet of that body, in a new world</td><td><code>BORN</code>, <code>GIVE</code>, <code>SPAWN</code></td></tr><tr><td>the up / down arrows in the party</td><td>moves a pal in the order</td><td>`REORDER</td><td>name</td><td>slot`</td></tr><tr><td><code>download</code> / <code>open</code></td><td>saves / reloads both ledgers as one text file</td><td>none (the file <i>is</i> the rows)</td></tr><tr><td><code>clear</code></td><td>starts over</td><td>none</td></tr></table></div>
+
+<p>A request the rules refuse (walking into a wall, using an item you do not hold, a slot out of range) is <b>not hidden</b>: it appears in the save table in red with its reason, and it is stored as a <code>REFUSED</code> row.</p>
+
+<h3 id="2-3-the-three-bodies-from-the-real-files-in-docs-pet-data">2.3 The three bodies (from the real files in <code>docs/pet-data/</code>)</h3>
+
+<div class="tw"><table><tr><th>Body</th><th>Needs (rate per 60 minutes)</th><th>Items it can use</th></tr><tr><td>organic</td><td>hunger +10</td><td><code>food.apple</code> (hunger −40), <code>food.bread</code> (−60)</td></tr><tr><td>robot</td><td>drain +8, heat +4</td><td><code>cell.small</code> (drain −50), <code>cell.full</code> (−100), <code>coolant.pack</code> (heat −50)</td></tr><tr><td>cyborg</td><td>hunger +6, drain +5</td><td><code>food.apple</code>, <code>food.bread</code>, <code>cell.small</code>, <code>cell.full</code></td></tr></table></div>
+
+<p>A need runs 0 to 100. Time carries remainders exactly (a rate of 10 per 60 minutes means 10 minutes adds 1 point <i>with</i> the left-over fraction kept), so ten 10-minute ticks equal one 100-minute tick. This is the house needs rule, and it was checked against the house's own needs program (case <code>hai_pet</code>).</p>
+
+<h3 id="2-4-talking-to-the-master-chat">2.4 Talking to the master (chat)</h3>
+
+<p>The chat is the same hai engine as the demo at the site root: type ordinary words and it answers with fixed starter replies and shows <b>why</b> it matched (<code>why: matched "hi" as greet: 1 of 1 words x trust 0.83</code>). Under each reply are grade buttons <b>0 to 4</b>; your grade changes that reply's weight for next time. You can teach it words (see the hai demo and book 22).</p>
+
+<p><b><code>/do</code> makes the master act for you.</b> These six verbs are the master's "hands":</p>
+
+<div class="tw"><table><tr><th>You type</th><th>The master does</th><th>Real answer from a live run</th></tr><tr><td><code>/do right</code> (also <code>left</code>, <code>up</code>, <code>down</code>)</td><td>walks the pet one step</td><td><code>I walked pip right.</code></td></tr><tr><td><code>/do give</code></td><td>gives the pet one of the body's first item</td><td><code>I gave pip one food.apple.</code></td></tr><tr><td><code>/do wait 600</code></td><td>lets 600 minutes pass</td><td><code>600 minutes passed.</code></td></tr><tr><td><code>/do feed</code></td><td>uses a held item that satisfies a need</td><td><code>I fed pip food.apple.</code></td></tr><tr><td><code>/do left</code> into a wall</td><td>refuses and says why</td><td><code>I could not walk left: a wall is in the way</code></td></tr><tr><td><code>/do dance</code></td><td>does not know it</td><td><code>I know: /do left, right, up, down, feed, give, wait N.</code></td></tr></table></div>
+
+<p>Every row the master writes is <b>tagged master</b> in your save (the table shows "master · world"), and the tag survives download and reopen. <b>Limit (NOT BUILT):</b> the master only does what <code>/do</code> says. It does not yet choose actions itself or understand "please feed the pet".</p>
+
+<h3 id="2-5-saving-and-reopening">2.5 Saving and reopening</h3>
+
+<p><code>download</code> writes <code>hai-pet-save.txt</code>: a header, the body, and one line per row, e.g. <code>p TICK|pip|540</code> and <code>w MOVE|pip|1|0&lt;TAB&gt;@master</code>. <code>open</code> replays the rows through the same rules. Evidence (run 2026-11-24): the world and pet state after reopen was byte-identical to before, including carried remainders and who acted. The browser also remembers your last session on reload.</p>
+
+<h3 id="2-6-developer-hooks">2.6 Developer hooks</h3>
+
+<p><code>pet.html?body=robot</code> starts with a robot. <code>?do=</code> applies rows at load, e.g. <code>?do=w:MOVE|pip|1|0;p:TICK|pip|540</code>. <code>window.hai.rows()</code>, <code>.world()</code>, <code>.pet()</code> expose the state to a test script.</p>
+
+<hr>
+
+<h2 id="part-3-the-command-line-tools-c-and-the-same-in-javascript">Part 3. The command-line tools (C, and the same in JavaScript)</h2>
+
+<p>All tools append to a ledger file and print one line. <b>Exit 0</b> ok, <b>3</b> refused (a <code>REFUSED</code> row is appended and the reason printed), <b>2</b> usage. The JavaScript ports (<code>docs/world.js</code>, <code>docs/pet.js</code>) take the same arguments through <code>node</code>.</p>
+
+<h3 id="3-1-hai-world-the-room-and-the-party">3.1 <code>hai_world</code>: the room and the party</h3>
+
+<p>Needs <code>HAI_RULES=docs/world.rules.pdl</code> (the numbers: 16×10 cells, 32-pixel cells, 32 agents, names up to 16 characters, extra wall cells). Build: <code>gcc -std=gnu11 -Wall -Wextra -O2 -o hai_world ops/hai_world.c</code>.</p>
+
+<pre><code>hai_world do &lt;ledger&gt; SPAWN name page x y      a pal appears (the cell must be free)
+hai_world do &lt;ledger&gt; MOVE name dx dy          one step, -1..1, not both 0
+hai_world do &lt;ledger&gt; TELEPORT name page x y   the only way to change page
+hai_world do &lt;ledger&gt; REORDER name slot        move to a 1-based slot; slot 1 is the master
+hai_world party &lt;ledger&gt;                       the order, on one line
+hai_world master &lt;ledger&gt;                      the first pal
+hai_world dump &lt;ledger&gt;                        name page x y, one line per pal
+hai_world pages &lt;ledger&gt;                       the pages that exist
+hai_world frame &lt;ledger&gt; &lt;page&gt; &lt;out_base&gt; [active]   512x320 RGBA canvas frame
+hai_world desk &lt;ledger&gt; &lt;page&gt; &lt;desk_dir&gt; &lt;atlas.rgba&gt; the editor's desk files (C only)
+hai_world run &lt;ledger&gt; &lt;script&gt; [state_out]    apply a whole script (used by the differential test)</code></pre>
+
+<p><b>A real run (2026-11-24):</b></p>
+
+<pre><code>$ hai_world do w.ledger SPAWN hai home 3 3        ok SPAWN
+$ hai_world do w.ledger SPAWN pip home 5 3        ok SPAWN
+$ hai_world do w.ledger MOVE pip 1 0              ok MOVE
+$ hai_world do w.ledger MOVE pip 1 0              ok MOVE
+$ hai_world do w.ledger MOVE pip 1 1              REFUSED MOVE: a wall is in the way
+$ hai_world do w.ledger TELEPORT pip garden 4 4   ok TELEPORT
+$ hai_world pages w.ledger                        home garden
+$ hai_world dump w.ledger                         hai home 3 3 / pip garden 4 4</code></pre>
+
+<p>The refusal reasons you will meet: <code>bad name</code>, <code>bad page name</code>, <code>that cell is a wall</code>, <code>that cell is taken</code>, <code>name already used</code>, <code>too many agents</code>, <code>no such agent</code>, <code>one step only</code>, <code>a wall is in the way</code>, <code>another agent is in the way</code>, <code>slot out of range</code>, <code>already in that slot</code>, <code>missing arguments</code>, <code>unknown verb</code>.</p>
+
+<h3 id="3-2-hai-pet-the-needs">3.2 <code>hai_pet</code>: the needs</h3>
+
+<pre><code>hai_pet &lt;data_dir&gt; &lt;ledger&gt; born &lt;name&gt; &lt;type&gt;       type = organic | robot | cyborg (a body file)
+hai_pet &lt;data_dir&gt; &lt;ledger&gt; give &lt;name&gt; &lt;item&gt; &lt;n&gt;   n = 1..99
+hai_pet &lt;data_dir&gt; &lt;ledger&gt; tick &lt;name&gt; &lt;minutes&gt;    1..100000
+hai_pet &lt;data_dir&gt; &lt;ledger&gt; use &lt;name&gt; &lt;item&gt;        only an item the body knows and the pet holds
+hai_pet &lt;data_dir&gt; &lt;ledger&gt; weight &lt;name&gt; &lt;need&gt; &lt;tenths&gt;   0 = off, 10 = normal, 40 = four times as fast
+hai_pet &lt;data_dir&gt; &lt;ledger&gt; status &lt;name&gt;            NEEDS / BODY weights / INVENTORY</code></pre>
+
+<p><code>&lt;data_dir&gt;</code> is <code>docs/pet-data/</code>. A body file is three row kinds: <code>BODY|type</code>, <code>RATE|need|points|per_minutes</code>, <code>USE|item|verb|need|delta</code> (the same shapes as the house <code>needs.pdl</code> and <code>itemdata.pdl</code>). Add a body by adding a file: no code changes.</p>
+
+<h3 id="3-3-the-chat">3.3 The chat</h3>
+
+<p><code>hai_chat</code> (C) and <code>docs/engine.js</code> (JavaScript) are the chat engine; the book <code>book/24</code> explains the pipeline (TURN, SAID, WHY, GRADE rows).</p>
+
+<hr>
+
+<h2 id="part-4-hai-pal-inside-the-lyfedesk-editor-rpg-edit">Part 4. hai-pal inside the LyfeDesk editor (rpg-edit)</h2>
+
+<h3 id="4-1-what-you-see">4.1 What you see</h3>
+
+<p>The book <code>hai-pal</code> (house folder <code>@.apps/hai-pal/</code>) opens like any other book. WORKS (photographed 2026-11-24): the <b>Books</b> dropdown lists <code>hai-pal</code>; opening it shows <code>book:hai-pal</code> and <code>page:home</code> in the header, the room drawn in 3D (a floor, a wall border, the inner wall block) with the figures standing on it; the minimap shows the room; the <b>pets bar</b> on the left lists <b>hai</b> (the first pal, the master) then <b>pip</b>.</p>
+
+<h3 id="4-2-how-to-open-it">4.2 How to open it</h3>
+
+<ol>
+<li>Click the <b>Books</b> cell (header cell 2) <b>twice</b> (the first click only focuses it), then click the row <code>hai-pal</code> <b>twice</b>.</li>
+</ol>
+<ol>
+<li>For the pals list, switch the left slot from palettes to the pets bar with the bottom "pets" cell.</li>
+</ol>
+<ol>
+<li>If the list still shows the old party, any action in the editor refreshes it.</li>
+</ol>
+<p>(Driving the real window by relay is documented in <code>HQ-IQ-BOOK/16.game/OPEN-A-PROJECT-AS-A-BOOK-IN-RPG-EDIT-...-2026-11-23.md</code> section 10: use clicks, not typed digits.)</p>
+
+<h3 id="4-3-how-a-book-gets-its-own-party-the-generic-rule-house-commits-8980d72c0-and-8873ffed9">4.3 How a book gets its own party (the generic rule, house commits 8980d72c0 and 8873ffed9)</h3>
+
+<p>When the open book ships <code>@.apps/&lt;book&gt;/db/system.pdl</code> with a <code>BookParty</code> group, the pets bar reads the party from there: <code>Party member1</code> is the <b>first pal (the master)</b>, the <code>BookParty</code> members are the followers, in order. A book without that file is unchanged (proved: 17 pals for a no-db book and for the editor's own book on old and new binaries). hai-pal's file:</p>
+
+<pre><code>SYSTEM | name | Party       SYSTEM | member1 | hai
+SYSTEM | name | BookParty   SYSTEM | member1 | pip</code></pre>
+
+<h3 id="4-4-the-files-of-the-book">4.4 The files of the book</h3>
+
+<div class="tw"><table><tr><th>File</th><th>What it is</th></tr><tr><td><code>game.pdl</code>, <code>rooms.pdl</code>, <code>verbs.pdl</code>, <code>state.pdl</code></td><td>the book's declaration; <code>state.pdl</code> classifies every file as LEDGER, PROJECTION, CONFIG or PREFERENCE</td></tr><tr><td><code>ledger/world.ledger</code></td><td><b>the authority</b>: the world's rows</td></tr><tr><td><code>hai-pal-pchq/.../maps/hai-pal/&lt;page&gt;/</code></td><td>desk files for each page (cells, figure tokens): a <b>projection</b>, written by <code>hai_world desk</code></td></tr><tr><td><code>db/system.pdl</code>, <code>db/LAYER</code></td><td>the party (to become a projection of the ledger's REORDER rows)</td></tr></table></div>
+
+<h3 id="4-5-what-does-not-work-yet-honest-list">4.5 What does not work yet (honest list)</h3>
+
+<p>Play does nothing (no <code>GAME | driver</code> row); the party file is hand-written, not yet derived from the ledger; the page-file check <code>book_check</code> passes 4, fails 2 (A1, A2), skips 8 (the same as every generated book); the <code>m</code> move mode is not built; the left slot opens on palettes until you choose the pets bar.</p>
+
+<hr>
+
+<h2 id="part-5-the-data-files-what-is-where">Part 5. The data files (what is where)</h2>
+
+<div class="tw"><table><tr><th>File</th><th>Read by</th><th>Contents</th></tr><tr><td><code>docs/world.rules.pdl</code></td><td><code>hai_world.c</code>, <code>world.js</code></td><td>`RULE</td><td>cols</td><td>16<code>, </code>rows<code>, </code>cell<code>, </code>max_agents<code>, </code>name_max<code>; </code>WALL</td><td>page</td><td>x</td><td>y`</td></tr><tr><td><code>docs/pet-data/body_&lt;type&gt;.pdl</code></td><td><code>hai_pet.c</code>, <code>pet.js</code>, the page</td><td><code>BODY</code>, <code>RATE</code>, <code>USE</code> rows</td></tr><tr><td><code>docs/data/*.pdl</code></td><td><code>engine.js</code>, <code>hai_chat</code></td><td>concepts, replies, states, rules, seeds, stop words, packs</td></tr><tr><td><code>@.apps/hai-pal/db/system.pdl</code></td><td>the editor</td><td>the party</td></tr><tr><td>any <code>*.ledger</code></td><td>all tools</td><td>append-only rows, never edited</td></tr></table></div>
+
+<p><b>Rules for anyone editing data:</b> numbers live in data, not in C or JS; there is one authority per fact; a projection is never read back as input.</p>
+
+<hr>
+
+<h2 id="part-6-testing-what-is-proved-and-how-to-run-it">Part 6. Testing: what is proved and how to run it</h2>
+
+<p>Run a case with the house harness: <code>harness_case_op.+x &lt;case&gt;.pdl &lt;house&gt;</code> from <code>cases/</code>; compare the number of <code>EXPECT_</code> rows with the <code>PASS</code> lines in <code>results/&lt;case&gt;.txt</code> (a missing file prints nothing, which reads as zero: check it exists).</p>
+
+<div class="tw"><table><tr><th>Case</th><th>Checks</th><th>What it proves</th></tr><tr><td><code>hai_world</code></td><td>62</td><td>the world rules and the desk projection</td></tr><tr><td><code>hai_world_parity</code></td><td>213</td><td>C and JS give the same words, exit codes, ledgers and frames</td></tr><tr><td><code>hai_world_reorder</code></td><td>134</td><td>REORDER, master, party, refusals, in C and JS</td></tr><tr><td><code>hai_compat</code></td><td>205</td><td><b>differential</b>: 3000 hostile rows per seed (world: 5 seeds on the house rules, 3 on a smaller world; pet: 4 seeds), C and JS ledgers and end states byte-identical, frames identical, every refusal reason reached</td></tr><tr><td><code>hai_pet</code></td><td>34</td><td>the needs rules, checked against the house needs program</td></tr><tr><td><code>hai_pet_parity</code></td><td>188</td><td>C and JS agree on the pet</td></tr></table></div>
+
+<p>Total today: <b>836 checks, all passing</b>, plus <b>13 deliberate one-sided breakages</b> (7 in the world, 6 in the pet) that each turned the differential case red. The method is written down in <code>HQ-IQ-BOOK/02-architecture/HAI-AND-PALS-REUSE-AND-COMPATIBILITY-GUIDE-2026-11-24.md</code> section 7.</p>
+
+<p><b>Not covered by a repeatable test:</b> the web page (verified by driving the real buttons in headless Chrome, but that script is not in the repo); the editor's left pals bar (verified in a scratch house and on the live window, not by a harness case); the <code>desk</code> command in JavaScript.</p>
+
+<hr>
+
+<h2 id="part-7-how-hai-pal-fits-the-house-integration-map">Part 7. How hai-pal fits the house (integration map)</h2>
+
+<div class="tw"><table><tr><th>House piece</th><th>How hai-pal uses it</th><th>State</th></tr><tr><td><b>Ledger as authority</b> (<code>NO-GHOST-DATA...</code>)</td><td>every fact is a row; projections declared in <code>state.pdl</code></td><td>WORKS; hash checkpoints (<code>ckpt</code> rows) NOT BUILT</td></tr><tr><td><b>Rules as ops</b> (<code>STANDARD-RULES-AS-OPS...</code>)</td><td>each verb should be a pure module, an op, a registry row, a case and an event page</td><td>PARTLY: ops and cases exist; registry rows and event pages NOT BUILT</td></tr><tr><td><b>Event rows</b></td><td>the world should use `EVENT</td><td>round</td><td>actor</td><td>verb</td><td>target</td><td>at</td><td>result`</td><td>DESIGN (owner chose it); the actor column makes "the master did it" a row</td></tr><tr><td><b>Trunk and branch</b> (<code>trunk_op</code>)</td><td>bodies as shared defaults, each agent's changes as a branch</td><td>DESIGN</td></tr><tr><td><b>Needs</b> (<code>survivor_op</code>)</td><td>the pet's needs agree with it; reuse needs your quarantine release</td><td>PARTLY (oracle only)</td></tr><tr><td><b>Party and bars</b> (<code>petslike_core</code>, <code>layouts.pdl</code>)</td><td>the pets bar reads the book's own party</td><td>WORKS (generic hook)</td></tr><tr><td><b>Pet-to-pet speech</b> (<code>net_say.pdl</code>)</td><td>pals talking to each other</td><td>DESIGN (shipped OFF in the house)</td></tr><tr><td><b>Books and pages</b> (<code>book_check</code>, rooms)</td><td>a page is a session, a book is the project</td><td>PARTLY (see 4.5)</td></tr><tr><td><b>Presentations</b></td><td>one place, standards, an mp3 beside every mp4</td><td>WORKS (video <code>hai-pal-and-the-web-pet</code>)</td></tr></table></div>
+
+<hr>
+
+<h2 id="part-8-roadmap">Part 8. Roadmap</h2>
+
+<p>Each step needs a test that can fail, then the real window opened by eye (the house rule). Order matters: later steps assume earlier ones.</p>
+
+<p><b>Phase A: finish the party (days)</b></p>
+<ol>
+<li><b>Move mode <code>m</code></b> with the arrow keys (handoff: <code>HQ-IQ-BOOK/02-architecture/HOW-TO-BUILD-M-MOVE-MODE-AND-REORDER-HANDOFF-2026-11-24.md</code>, test spec T1 to T9). <code>^</code> stays the lock.</li>
+</ol>
+<ol>
+<li><b>The party projection:</b> an op that turns a reorder into a ledger row <i>and</i> rewrites <code>db/system.pdl</code>, so the order has one authority.</li>
+</ol>
+<ol>
+<li><b>A default bar:</b> a book <code>layouts.pdl</code> row so hai-pal opens on the pets bar, not palettes.</li>
+</ol>
+<ol>
+<li><b>A harness case for the book-party hook</b> (so the pals-on-left change stops depending on a manual scratch run).</li>
+</ol>
+<p><b>Phase B: make it playable (1 to 2 weeks)</b></p>
+<ol>
+<li><b>Event rows and registry:</b> move the world to <code>EVENT</code> rows, add <code>ckpt</code> hash rows, give each verb a <code>COMMAND</code> registry row and an event page (visible in Blueprintz).</li>
+</ol>
+<ol>
+<li><b>The Play driver</b> (<code>GAME | driver</code>): Play runs the agents' loop, Stop pauses; pressing Play must not change your saved book.</li>
+</ol>
+<ol>
+<li><b>Page-file conformance</b> (<code>book_check</code> A1 to A10).</li>
+</ol>
+<ol>
+<li><b>One session, two doors:</b> the standalone window and the editor book open the same session and world; one case replays one ledger through both.</li>
+</ol>
+<p><b>Phase C: the master gets real powers (weeks)</b></p>
+<ol>
+<li><b>Permissions:</b> hard rules and hand-set biases that can forbid any master verb (a refusal is a row); permission grows only by your rule.</li>
+</ol>
+<ol>
+<li><b>Interface verbs:</b> the master opens and closes bars, switches book and page, by calling the same ops your clicks call (every action a row with actor <code>master</code>).</li>
+</ol>
+<ol>
+<li><b>Plain-language <code>/do</code>:</b> map "please feed the pet" to verbs by matched concepts (the hai engine already shows its reasoning), never by a hidden model.</li>
+</ol>
+<ol>
+<li><b>Pals talk to each other:</b> <code>SAY|from|to|text</code> rows, each pal answering from its own bank, switchable off.</li>
+</ol>
+<p><b>Phase D: the pet's world (months)</b></p>
+<ol>
+<li><b>Food as a created concept, farming:</b> plant, water, harvest, then cooking (book 26).</li>
+</ol>
+<ol>
+<li><b>Anatomy and bodies:</b> digest, waste, breathe; weight-adjustable bodies; cyborg parts; later evolving forms (the "terumon" mini sim).</li>
+</ol>
+<ol>
+<li><b>Sandbox for real folders:</b> an agent's body can be a real folder on the desktop or a data file on the web, with escape tests first.</li>
+</ol>
+<ol>
+<li><b>Shared data:</b> bodies and settings through <code>trunk_op</code> (trunk plus per-agent branches).</li>
+</ol>
+<ol>
+<li><b>Texting between phones:</b> reuse the house phones and router (design only today).</li>
+</ol>
+<p><b>Phase E: one implementation (when the third rule set arrives)</b></p>
+<ol>
+<li>Single source for the rules shared by C and the web (no C-to-wasm compiler exists here today; the house vendors wasm3), keeping the differential test as the guard.</li>
+</ol>
+<p><b>Standing decisions the owner still owes (defaults in brackets):</b> the party order authority [the ledger]; whether the master's memory follows the slot [yes]; reuse <code>survivor_op</code> [yes, needs the quarantine release]; a native speaker for the Japanese lines.</p>
+
+<hr>
+
+<h2 id="part-9-troubleshooting-and-traps">Part 9. Troubleshooting and traps</h2>
+
+<ul>
+<li><b>The page says "could not load":</b> open it from a web server or the live site, not from a file (the browser blocks <code>fetch</code> on <code>file://</code>).</li>
+</ul>
+<ul>
+<li><b>The left bar still shows palettes or the old party:</b> choose the pets bar (bottom "pets" cell), then do any action; the list is rewritten when the editor's core runs.</li>
+</ul>
+<ul>
+<li><b>A test reads a stale file:</b> delete the file first. A file the program did not just write proves nothing.</li>
+</ul>
+<ul>
+<li><b><code>EXPECT_HAS</code> misses text in a big file:</b> it reads only the first ~8 KB; use <code>RUN | grep -q</code> and <code>EXPECT_EXIT</code>.</li>
+</ul>
+<ul>
+<li><b>The CPU gate refuses a heavy job:</b> another agent holds the lock; wait, do not bypass.</li>
+</ul>
+<ul>
+<li><b>Clicks do nothing in the editor:</b> the first click only focuses a cell; click twice; typed digits can select the wrong item.</li>
+</ul>
+<ul>
+<li><b>Numbers differ between C and JS:</b> read both through the rules file; run <code>hai_compat</code>.</li>
+</ul>
+<h2 id="part-10-glossary">Part 10. Glossary</h2>
+
+<p><b>Ledger:</b> the append-only file of rows; the only truth. <b>Projection:</b> a file derived from the ledger by a named op, safe to delete. <b>Pal:</b> an agent in the world. <b>Master:</b> the first pal in the order. <b>Page:</b> a room; a page is a session. <b>Book:</b> a project that opens in the editor. <b>Body:</b> the data file that gives a pet its needs. <b>Weight:</b> a multiplier on a need (10 = normal, 0 = off). <b>REFUSED row:</b> a request the rules did not allow, kept so it can be audited. <b>Differential test:</b> two implementations run on the same random input and compared byte for byte.</p>
+
+<h2 id="part-11-where-to-read-more">Part 11. Where to read more</h2>
+
+<p>hai repo: <code>book/22</code> (teaching), <code>23</code> (agents and sessions), <code>24</code> (how hai answers), <code>25</code> (embodied agents), <code>26</code> (the pet), <code>27</code> (master, slave and the order). House: <code>HQ-IQ-BOOK/02-architecture/HAI-AND-PALS-REUSE-AND-COMPATIBILITY-GUIDE-2026-11-24.md</code>, <code>.../HOW-TO-BUILD-M-MOVE-MODE-AND-REORDER-HANDOFF-2026-11-24.md</code>, <code>16.game/OPEN-A-PROJECT-AS-A-BOOK-IN-RPG-EDIT-...-2026-11-23.md</code>, <code>02-architecture/STANDARD-RULES-AS-OPS-FOUNDATION-DESIGN-2026-11-18.md</code>, <code>NO-GHOST-DATA-THE-LEDGER-IS-THE-AUTHORITY-2026-11-07.md</code>, <code>TRUNK-AND-BRANCH-SHARED-DATA-STANDARD-2026-11-16.md</code>.</p>
+</main></div></body></html>

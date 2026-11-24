@@ -12,6 +12,8 @@ Status: **runs, and learns what you teach it.** It asks about words it does not 
 
 ## The pet (proof of concept, 2026-11-23)
 
+**Textbook:** [`docs/textbook.html`](docs/textbook.html) ([markdown](docs/textbook.md)): how to use hai-pal, how it works, the test evidence, the house integration map and the roadmap.
+
 **Try it in your browser: [`docs/pet.html`](docs/pet.html)** (on the site: `/pet.html`). Walk the pet around a small room with the arrows, give it food, let time pass, turn a need off, switch the body (organic, robot, cyborg), change who the master is, and download your save. Everything runs in your browser from the same rules and data files the C programs read (`docs/world.rules.pdl`, `docs/pet-data/`); the C and JavaScript sides are checked against each other on thousands of random steps (case `hai_compat`).
 
 ![the pet page: a room, a pet and a master, a hunger bar, a pantry and the ledger of every move](docs/media/hai-pet-page.png)
