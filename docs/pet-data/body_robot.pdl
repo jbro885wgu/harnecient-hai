@@ -1,0 +1,7 @@
+# body_robot.pdl - a robot body (book 26). Its main need is drain (how empty the battery is); it cannot eat. heat rises with use and is cooled by rest items.
+BODY|robot
+RATE|drain|8|60
+RATE|heat|4|60
+USE|cell.small|charge|drain|-50
+USE|cell.full|charge|drain|-100
+USE|coolant.pack|cool|heat|-50

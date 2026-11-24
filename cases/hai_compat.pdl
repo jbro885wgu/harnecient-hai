@@ -354,9 +354,9 @@ RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_pet_fuzz 
 EXPECT_EXIT | 0 | pet-fuzz-generator-builds-without-warnings
 RUN | $T/hai_pet_fuzz | 1 | 3000 | $T/pet1.script
 EXPECT_EXIT | 0 | pet1-script-generated
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet1.c.l | run | $T/pet1.script | $T/pet1.c.s
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet1.c.l | run | $T/pet1.script | $T/pet1.c.s
 EXPECT_EXIT | 0 | pet1-c-runs-the-script
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet1.j.l | run | $T/pet1.script | $T/pet1.j.s
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet1.j.l | run | $T/pet1.script | $T/pet1.j.s
 EXPECT_EXIT | 0 | pet1-js-runs-the-script
 RUN | cmp | $T/pet1.c.l | $T/pet1.j.l
 EXPECT_EXIT | 0 | pet1-ledgers-byte-identical
@@ -364,9 +364,9 @@ RUN | cmp | $T/pet1.c.s | $T/pet1.j.s
 EXPECT_EXIT | 0 | pet1-end-state-byte-identical
 RUN | $T/hai_pet_fuzz | 2 | 3000 | $T/pet2.script
 EXPECT_EXIT | 0 | pet2-script-generated
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet2.c.l | run | $T/pet2.script | $T/pet2.c.s
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet2.c.l | run | $T/pet2.script | $T/pet2.c.s
 EXPECT_EXIT | 0 | pet2-c-runs-the-script
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet2.j.l | run | $T/pet2.script | $T/pet2.j.s
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet2.j.l | run | $T/pet2.script | $T/pet2.j.s
 EXPECT_EXIT | 0 | pet2-js-runs-the-script
 RUN | cmp | $T/pet2.c.l | $T/pet2.j.l
 EXPECT_EXIT | 0 | pet2-ledgers-byte-identical
@@ -374,9 +374,9 @@ RUN | cmp | $T/pet2.c.s | $T/pet2.j.s
 EXPECT_EXIT | 0 | pet2-end-state-byte-identical
 RUN | $T/hai_pet_fuzz | 3 | 3000 | $T/pet3.script
 EXPECT_EXIT | 0 | pet3-script-generated
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet3.c.l | run | $T/pet3.script | $T/pet3.c.s
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet3.c.l | run | $T/pet3.script | $T/pet3.c.s
 EXPECT_EXIT | 0 | pet3-c-runs-the-script
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet3.j.l | run | $T/pet3.script | $T/pet3.j.s
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet3.j.l | run | $T/pet3.script | $T/pet3.j.s
 EXPECT_EXIT | 0 | pet3-js-runs-the-script
 RUN | cmp | $T/pet3.c.l | $T/pet3.j.l
 EXPECT_EXIT | 0 | pet3-ledgers-byte-identical
@@ -384,9 +384,9 @@ RUN | cmp | $T/pet3.c.s | $T/pet3.j.s
 EXPECT_EXIT | 0 | pet3-end-state-byte-identical
 RUN | $T/hai_pet_fuzz | 4 | 3000 | $T/pet4.script
 EXPECT_EXIT | 0 | pet4-script-generated
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet4.c.l | run | $T/pet4.script | $T/pet4.c.s
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet4.c.l | run | $T/pet4.script | $T/pet4.c.s
 EXPECT_EXIT | 0 | pet4-c-runs-the-script
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet4.j.l | run | $T/pet4.script | $T/pet4.j.s
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/pet4.j.l | run | $T/pet4.script | $T/pet4.j.s
 EXPECT_EXIT | 0 | pet4-js-runs-the-script
 RUN | cmp | $T/pet4.c.l | $T/pet4.j.l
 EXPECT_EXIT | 0 | pet4-ledgers-byte-identical

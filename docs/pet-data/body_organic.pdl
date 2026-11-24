@@ -1,0 +1,5 @@
+# body_organic.pdl - an organic body (book 26). Same row shapes as the house needs.pdl and itemdata.pdl. A need is how much the body NEEDS something: 0 = fine, 100 = desperate.
+BODY|organic
+RATE|hunger|10|60
+USE|food.apple|eat|hunger|-40
+USE|food.bread|eat|hunger|-60

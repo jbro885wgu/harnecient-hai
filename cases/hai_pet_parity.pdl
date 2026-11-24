@@ -8,286 +8,286 @@ CASE    | parity
 SCRATCH |
 RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_pet.c
 EXPECT_EXIT | 0 | c-op-builds-without-warnings
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | born | rex | organic
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | born | rex | organic
 EXPECT_EXIT | 0 | c-01-born-rex-exit
 EXPECT_OUT_IS | ok BORN | c-01-born-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | born | rex | organic
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | born | rex | organic
 EXPECT_EXIT | 0 | js-01-born-rex-exit
 EXPECT_OUT_IS | ok BORN | js-01-born-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | born | bolt | robot
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | born | bolt | robot
 EXPECT_EXIT | 0 | c-02-born-bolt-exit
 EXPECT_OUT_IS | ok BORN | c-02-born-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | born | bolt | robot
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | born | bolt | robot
 EXPECT_EXIT | 0 | js-02-born-bolt-exit
 EXPECT_OUT_IS | ok BORN | js-02-born-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | born | cy | cyborg
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | born | cy | cyborg
 EXPECT_EXIT | 0 | c-03-born-cy-exit
 EXPECT_OUT_IS | ok BORN | c-03-born-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | born | cy | cyborg
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | born | cy | cyborg
 EXPECT_EXIT | 0 | js-03-born-cy-exit
 EXPECT_OUT_IS | ok BORN | js-03-born-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | born | rex | robot
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | born | rex | robot
 EXPECT_EXIT | 3 | c-04-born-rex-exit
 EXPECT_OUT_IS | REFUSED BORN: name already used | c-04-born-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | born | rex | robot
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | born | rex | robot
 EXPECT_EXIT | 3 | js-04-born-rex-exit
 EXPECT_OUT_IS | REFUSED BORN: name already used | js-04-born-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | born | ghost | wizard
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | born | ghost | wizard
 EXPECT_EXIT | 3 | c-05-born-ghost-exit
 EXPECT_OUT_IS | REFUSED BORN: no such body type | c-05-born-ghost-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | born | ghost | wizard
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | born | ghost | wizard
 EXPECT_EXIT | 3 | js-05-born-ghost-exit
 EXPECT_OUT_IS | REFUSED BORN: no such body type | js-05-born-ghost-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | born | Bad | organic
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | born | Bad | organic
 EXPECT_EXIT | 3 | c-06-born-Bad-exit
 EXPECT_OUT_IS | REFUSED BORN: bad name | c-06-born-Bad-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | born | Bad | organic
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | born | Bad | organic
 EXPECT_EXIT | 3 | js-06-born-Bad-exit
 EXPECT_OUT_IS | REFUSED BORN: bad name | js-06-born-Bad-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | give | rex | food.apple | 2
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | give | rex | food.apple | 2
 EXPECT_EXIT | 0 | c-07-give-rex-exit
 EXPECT_OUT_IS | ok GIVE | c-07-give-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | give | rex | food.apple | 2
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | give | rex | food.apple | 2
 EXPECT_EXIT | 0 | js-07-give-rex-exit
 EXPECT_OUT_IS | ok GIVE | js-07-give-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | give | bolt | cell.small | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | give | bolt | cell.small | 1
 EXPECT_EXIT | 0 | c-08-give-bolt-exit
 EXPECT_OUT_IS | ok GIVE | c-08-give-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | give | bolt | cell.small | 1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | give | bolt | cell.small | 1
 EXPECT_EXIT | 0 | js-08-give-bolt-exit
 EXPECT_OUT_IS | ok GIVE | js-08-give-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | give | cy | food.apple | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | give | cy | food.apple | 1
 EXPECT_EXIT | 0 | c-09-give-cy-exit
 EXPECT_OUT_IS | ok GIVE | c-09-give-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | give | cy | food.apple | 1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | give | cy | food.apple | 1
 EXPECT_EXIT | 0 | js-09-give-cy-exit
 EXPECT_OUT_IS | ok GIVE | js-09-give-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | give | rex | food.apple | 0
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | give | rex | food.apple | 0
 EXPECT_EXIT | 3 | c-10-give-rex-exit
 EXPECT_OUT_IS | REFUSED GIVE: count must be 1..99 | c-10-give-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | give | rex | food.apple | 0
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | give | rex | food.apple | 0
 EXPECT_EXIT | 3 | js-10-give-rex-exit
 EXPECT_OUT_IS | REFUSED GIVE: count must be 1..99 | js-10-give-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | give | rex | Bad!item | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | give | rex | Bad!item | 1
 EXPECT_EXIT | 3 | c-11-give-rex-exit
 EXPECT_OUT_IS | REFUSED GIVE: bad item name | c-11-give-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | give | rex | Bad!item | 1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | give | rex | Bad!item | 1
 EXPECT_EXIT | 3 | js-11-give-rex-exit
 EXPECT_OUT_IS | REFUSED GIVE: bad item name | js-11-give-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | rex | 240
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | rex | 240
 EXPECT_EXIT | 0 | c-12-tick-rex-exit
 EXPECT_OUT_IS | ok TICK | c-12-tick-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | rex | 240
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | rex | 240
 EXPECT_EXIT | 0 | js-12-tick-rex-exit
 EXPECT_OUT_IS | ok TICK | js-12-tick-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | bolt | 240
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | bolt | 240
 EXPECT_EXIT | 0 | c-13-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | c-13-tick-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | bolt | 240
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | bolt | 240
 EXPECT_EXIT | 0 | js-13-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | js-13-tick-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | cy | 240
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | cy | 240
 EXPECT_EXIT | 0 | c-14-tick-cy-exit
 EXPECT_OUT_IS | ok TICK | c-14-tick-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | cy | 240
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | cy | 240
 EXPECT_EXIT | 0 | js-14-tick-cy-exit
 EXPECT_OUT_IS | ok TICK | js-14-tick-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | rex | 0
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | rex | 0
 EXPECT_EXIT | 3 | c-15-tick-rex-exit
 EXPECT_OUT_IS | REFUSED TICK: minutes must be 1..100000 | c-15-tick-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | rex | 0
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | rex | 0
 EXPECT_EXIT | 3 | js-15-tick-rex-exit
 EXPECT_OUT_IS | REFUSED TICK: minutes must be 1..100000 | js-15-tick-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | nobody | 5
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | nobody | 5
 EXPECT_EXIT | 3 | c-16-tick-nobody-exit
 EXPECT_OUT_IS | REFUSED TICK: no such pet | c-16-tick-nobody-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | nobody | 5
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | nobody | 5
 EXPECT_EXIT | 3 | js-16-tick-nobody-exit
 EXPECT_OUT_IS | REFUSED TICK: no such pet | js-16-tick-nobody-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | rex
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | rex
 EXPECT_EXIT | 0 | c-17-status-rex-exit
 EXPECT_OUT_IS | NEEDS rex hunger=40\nBODY organic weights hunger=10\nINVENTORY food.apple:2 | c-17-status-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | rex
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | rex
 EXPECT_EXIT | 0 | js-17-status-rex-exit
 EXPECT_OUT_IS | NEEDS rex hunger=40\nBODY organic weights hunger=10\nINVENTORY food.apple:2 | js-17-status-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | bolt
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | bolt
 EXPECT_EXIT | 0 | c-18-status-bolt-exit
 EXPECT_OUT_IS | NEEDS bolt drain=32 heat=16\nBODY robot weights drain=10 heat=10\nINVENTORY cell.small:1 | c-18-status-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | bolt
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | bolt
 EXPECT_EXIT | 0 | js-18-status-bolt-exit
 EXPECT_OUT_IS | NEEDS bolt drain=32 heat=16\nBODY robot weights drain=10 heat=10\nINVENTORY cell.small:1 | js-18-status-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | cy
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | cy
 EXPECT_EXIT | 0 | c-19-status-cy-exit
 EXPECT_OUT_IS | NEEDS cy hunger=24 drain=20\nBODY cyborg weights hunger=10 drain=10\nINVENTORY food.apple:1 | c-19-status-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | cy
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | cy
 EXPECT_EXIT | 0 | js-19-status-cy-exit
 EXPECT_OUT_IS | NEEDS cy hunger=24 drain=20\nBODY cyborg weights hunger=10 drain=10\nINVENTORY food.apple:1 | js-19-status-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | use | rex | food.apple
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | use | rex | food.apple
 EXPECT_EXIT | 0 | c-20-use-rex-exit
 EXPECT_OUT_IS | ok USE | c-20-use-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | use | rex | food.apple
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | use | rex | food.apple
 EXPECT_EXIT | 0 | js-20-use-rex-exit
 EXPECT_OUT_IS | ok USE | js-20-use-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | use | bolt | food.apple
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | use | bolt | food.apple
 EXPECT_EXIT | 3 | c-21-use-bolt-exit
 EXPECT_OUT_IS | REFUSED USE: this body cannot use that item | c-21-use-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | use | bolt | food.apple
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | use | bolt | food.apple
 EXPECT_EXIT | 3 | js-21-use-bolt-exit
 EXPECT_OUT_IS | REFUSED USE: this body cannot use that item | js-21-use-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | use | bolt | cell.small
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | use | bolt | cell.small
 EXPECT_EXIT | 0 | c-22-use-bolt-exit
 EXPECT_OUT_IS | ok USE | c-22-use-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | use | bolt | cell.small
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | use | bolt | cell.small
 EXPECT_EXIT | 0 | js-22-use-bolt-exit
 EXPECT_OUT_IS | ok USE | js-22-use-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | use | cy | cell.small
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | use | cy | cell.small
 EXPECT_EXIT | 3 | c-23-use-cy-exit
 EXPECT_OUT_IS | REFUSED USE: holds none of that item | c-23-use-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | use | cy | cell.small
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | use | cy | cell.small
 EXPECT_EXIT | 3 | js-23-use-cy-exit
 EXPECT_OUT_IS | REFUSED USE: holds none of that item | js-23-use-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | use | rex | food.bread
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | use | rex | food.bread
 EXPECT_EXIT | 3 | c-24-use-rex-exit
 EXPECT_OUT_IS | REFUSED USE: holds none of that item | c-24-use-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | use | rex | food.bread
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | use | rex | food.bread
 EXPECT_EXIT | 3 | js-24-use-rex-exit
 EXPECT_OUT_IS | REFUSED USE: holds none of that item | js-24-use-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | weight | rex | hunger | 0
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | weight | rex | hunger | 0
 EXPECT_EXIT | 0 | c-25-weight-rex-exit
 EXPECT_OUT_IS | ok WEIGHT | c-25-weight-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | weight | rex | hunger | 0
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | weight | rex | hunger | 0
 EXPECT_EXIT | 0 | js-25-weight-rex-exit
 EXPECT_OUT_IS | ok WEIGHT | js-25-weight-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | rex | 600
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | rex | 600
 EXPECT_EXIT | 0 | c-26-tick-rex-exit
 EXPECT_OUT_IS | ok TICK | c-26-tick-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | rex | 600
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | rex | 600
 EXPECT_EXIT | 0 | js-26-tick-rex-exit
 EXPECT_OUT_IS | ok TICK | js-26-tick-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | weight | cy | hunger | 40
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | weight | cy | hunger | 40
 EXPECT_EXIT | 0 | c-27-weight-cy-exit
 EXPECT_OUT_IS | ok WEIGHT | c-27-weight-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | weight | cy | hunger | 40
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | weight | cy | hunger | 40
 EXPECT_EXIT | 0 | js-27-weight-cy-exit
 EXPECT_OUT_IS | ok WEIGHT | js-27-weight-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | cy | 60
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | cy | 60
 EXPECT_EXIT | 0 | c-28-tick-cy-exit
 EXPECT_OUT_IS | ok TICK | c-28-tick-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | cy | 60
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | cy | 60
 EXPECT_EXIT | 0 | js-28-tick-cy-exit
 EXPECT_OUT_IS | ok TICK | js-28-tick-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | weight | cy | hunger | 41
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | weight | cy | hunger | 41
 EXPECT_EXIT | 3 | c-29-weight-cy-exit
 EXPECT_OUT_IS | REFUSED WEIGHT: weight must be 0..40 tenths | c-29-weight-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | weight | cy | hunger | 41
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | weight | cy | hunger | 41
 EXPECT_EXIT | 3 | js-29-weight-cy-exit
 EXPECT_OUT_IS | REFUSED WEIGHT: weight must be 0..40 tenths | js-29-weight-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | weight | cy | thirst | 10
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | weight | cy | thirst | 10
 EXPECT_EXIT | 3 | c-30-weight-cy-exit
 EXPECT_OUT_IS | REFUSED WEIGHT: unknown need | c-30-weight-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | weight | cy | thirst | 10
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | weight | cy | thirst | 10
 EXPECT_EXIT | 3 | js-30-weight-cy-exit
 EXPECT_OUT_IS | REFUSED WEIGHT: unknown need | js-30-weight-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | rex
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | rex
 EXPECT_EXIT | 0 | c-31-status-rex-exit
 EXPECT_OUT_IS | NEEDS rex hunger=0\nBODY organic weights hunger=0\nINVENTORY food.apple:1 | c-31-status-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | rex
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | rex
 EXPECT_EXIT | 0 | js-31-status-rex-exit
 EXPECT_OUT_IS | NEEDS rex hunger=0\nBODY organic weights hunger=0\nINVENTORY food.apple:1 | js-31-status-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | cy
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | cy
 EXPECT_EXIT | 0 | c-32-status-cy-exit
 EXPECT_OUT_IS | NEEDS cy hunger=48 drain=25\nBODY cyborg weights hunger=40 drain=10\nINVENTORY food.apple:1 | c-32-status-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | cy
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | cy
 EXPECT_EXIT | 0 | js-32-status-cy-exit
 EXPECT_OUT_IS | NEEDS cy hunger=48 drain=25\nBODY cyborg weights hunger=40 drain=10\nINVENTORY food.apple:1 | js-32-status-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | cy | 100000
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | cy | 100000
 EXPECT_EXIT | 0 | c-33-tick-cy-exit
 EXPECT_OUT_IS | ok TICK | c-33-tick-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | cy | 100000
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | cy | 100000
 EXPECT_EXIT | 0 | js-33-tick-cy-exit
 EXPECT_OUT_IS | ok TICK | js-33-tick-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | cy
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | cy
 EXPECT_EXIT | 0 | c-34-status-cy-exit
 EXPECT_OUT_IS | NEEDS cy hunger=100 drain=100\nBODY cyborg weights hunger=40 drain=10\nINVENTORY food.apple:1 | c-34-status-cy-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | cy
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | cy
 EXPECT_EXIT | 0 | js-34-status-cy-exit
 EXPECT_OUT_IS | NEEDS cy hunger=100 drain=100\nBODY cyborg weights hunger=40 drain=10\nINVENTORY food.apple:1 | js-34-status-cy-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | nobody
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | nobody
 EXPECT_EXIT | 3 | c-35-status-nobody-exit
 EXPECT_OUT_IS | REFUSED: no such pet | c-35-status-nobody-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | nobody
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | nobody
 EXPECT_EXIT | 3 | js-35-status-nobody-exit
 EXPECT_OUT_IS | REFUSED: no such pet | js-35-status-nobody-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | bolt | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | bolt | 1
 EXPECT_EXIT | 0 | c-36-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | c-36-tick-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | bolt | 1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | bolt | 1
 EXPECT_EXIT | 0 | js-36-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | js-36-tick-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | bolt | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | bolt | 1
 EXPECT_EXIT | 0 | c-37-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | c-37-tick-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | bolt | 1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | bolt | 1
 EXPECT_EXIT | 0 | js-37-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | js-37-tick-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | bolt | 1
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | bolt | 1
 EXPECT_EXIT | 0 | c-38-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | c-38-tick-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | bolt | 1
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | bolt | 1
 EXPECT_EXIT | 0 | js-38-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | js-38-tick-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | bolt
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | bolt
 EXPECT_EXIT | 0 | c-39-status-bolt-exit
 EXPECT_OUT_IS | NEEDS bolt drain=0 heat=16\nBODY robot weights drain=10 heat=10\nINVENTORY | c-39-status-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | bolt
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | bolt
 EXPECT_EXIT | 0 | js-39-status-bolt-exit
 EXPECT_OUT_IS | NEEDS bolt drain=0 heat=16\nBODY robot weights drain=10 heat=10\nINVENTORY | js-39-status-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | bolt | 10
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | bolt | 10
 EXPECT_EXIT | 0 | c-40-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | c-40-tick-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | bolt | 10
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | bolt | 10
 EXPECT_EXIT | 0 | js-40-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | js-40-tick-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | bolt | 10
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | bolt | 10
 EXPECT_EXIT | 0 | c-41-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | c-41-tick-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | bolt | 10
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | bolt | 10
 EXPECT_EXIT | 0 | js-41-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | js-41-tick-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | tick | bolt | 10
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | tick | bolt | 10
 EXPECT_EXIT | 0 | c-42-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | c-42-tick-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | tick | bolt | 10
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | tick | bolt | 10
 EXPECT_EXIT | 0 | js-42-tick-bolt-exit
 EXPECT_OUT_IS | ok TICK | js-42-tick-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | bolt
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | bolt
 EXPECT_EXIT | 0 | c-43-status-bolt-exit
 EXPECT_OUT_IS | NEEDS bolt drain=4 heat=18\nBODY robot weights drain=10 heat=10\nINVENTORY | c-43-status-bolt-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | bolt
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | bolt
 EXPECT_EXIT | 0 | js-43-status-bolt-exit
 EXPECT_OUT_IS | NEEDS bolt drain=4 heat=18\nBODY robot weights drain=10 heat=10\nINVENTORY | js-43-status-bolt-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | give | rex | food.apple | 99
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | give | rex | food.apple | 99
 EXPECT_EXIT | 0 | c-44-give-rex-exit
 EXPECT_OUT_IS | ok GIVE | c-44-give-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | give | rex | food.apple | 99
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | give | rex | food.apple | 99
 EXPECT_EXIT | 0 | js-44-give-rex-exit
 EXPECT_OUT_IS | ok GIVE | js-44-give-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | give | rex | food.apple | 100
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | give | rex | food.apple | 100
 EXPECT_EXIT | 3 | c-45-give-rex-exit
 EXPECT_OUT_IS | REFUSED GIVE: count must be 1..99 | c-45-give-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | give | rex | food.apple | 100
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | give | rex | food.apple | 100
 EXPECT_EXIT | 3 | js-45-give-rex-exit
 EXPECT_OUT_IS | REFUSED GIVE: count must be 1..99 | js-45-give-rex-words
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | rex
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | rex
 EXPECT_EXIT | 0 | c-46-status-rex-exit
 EXPECT_OUT_IS | NEEDS rex hunger=0\nBODY organic weights hunger=0\nINVENTORY food.apple:100 | c-46-status-rex-words
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | rex
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | rex
 EXPECT_EXIT | 0 | js-46-status-rex-exit
 EXPECT_OUT_IS | NEEDS rex hunger=0\nBODY organic weights hunger=0\nINVENTORY food.apple:100 | js-46-status-rex-words
 RUN | cmp | $T/c.ledger | $T/js.ledger
 EXPECT_EXIT | 0 | the-two-ledgers-are-byte-identical
 # each implementation replays the OTHER one's ledger and must give the same status
-RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/js.ledger | status | cy
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/js.ledger | status | cy
 EXPECT_OUT_IS | NEEDS cy hunger=100 drain=100\nBODY cyborg weights hunger=40 drain=10\nINVENTORY food.apple:1 | c-replays-the-js-ledger-to-the-same-pet
-RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/c.ledger | status | cy
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet-data | $T/c.ledger | status | cy
 EXPECT_OUT_IS | NEEDS cy hunger=100 drain=100\nBODY cyborg weights hunger=40 drain=10\nINVENTORY food.apple:1 | js-replays-the-c-ledger-to-the-same-pet

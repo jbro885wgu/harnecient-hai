@@ -12,13 +12,17 @@ Status: **runs, and learns what you teach it.** It asks about words it does not 
 
 ## The pet (proof of concept, 2026-11-23)
 
+**Try it in your browser: [`docs/pet.html`](docs/pet.html)** (on the site: `/pet.html`). Walk the pet around a small room with the arrows, give it food, let time pass, turn a need off, switch the body (organic, robot, cyborg), change who the master is, and download your save. Everything runs in your browser from the same rules and data files the C programs read (`docs/world.rules.pdl`, `docs/pet-data/`); the C and JavaScript sides are checked against each other on thousands of random steps (case `hai_compat`).
+
+![the pet page: a room, a pet and a master, a hunger bar, a pantry and the ledger of every move](docs/media/hai-pet-page.png)
+
 ![hai pet proof of concept: body types as data, checked against the house needs op, ported to JavaScript](docs/media/hai-pet-proof.gif)
 
-A pet whose **body is data**: an organic body, a robot body or a cyborg, each one small file (`pet/data/body_*.pdl`) that says which needs rise, how fast, and which items satisfy them. The same code runs every body; a weight (0 to 40 tenths) speeds a need up, slows it down, or switches it off. Everything the pet is comes from rows in one ledger, so replaying the rows gives exactly the same pet. Every slide above is a real run, not a mock-up.
+A pet whose **body is data**: an organic body, a robot body or a cyborg, each one small file (`docs/pet-data/body_*.pdl`) that says which needs rise, how fast, and which items satisfy them. The same code runs every body; a weight (0 to 40 tenths) speeds a need up, slows it down, or switches it off. Everything the pet is comes from rows in one ledger, so replaying the rows gives exactly the same pet. Every slide above is a real run, not a mock-up.
 
 | What | Where | Checked by |
 |---|---|---|
-| the needs core in C | `ops/hai_pet.c`, data in `pet/data/` | case `cases/hai_pet.pdl`: 34 checks, and the tick arithmetic is compared with the house needs op on the same minutes |
+| the needs core in C | `ops/hai_pet.c`, data in `docs/pet-data/` | case `cases/hai_pet.pdl`: 34 checks, and the tick arithmetic is compared with the house needs op on the same minutes |
 | the JavaScript port | `docs/pet.js` (also a command line) | case `cases/hai_pet_parity.pdl`: 188 checks, same words and exit codes, byte-identical ledgers, each side replays the other's ledger |
 | the design | `book/25-...` (embodied agents) and `book/26-...` (needs, food, farming, bodies, cyborgs) | design only, labelled as such |
 
@@ -26,11 +30,11 @@ Try it (needs a C compiler, or node):
 
 ```sh
 cc -std=gnu11 -O2 -o hai_pet ops/hai_pet.c
-./hai_pet pet/data /tmp/pet.ledger born rex organic
-./hai_pet pet/data /tmp/pet.ledger give rex food.apple 2
-./hai_pet pet/data /tmp/pet.ledger tick rex 240      # four hours pass
-./hai_pet pet/data /tmp/pet.ledger status rex        # NEEDS rex hunger=40
-node docs/pet.js pet/data /tmp/pet2.ledger born bolt robot    # the same verbs in JavaScript
+./hai_pet docs/pet-data /tmp/pet.ledger born rex organic
+./hai_pet docs/pet-data /tmp/pet.ledger give rex food.apple 2
+./hai_pet docs/pet-data /tmp/pet.ledger tick rex 240      # four hours pass
+./hai_pet docs/pet-data /tmp/pet.ledger status rex        # NEEDS rex hunger=40
+node docs/pet.js docs/pet-data /tmp/pet2.ledger born bolt robot    # the same verbs in JavaScript
 ```
 
 Every check can fail: breaking either implementation on purpose (dropping the carried remainder, changing a limit, changing a clamp) turns the cases red, and that was run. **Not done yet:** the pet on the web page, a world to walk in, planting and cooking, anatomy parts, evolving a body. Those are in the design chapters, not in code.
