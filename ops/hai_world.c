@@ -25,21 +25,46 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#define COLS 16
-#define ROWS 10
-#define CELL 32
+/* the numbers come from docs/world.rules.pdl (env HAI_RULES), the same file docs/world.js reads: one authority for the grid, the caps and the walls */
 #define MAXA 32
+#define MAXW 64
+static int g_cols, g_rows, g_cell, g_max_agents, g_name_max, g_nwalls;
+static struct { char page[20]; int x, y; } g_walls[MAXW];
+#define COLS g_cols
+#define ROWS g_rows
+#define CELL g_cell
 typedef struct { char name[20]; char page[20]; int x, y, on; } agent_t;
 typedef struct { agent_t a[MAXA]; int n; } world_t;
 
+static int load_rules(void) {
+    const char *p = getenv("HAI_RULES"); if (!p || !p[0]) { fprintf(stderr, "no rules file: set HAI_RULES to docs/world.rules.pdl\n"); return 2; }
+    FILE *fp = fopen(p, "r"); if (!fp) { fprintf(stderr, "cannot read the rules file %s\n", p); return 2; }
+    char line[256]; g_cols = g_rows = g_cell = g_max_agents = g_name_max = g_nwalls = 0;
+    while (fgets(line, sizeof line, fp)) {
+        line[strcspn(line, "\r\n")] = 0; if (!line[0] || line[0] == '#') continue;
+        char *f[5]; int n = 0; char *q = line; while (n < 5) { f[n++] = q; char *b = strchr(q, '|'); if (!b) break; *b = 0; q = b + 1; }
+        for (int i = 0; i < n; i++) { while (*f[i] == ' ') f[i]++; char *e = f[i] + strlen(f[i]); while (e > f[i] && e[-1] == ' ') *--e = 0; }
+        if (n >= 3 && strcmp(f[0], "RULE") == 0) {
+            int v = atoi(f[2]);
+            if (strcmp(f[1], "cols") == 0) g_cols = v; else if (strcmp(f[1], "rows") == 0) g_rows = v; else if (strcmp(f[1], "cell") == 0) g_cell = v;
+            else if (strcmp(f[1], "max_agents") == 0) g_max_agents = v; else if (strcmp(f[1], "name_max") == 0) g_name_max = v;
+        } else if (n >= 4 && strcmp(f[0], "WALL") == 0 && g_nwalls < MAXW) {
+            snprintf(g_walls[g_nwalls].page, sizeof g_walls[0].page, "%s", f[1]); g_walls[g_nwalls].x = atoi(f[2]); g_walls[g_nwalls].y = atoi(f[3]); g_nwalls++;
+        }
+    }
+    fclose(fp);
+    if (g_cols < 3 || g_cols > 64 || g_rows < 3 || g_rows > 64 || g_cell < 4 || g_cell > 64 || g_max_agents < 1 || g_max_agents > MAXA || g_name_max < 1 || g_name_max > 19) { fprintf(stderr, "the rules file has a missing or out of range number\n"); return 2; }
+    return 0;
+}
+
 static int valid_name(const char *s) {
-    size_t n = strlen(s); if (n < 1 || n > 16) return 0;
+    size_t n = strlen(s); if (n < 1 || (int)n > g_name_max) return 0;
     for (size_t i = 0; i < n; i++) { char c = s[i]; if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-')) return 0; }
     return 1;
 }
 static int is_wall(const char *page, int x, int y) {
     if (x < 1 || y < 1 || x > COLS - 2 || y > ROWS - 2) return 1;
-    if (strcmp(page, "home") == 0 && y == 4 && (x == 7 || x == 8)) return 1;
+    for (int i = 0; i < g_nwalls; i++) if (g_walls[i].x == x && g_walls[i].y == y && strcmp(g_walls[i].page, page) == 0) return 1;
     return 0;
 }
 static agent_t *find(world_t *w, const char *name) { for (int i = 0; i < w->n; i++) if (strcmp(w->a[i].name, name) == 0) return &w->a[i]; return NULL; }
@@ -56,7 +81,7 @@ static const char *apply(world_t *w, const char *verb, char **f, int nf) {
         if (at(w, page, x, y)) return "that cell is taken";
         if (strcmp(verb, "SPAWN") == 0) {
             if (find(w, name)) return "name already used";
-            if (w->n >= MAXA) return "too many agents";
+            if (w->n >= g_max_agents) return "too many agents";
             agent_t *a = &w->a[w->n++]; memset(a, 0, sizeof *a);
             snprintf(a->name, sizeof a->name, "%s", name); snprintf(a->page, sizeof a->page, "%s", page); a->x = x; a->y = y; a->on = 1; return NULL;
         }
@@ -111,6 +136,7 @@ static int write_atomic(const char *path, const char *text) { char tmp[1200]; sn
 int main(int argc, char **argv) {
     if (argc < 3) { fprintf(stderr, "usage: hai_world do|dump|frame|pages <ledger> ...\n"); return 2; }
     const char *cmd = argv[1], *ledger = argv[2]; world_t w;
+    { int rc = load_rules(); if (rc) return rc; }
     if (strcmp(cmd, "do") == 0) {
         if (argc < 4) { fprintf(stderr, "usage: hai_world do <ledger> VERB args...\n"); return 2; }
         replay(ledger, &w);
@@ -121,6 +147,22 @@ int main(int argc, char **argv) {
         if (why) { fprintf(o, "REFUSED|%s|%s|%s\n", verb, nf ? f[0] : "-", why); fclose(o); printf("REFUSED %s: %s\n", verb, why); return 3; }
         fprintf(o, "%s", verb); for (int i = 0; i < nf; i++) fprintf(o, "|%s", f[i]); fprintf(o, "\n"); fclose(o);
         printf("ok %s\n", verb); return 0;
+    }
+    if (strcmp(cmd, "run") == 0) { /* run <ledger> <script>: apply each script row as `do` would (ledger rows and REFUSED rows appended), print one summary line (ok and refused counts; the per-row results are the ledger rows); for the C/JS differential case */
+        if (argc < 4) { fprintf(stderr, "usage: hai_world run <ledger> <script> [state_out]\n"); return 2; }
+        FILE *sf = fopen(argv[3], "r"); if (!sf) { fprintf(stderr, "cannot read the script\n"); return 2; }
+        replay(ledger, &w); FILE *o = fopen(ledger, "a"); if (!o) { perror("ledger"); fclose(sf); return 2; }
+        char line[512]; int n_ok = 0, n_ref = 0;
+        while (fgets(line, sizeof line, sf)) {
+            line[strcspn(line, "\r\n")] = 0; if (!line[0] || line[0] == '#') continue;
+            char keep[512]; snprintf(keep, sizeof keep, "%s", line);
+            char *f[8]; int nf = split(line, f, 8); const char *why = apply(&w, f[0], f + 1, nf - 1);
+            if (why) { fprintf(o, "REFUSED|%s|%s|%s\n", f[0], nf > 1 ? f[1] : "-", why); n_ref++; }
+            else { fprintf(o, "%s\n", keep); n_ok++; }
+        }
+        fclose(o); fclose(sf); printf("ran ok=%d refused=%d\n", n_ok, n_ref);   /* the per-row results are the ledger rows; one summary line keeps a pipe small */
+        if (argc > 4) { FILE *so = fopen(argv[4], "w"); if (!so) return 2; for (int i = 0; i < w.n; i++) fprintf(so, "%s%s", i ? " " : "", w.a[i].name); fprintf(so, "\n"); for (int i = 0; i < w.n; i++) fprintf(so, "%s %s %d %d\n", w.a[i].name, w.a[i].page, w.a[i].x, w.a[i].y); fclose(so); }
+        return 0;
     }
     replay(ledger, &w);
     if (strcmp(cmd, "master") == 0) { if (w.n < 1) { printf("none\n"); return 0; } printf("%s\n", w.a[0].name); return 0; }
@@ -159,7 +201,7 @@ int main(int argc, char **argv) {
         if (argc < 6) { fprintf(stderr, "usage: hai_world desk <ledger> <page> <desk_dir> <atlas.rgba>\n"); return 2; }
         const char *page = argv[3], *dd = argv[4], *atlas = argv[5]; struct stat sb;
         if (stat(dd, &sb) != 0 || !S_ISDIR(sb.st_mode)) { fprintf(stderr, "desk: the desk folder does not exist (make it first)\n"); return 2; }
-        static char buf[COLS * ROWS * 14 + 512]; size_t n = 0; char q[1100];
+        static char buf[64 * 64 * 14 + 512]; size_t n = 0; char q[1100];
         n += (size_t)snprintf(buf + n, sizeof buf - n, "width=%d\nheight=%d\ntile_px=24\natlas_cols=16\natlas_tiles=43\nrock_slot=36\ncells\n", COLS, ROWS);
         for (int y = 0; y < ROWS; y++) { for (int x = 0; x < COLS; x++) { int t = is_wall(page, x, y) ? 36 : (((x + y) & 1) ? 42 : 39); int z = is_wall(page, x, y) ? 2 : 1; n += (size_t)snprintf(buf + n, sizeof buf - n, "%s%d,0,%d", x ? " " : "", t, z); } buf[n++] = '\n'; }
         buf[n] = 0; snprintf(q, sizeof q, "%s/cells.txt", dd); if (write_atomic(q, buf) != 0) { fprintf(stderr, "desk: cannot write cells.txt\n"); return 2; }

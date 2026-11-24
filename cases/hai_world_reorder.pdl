@@ -1,6 +1,7 @@
 # hai_world_reorder (2026-11-24): REORDER (the party order is the role, slot 1 = master; book 27) in the C op and in docs/world.js. Expected text recorded once from the C op, literal here; ledgers must be byte-identical.
 RESULTS | ../results/hai_world_reorder.txt
 ENV | LC_ALL | C
+ENV | HAI_RULES | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.rules.pdl
 
 CASE    | reorder
 SCRATCH |

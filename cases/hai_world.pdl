@@ -3,6 +3,7 @@
 # DEBT: absolute repo paths (the case op expands only $T and $HOUSE).
 RESULTS | ../results/hai_world.txt
 ENV | LC_ALL | C
+ENV | HAI_RULES | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.rules.pdl
 
 CASE    | world
 SCRATCH |

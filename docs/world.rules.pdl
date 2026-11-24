@@ -1,0 +1,11 @@
+# docs/world.rules.pdl (2026-11-24; in docs/ so the web page fetches the SAME file GitHub Pages serves): the numbers of the hai-pal world, as DATA. Read by BOTH implementations (ops/hai_world.c and docs/world.js), so the grid, the caps and the walls live in ONE place (house contract: numbers are data, RULE rows; docs 02-architecture/HAI-AND-PALS-REUSE-AND-COMPATIBILITY-GUIDE-2026-11-24.md).
+# RULE | key | integer      cols, rows = the page grid (the outer ring of cells is wall); cell = pixels per cell in the canvas frame; max_agents (1..32, the C array size); name_max (1..19) = longest agent or page name.
+# WALL | page | x | y        one extra wall cell on that page (inside the grid). More rows = more walls; max 64.
+# NOT here on purpose: the frame colours (presentation, not a rule). A changed number here is a different world: hash this file with the ledger when a ckpt row exists (not built yet).
+RULE | cols | 16
+RULE | rows | 10
+RULE | cell | 32
+RULE | max_agents | 32
+RULE | name_max | 16
+WALL | home | 7 | 4
+WALL | home | 8 | 4

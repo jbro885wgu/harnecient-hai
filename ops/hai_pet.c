@@ -90,8 +90,21 @@ static void replay(const char *ledger, world_t *w) {
     fclose(fp);
 }
 int main(int argc, char **argv) {
-    if (argc < 5) { fprintf(stderr, "usage: hai_pet <data_dir> <ledger> born|give|tick|use|weight|status <name> ...\n"); return 2; }
+    if (argc < 5) { fprintf(stderr, "usage: hai_pet <data_dir> <ledger> born|give|tick|use|weight|status <name> ... | run <script> [state_out]\n"); return 2; }
     world_t *w = calloc(1, sizeof *w); if (!w) return 2; w->data = argv[1]; const char *ledger = argv[2], *cmd = argv[3];
+    if (!strcmp(cmd, "run")) { /* run <data> <ledger> <script> [state_out]: apply each script row as a command would, append ledger and REFUSED rows, print ONE summary line; the end state of every pet goes to state_out (C/JS differential case) */
+        FILE *sf = fopen(argv[4], "r"); if (!sf) { fprintf(stderr, "cannot read the script\n"); free(w); return 2; }
+        replay(ledger, w); FILE *o = fopen(ledger, "a"); if (!o) { perror("ledger"); fclose(sf); free(w); return 2; }
+        char line[400]; int n_ok = 0, n_ref = 0;
+        while (fgets(line, sizeof line, sf)) {
+            line[strcspn(line, "\r\n")] = 0; if (!line[0] || line[0] == '#') continue;
+            char keep[400]; snprintf(keep, sizeof keep, "%s", line); char *f[8]; int nf = split(line, f, 8); const char *why = apply(w, f[0], f + 1, nf - 1);
+            if (why) { fprintf(o, "REFUSED|%s|%s|%s\n", f[0], nf > 1 ? f[1] : "-", why); n_ref++; } else { fprintf(o, "%s\n", keep); n_ok++; }
+        }
+        fclose(o); fclose(sf); printf("ran ok=%d refused=%d\n", n_ok, n_ref);
+        if (argc > 5) { FILE *so = fopen(argv[5], "w"); if (!so) { free(w); return 2; } for (int k = 0; k < w->n; k++) { pet_t *p = &w->p[k]; fprintf(so, "NEEDS %s", p->name); for (int i = 0; i < p->b.nr; i++) fprintf(so, " %s=%ld", p->b.r[i].need, p->val[i]); fprintf(so, "\nBODY %s weights", p->b.type); for (int i = 0; i < p->b.nr; i++) fprintf(so, " %s=%ld", p->b.r[i].need, p->w[i]); fprintf(so, "\nINVENTORY"); for (int i = 0; i < p->ni; i++) if (p->cnt[i] > 0) fprintf(so, " %s:%ld", p->inv[i], p->cnt[i]); fprintf(so, "\n"); } fclose(so); }
+        free(w); return 0;
+    }
     replay(ledger, w);
     if (!strcmp(cmd, "status")) {
         pet_t *p = find(w, argv[4]); if (!p) { printf("REFUSED: no such pet\n"); free(w); return 3; }

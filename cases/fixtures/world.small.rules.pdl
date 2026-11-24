@@ -1,0 +1,11 @@
+# a DIFFERENT world on purpose (2026-11-24): proves the numbers are data in BOTH implementations: a 12 by 8 grid, 24 pixel cells, 5 agents, names up to 6 characters, walls on two pages.
+RULE | cols | 12
+RULE | rows | 8
+RULE | cell | 24
+RULE | max_agents | 5
+RULE | name_max | 6
+WALL | home | 3 | 3
+WALL | home | 4 | 3
+WALL | garden | 5 | 2
+WALL | garden | 5 | 3
+WALL | garden | 5 | 4

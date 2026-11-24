@@ -3,6 +3,7 @@
 # Steps cover every wall edge, the inner wall block, diagonals, a taken cell, teleport and bad input. Needs node and cmp. DEBT: absolute repo paths.
 RESULTS | ../results/hai_world_parity.txt
 ENV | LC_ALL | C
+ENV | HAI_RULES | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.rules.pdl
 
 CASE    | parity
 SCRATCH |

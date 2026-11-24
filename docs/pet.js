@@ -97,6 +97,18 @@
     var data = argv[0], ledger = argv[1], cmd = argv[2];
     var w = newWorld(function (type) { try { return fs.readFileSync(data + '/body_' + type + '.pdl', 'utf8'); } catch (e) { return null; } });
     try { replay(w, fs.readFileSync(ledger, 'utf8')); } catch (e) { /* no ledger yet is an empty world */ }
+    if (cmd === 'run') {
+      var sc; try { sc = fs.readFileSync(argv[3], 'utf8'); } catch (e) { process.stderr.write('cannot read the script\n'); process.exit(2); }
+      var lo = '', nok = 0, nref = 0, sl = sc.split('\n');
+      for (var si = 0; si < sl.length; si++) {
+        var ln = sl[si].replace(/[\r\n]+$/, ''); if (!ln || ln[0] === '#') continue;
+        var sf = split(ln, 8), sv = sf[0], sa = sf.slice(1), sw = apply(w, sv, sa);
+        if (sw) { lo += 'REFUSED|' + sv + '|' + (sa.length ? sa[0] : '-') + '|' + sw + '\n'; nref++; } else { lo += ln + '\n'; nok++; }
+      }
+      fs.appendFileSync(ledger, lo); out('ran ok=' + nok + ' refused=' + nref + '\n');
+      if (argv.length > 4) fs.writeFileSync(argv[4], w.pets.map(statusText).join(''));
+      process.exit(0);
+    }
     if (cmd === 'status') {
       var sp = find(w, argv[3]); if (!sp) { out('REFUSED: no such pet\n'); process.exit(3); }
       out(statusText(sp)); process.exit(0);

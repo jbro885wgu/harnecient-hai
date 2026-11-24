@@ -1,0 +1,424 @@
+# hai_compat (2026-11-24): the C/JS DIFFERENTIAL case. A deterministic hostile script (ops/hai_fuzz.c, 3000 rows per seed) is run by the C op and by docs/world.js under the SAME rules file; the ledgers, the end state and the canvas frames of three pages must be BYTE-IDENTICAL. Two worlds (the house rules file and a small different one) prove the numbers are data on both sides. Every refusal reason must appear, so the fuzz cannot silently stop reaching them. Needs node, gcc, cmp. DEBT: absolute repo paths.
+RESULTS | ../results/hai_compat.txt
+ENV | LC_ALL | C
+
+CASE    | default
+SCRATCH |
+ENV | HAI_RULES | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.rules.pdl
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_world | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_world.c
+EXPECT_EXIT | 0 | c-op-builds-without-warnings
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_fuzz | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_fuzz.c
+EXPECT_EXIT | 0 | fuzz-generator-builds-without-warnings
+RUN | $T/hai_fuzz | 1 | 3000 | 16 | 10 | $T/default1.script
+EXPECT_EXIT | 0 | default1-script-generated
+RUN | $T/hai_world | run | $T/default1.c.l | $T/default1.script | $T/default1.c.s
+EXPECT_EXIT | 0 | default1-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/default1.j.l | $T/default1.script | $T/default1.j.s
+EXPECT_EXIT | 0 | default1-js-runs-the-script
+RUN | cmp | $T/default1.c.l | $T/default1.j.l
+EXPECT_EXIT | 0 | default1-ledgers-byte-identical
+RUN | cmp | $T/default1.c.s | $T/default1.j.s
+EXPECT_EXIT | 0 | default1-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/default1.c.l | home | $T/default1.c.home | hai
+EXPECT_EXIT | 0 | default1-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default1.j.l | home | $T/default1.j.home | hai
+EXPECT_EXIT | 0 | default1-js-frame-home
+RUN | cmp | $T/default1.c.home.raw | $T/default1.j.home.raw
+EXPECT_EXIT | 0 | default1-frame-home-byte-identical
+RUN | cmp | $T/default1.c.home.receipt.txt | $T/default1.j.home.receipt.txt
+EXPECT_EXIT | 0 | default1-receipt-home-identical
+RUN | $T/hai_world | frame | $T/default1.c.l | garden | $T/default1.c.garden | hai
+EXPECT_EXIT | 0 | default1-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default1.j.l | garden | $T/default1.j.garden | hai
+EXPECT_EXIT | 0 | default1-js-frame-garden
+RUN | cmp | $T/default1.c.garden.raw | $T/default1.j.garden.raw
+EXPECT_EXIT | 0 | default1-frame-garden-byte-identical
+RUN | cmp | $T/default1.c.garden.receipt.txt | $T/default1.j.garden.receipt.txt
+EXPECT_EXIT | 0 | default1-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/default1.c.l | cave | $T/default1.c.cave | hai
+EXPECT_EXIT | 0 | default1-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default1.j.l | cave | $T/default1.j.cave | hai
+EXPECT_EXIT | 0 | default1-js-frame-cave
+RUN | cmp | $T/default1.c.cave.raw | $T/default1.j.cave.raw
+EXPECT_EXIT | 0 | default1-frame-cave-byte-identical
+RUN | cmp | $T/default1.c.cave.receipt.txt | $T/default1.j.cave.receipt.txt
+EXPECT_EXIT | 0 | default1-receipt-cave-identical
+RUN | $T/hai_fuzz | 2 | 3000 | 16 | 10 | $T/default2.script
+EXPECT_EXIT | 0 | default2-script-generated
+RUN | $T/hai_world | run | $T/default2.c.l | $T/default2.script | $T/default2.c.s
+EXPECT_EXIT | 0 | default2-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/default2.j.l | $T/default2.script | $T/default2.j.s
+EXPECT_EXIT | 0 | default2-js-runs-the-script
+RUN | cmp | $T/default2.c.l | $T/default2.j.l
+EXPECT_EXIT | 0 | default2-ledgers-byte-identical
+RUN | cmp | $T/default2.c.s | $T/default2.j.s
+EXPECT_EXIT | 0 | default2-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/default2.c.l | home | $T/default2.c.home | hai
+EXPECT_EXIT | 0 | default2-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default2.j.l | home | $T/default2.j.home | hai
+EXPECT_EXIT | 0 | default2-js-frame-home
+RUN | cmp | $T/default2.c.home.raw | $T/default2.j.home.raw
+EXPECT_EXIT | 0 | default2-frame-home-byte-identical
+RUN | cmp | $T/default2.c.home.receipt.txt | $T/default2.j.home.receipt.txt
+EXPECT_EXIT | 0 | default2-receipt-home-identical
+RUN | $T/hai_world | frame | $T/default2.c.l | garden | $T/default2.c.garden | hai
+EXPECT_EXIT | 0 | default2-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default2.j.l | garden | $T/default2.j.garden | hai
+EXPECT_EXIT | 0 | default2-js-frame-garden
+RUN | cmp | $T/default2.c.garden.raw | $T/default2.j.garden.raw
+EXPECT_EXIT | 0 | default2-frame-garden-byte-identical
+RUN | cmp | $T/default2.c.garden.receipt.txt | $T/default2.j.garden.receipt.txt
+EXPECT_EXIT | 0 | default2-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/default2.c.l | cave | $T/default2.c.cave | hai
+EXPECT_EXIT | 0 | default2-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default2.j.l | cave | $T/default2.j.cave | hai
+EXPECT_EXIT | 0 | default2-js-frame-cave
+RUN | cmp | $T/default2.c.cave.raw | $T/default2.j.cave.raw
+EXPECT_EXIT | 0 | default2-frame-cave-byte-identical
+RUN | cmp | $T/default2.c.cave.receipt.txt | $T/default2.j.cave.receipt.txt
+EXPECT_EXIT | 0 | default2-receipt-cave-identical
+RUN | $T/hai_fuzz | 3 | 3000 | 16 | 10 | $T/default3.script
+EXPECT_EXIT | 0 | default3-script-generated
+RUN | $T/hai_world | run | $T/default3.c.l | $T/default3.script | $T/default3.c.s
+EXPECT_EXIT | 0 | default3-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/default3.j.l | $T/default3.script | $T/default3.j.s
+EXPECT_EXIT | 0 | default3-js-runs-the-script
+RUN | cmp | $T/default3.c.l | $T/default3.j.l
+EXPECT_EXIT | 0 | default3-ledgers-byte-identical
+RUN | cmp | $T/default3.c.s | $T/default3.j.s
+EXPECT_EXIT | 0 | default3-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/default3.c.l | home | $T/default3.c.home | hai
+EXPECT_EXIT | 0 | default3-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default3.j.l | home | $T/default3.j.home | hai
+EXPECT_EXIT | 0 | default3-js-frame-home
+RUN | cmp | $T/default3.c.home.raw | $T/default3.j.home.raw
+EXPECT_EXIT | 0 | default3-frame-home-byte-identical
+RUN | cmp | $T/default3.c.home.receipt.txt | $T/default3.j.home.receipt.txt
+EXPECT_EXIT | 0 | default3-receipt-home-identical
+RUN | $T/hai_world | frame | $T/default3.c.l | garden | $T/default3.c.garden | hai
+EXPECT_EXIT | 0 | default3-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default3.j.l | garden | $T/default3.j.garden | hai
+EXPECT_EXIT | 0 | default3-js-frame-garden
+RUN | cmp | $T/default3.c.garden.raw | $T/default3.j.garden.raw
+EXPECT_EXIT | 0 | default3-frame-garden-byte-identical
+RUN | cmp | $T/default3.c.garden.receipt.txt | $T/default3.j.garden.receipt.txt
+EXPECT_EXIT | 0 | default3-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/default3.c.l | cave | $T/default3.c.cave | hai
+EXPECT_EXIT | 0 | default3-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default3.j.l | cave | $T/default3.j.cave | hai
+EXPECT_EXIT | 0 | default3-js-frame-cave
+RUN | cmp | $T/default3.c.cave.raw | $T/default3.j.cave.raw
+EXPECT_EXIT | 0 | default3-frame-cave-byte-identical
+RUN | cmp | $T/default3.c.cave.receipt.txt | $T/default3.j.cave.receipt.txt
+EXPECT_EXIT | 0 | default3-receipt-cave-identical
+RUN | $T/hai_fuzz | 4 | 3000 | 16 | 10 | $T/default4.script
+EXPECT_EXIT | 0 | default4-script-generated
+RUN | $T/hai_world | run | $T/default4.c.l | $T/default4.script | $T/default4.c.s
+EXPECT_EXIT | 0 | default4-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/default4.j.l | $T/default4.script | $T/default4.j.s
+EXPECT_EXIT | 0 | default4-js-runs-the-script
+RUN | cmp | $T/default4.c.l | $T/default4.j.l
+EXPECT_EXIT | 0 | default4-ledgers-byte-identical
+RUN | cmp | $T/default4.c.s | $T/default4.j.s
+EXPECT_EXIT | 0 | default4-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/default4.c.l | home | $T/default4.c.home | hai
+EXPECT_EXIT | 0 | default4-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default4.j.l | home | $T/default4.j.home | hai
+EXPECT_EXIT | 0 | default4-js-frame-home
+RUN | cmp | $T/default4.c.home.raw | $T/default4.j.home.raw
+EXPECT_EXIT | 0 | default4-frame-home-byte-identical
+RUN | cmp | $T/default4.c.home.receipt.txt | $T/default4.j.home.receipt.txt
+EXPECT_EXIT | 0 | default4-receipt-home-identical
+RUN | $T/hai_world | frame | $T/default4.c.l | garden | $T/default4.c.garden | hai
+EXPECT_EXIT | 0 | default4-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default4.j.l | garden | $T/default4.j.garden | hai
+EXPECT_EXIT | 0 | default4-js-frame-garden
+RUN | cmp | $T/default4.c.garden.raw | $T/default4.j.garden.raw
+EXPECT_EXIT | 0 | default4-frame-garden-byte-identical
+RUN | cmp | $T/default4.c.garden.receipt.txt | $T/default4.j.garden.receipt.txt
+EXPECT_EXIT | 0 | default4-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/default4.c.l | cave | $T/default4.c.cave | hai
+EXPECT_EXIT | 0 | default4-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default4.j.l | cave | $T/default4.j.cave | hai
+EXPECT_EXIT | 0 | default4-js-frame-cave
+RUN | cmp | $T/default4.c.cave.raw | $T/default4.j.cave.raw
+EXPECT_EXIT | 0 | default4-frame-cave-byte-identical
+RUN | cmp | $T/default4.c.cave.receipt.txt | $T/default4.j.cave.receipt.txt
+EXPECT_EXIT | 0 | default4-receipt-cave-identical
+RUN | $T/hai_fuzz | 5 | 3000 | 16 | 10 | $T/default5.script
+EXPECT_EXIT | 0 | default5-script-generated
+RUN | $T/hai_world | run | $T/default5.c.l | $T/default5.script | $T/default5.c.s
+EXPECT_EXIT | 0 | default5-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/default5.j.l | $T/default5.script | $T/default5.j.s
+EXPECT_EXIT | 0 | default5-js-runs-the-script
+RUN | cmp | $T/default5.c.l | $T/default5.j.l
+EXPECT_EXIT | 0 | default5-ledgers-byte-identical
+RUN | cmp | $T/default5.c.s | $T/default5.j.s
+EXPECT_EXIT | 0 | default5-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/default5.c.l | home | $T/default5.c.home | hai
+EXPECT_EXIT | 0 | default5-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default5.j.l | home | $T/default5.j.home | hai
+EXPECT_EXIT | 0 | default5-js-frame-home
+RUN | cmp | $T/default5.c.home.raw | $T/default5.j.home.raw
+EXPECT_EXIT | 0 | default5-frame-home-byte-identical
+RUN | cmp | $T/default5.c.home.receipt.txt | $T/default5.j.home.receipt.txt
+EXPECT_EXIT | 0 | default5-receipt-home-identical
+RUN | $T/hai_world | frame | $T/default5.c.l | garden | $T/default5.c.garden | hai
+EXPECT_EXIT | 0 | default5-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default5.j.l | garden | $T/default5.j.garden | hai
+EXPECT_EXIT | 0 | default5-js-frame-garden
+RUN | cmp | $T/default5.c.garden.raw | $T/default5.j.garden.raw
+EXPECT_EXIT | 0 | default5-frame-garden-byte-identical
+RUN | cmp | $T/default5.c.garden.receipt.txt | $T/default5.j.garden.receipt.txt
+EXPECT_EXIT | 0 | default5-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/default5.c.l | cave | $T/default5.c.cave | hai
+EXPECT_EXIT | 0 | default5-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/default5.j.l | cave | $T/default5.j.cave | hai
+EXPECT_EXIT | 0 | default5-js-frame-cave
+RUN | cmp | $T/default5.c.cave.raw | $T/default5.j.cave.raw
+EXPECT_EXIT | 0 | default5-frame-cave-byte-identical
+RUN | cmp | $T/default5.c.cave.receipt.txt | $T/default5.j.cave.receipt.txt
+EXPECT_EXIT | 0 | default5-receipt-cave-identical
+RUN | grep | -q | that cell is taken | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-that-cell-is-taken
+RUN | grep | -q | too many agents | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-too-many-agents
+RUN | grep | -q | slot out of range | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-slot-out-of-range
+RUN | grep | -q | already in that slot | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-already-in-that-slot
+RUN | grep | -q | another agent is in the way | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-another-agent-is-in-the-way
+RUN | grep | -q | a wall is in the way | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-a-wall-is-in-the-way
+RUN | grep | -q | that cell is a wall | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-that-cell-is-a-wall
+RUN | grep | -q | bad name | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-bad-name
+RUN | grep | -q | bad page name | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-bad-page-name
+RUN | grep | -q | name already used | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-name-already-used
+RUN | grep | -q | no such agent | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-no-such-agent
+RUN | grep | -q | one step only | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-one-step-only
+RUN | grep | -q | missing arguments | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-missing-arguments
+RUN | grep | -q | unknown verb | $T/default1.c.l
+EXPECT_EXIT | 0 | default-fuzz-reaches-refusal-unknown-verb
+
+CASE    | small
+SCRATCH |
+ENV | HAI_RULES | /home/no/Desktop/github/work/#.hai/harnecient-hai/cases/fixtures/world.small.rules.pdl
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_world | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_world.c
+EXPECT_EXIT | 0 | c-op-builds-without-warnings
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_fuzz | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_fuzz.c
+EXPECT_EXIT | 0 | fuzz-generator-builds-without-warnings
+RUN | $T/hai_fuzz | 11 | 3000 | 12 | 8 | $T/small11.script
+EXPECT_EXIT | 0 | small11-script-generated
+RUN | $T/hai_world | run | $T/small11.c.l | $T/small11.script | $T/small11.c.s
+EXPECT_EXIT | 0 | small11-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/small11.j.l | $T/small11.script | $T/small11.j.s
+EXPECT_EXIT | 0 | small11-js-runs-the-script
+RUN | cmp | $T/small11.c.l | $T/small11.j.l
+EXPECT_EXIT | 0 | small11-ledgers-byte-identical
+RUN | cmp | $T/small11.c.s | $T/small11.j.s
+EXPECT_EXIT | 0 | small11-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/small11.c.l | home | $T/small11.c.home | hai
+EXPECT_EXIT | 0 | small11-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small11.j.l | home | $T/small11.j.home | hai
+EXPECT_EXIT | 0 | small11-js-frame-home
+RUN | cmp | $T/small11.c.home.raw | $T/small11.j.home.raw
+EXPECT_EXIT | 0 | small11-frame-home-byte-identical
+RUN | cmp | $T/small11.c.home.receipt.txt | $T/small11.j.home.receipt.txt
+EXPECT_EXIT | 0 | small11-receipt-home-identical
+RUN | $T/hai_world | frame | $T/small11.c.l | garden | $T/small11.c.garden | hai
+EXPECT_EXIT | 0 | small11-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small11.j.l | garden | $T/small11.j.garden | hai
+EXPECT_EXIT | 0 | small11-js-frame-garden
+RUN | cmp | $T/small11.c.garden.raw | $T/small11.j.garden.raw
+EXPECT_EXIT | 0 | small11-frame-garden-byte-identical
+RUN | cmp | $T/small11.c.garden.receipt.txt | $T/small11.j.garden.receipt.txt
+EXPECT_EXIT | 0 | small11-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/small11.c.l | cave | $T/small11.c.cave | hai
+EXPECT_EXIT | 0 | small11-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small11.j.l | cave | $T/small11.j.cave | hai
+EXPECT_EXIT | 0 | small11-js-frame-cave
+RUN | cmp | $T/small11.c.cave.raw | $T/small11.j.cave.raw
+EXPECT_EXIT | 0 | small11-frame-cave-byte-identical
+RUN | cmp | $T/small11.c.cave.receipt.txt | $T/small11.j.cave.receipt.txt
+EXPECT_EXIT | 0 | small11-receipt-cave-identical
+RUN | $T/hai_fuzz | 12 | 3000 | 12 | 8 | $T/small12.script
+EXPECT_EXIT | 0 | small12-script-generated
+RUN | $T/hai_world | run | $T/small12.c.l | $T/small12.script | $T/small12.c.s
+EXPECT_EXIT | 0 | small12-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/small12.j.l | $T/small12.script | $T/small12.j.s
+EXPECT_EXIT | 0 | small12-js-runs-the-script
+RUN | cmp | $T/small12.c.l | $T/small12.j.l
+EXPECT_EXIT | 0 | small12-ledgers-byte-identical
+RUN | cmp | $T/small12.c.s | $T/small12.j.s
+EXPECT_EXIT | 0 | small12-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/small12.c.l | home | $T/small12.c.home | hai
+EXPECT_EXIT | 0 | small12-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small12.j.l | home | $T/small12.j.home | hai
+EXPECT_EXIT | 0 | small12-js-frame-home
+RUN | cmp | $T/small12.c.home.raw | $T/small12.j.home.raw
+EXPECT_EXIT | 0 | small12-frame-home-byte-identical
+RUN | cmp | $T/small12.c.home.receipt.txt | $T/small12.j.home.receipt.txt
+EXPECT_EXIT | 0 | small12-receipt-home-identical
+RUN | $T/hai_world | frame | $T/small12.c.l | garden | $T/small12.c.garden | hai
+EXPECT_EXIT | 0 | small12-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small12.j.l | garden | $T/small12.j.garden | hai
+EXPECT_EXIT | 0 | small12-js-frame-garden
+RUN | cmp | $T/small12.c.garden.raw | $T/small12.j.garden.raw
+EXPECT_EXIT | 0 | small12-frame-garden-byte-identical
+RUN | cmp | $T/small12.c.garden.receipt.txt | $T/small12.j.garden.receipt.txt
+EXPECT_EXIT | 0 | small12-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/small12.c.l | cave | $T/small12.c.cave | hai
+EXPECT_EXIT | 0 | small12-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small12.j.l | cave | $T/small12.j.cave | hai
+EXPECT_EXIT | 0 | small12-js-frame-cave
+RUN | cmp | $T/small12.c.cave.raw | $T/small12.j.cave.raw
+EXPECT_EXIT | 0 | small12-frame-cave-byte-identical
+RUN | cmp | $T/small12.c.cave.receipt.txt | $T/small12.j.cave.receipt.txt
+EXPECT_EXIT | 0 | small12-receipt-cave-identical
+RUN | $T/hai_fuzz | 13 | 3000 | 12 | 8 | $T/small13.script
+EXPECT_EXIT | 0 | small13-script-generated
+RUN | $T/hai_world | run | $T/small13.c.l | $T/small13.script | $T/small13.c.s
+EXPECT_EXIT | 0 | small13-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | run | $T/small13.j.l | $T/small13.script | $T/small13.j.s
+EXPECT_EXIT | 0 | small13-js-runs-the-script
+RUN | cmp | $T/small13.c.l | $T/small13.j.l
+EXPECT_EXIT | 0 | small13-ledgers-byte-identical
+RUN | cmp | $T/small13.c.s | $T/small13.j.s
+EXPECT_EXIT | 0 | small13-end-state-byte-identical
+RUN | $T/hai_world | frame | $T/small13.c.l | home | $T/small13.c.home | hai
+EXPECT_EXIT | 0 | small13-c-frame-home
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small13.j.l | home | $T/small13.j.home | hai
+EXPECT_EXIT | 0 | small13-js-frame-home
+RUN | cmp | $T/small13.c.home.raw | $T/small13.j.home.raw
+EXPECT_EXIT | 0 | small13-frame-home-byte-identical
+RUN | cmp | $T/small13.c.home.receipt.txt | $T/small13.j.home.receipt.txt
+EXPECT_EXIT | 0 | small13-receipt-home-identical
+RUN | $T/hai_world | frame | $T/small13.c.l | garden | $T/small13.c.garden | hai
+EXPECT_EXIT | 0 | small13-c-frame-garden
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small13.j.l | garden | $T/small13.j.garden | hai
+EXPECT_EXIT | 0 | small13-js-frame-garden
+RUN | cmp | $T/small13.c.garden.raw | $T/small13.j.garden.raw
+EXPECT_EXIT | 0 | small13-frame-garden-byte-identical
+RUN | cmp | $T/small13.c.garden.receipt.txt | $T/small13.j.garden.receipt.txt
+EXPECT_EXIT | 0 | small13-receipt-garden-identical
+RUN | $T/hai_world | frame | $T/small13.c.l | cave | $T/small13.c.cave | hai
+EXPECT_EXIT | 0 | small13-c-frame-cave
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | frame | $T/small13.j.l | cave | $T/small13.j.cave | hai
+EXPECT_EXIT | 0 | small13-js-frame-cave
+RUN | cmp | $T/small13.c.cave.raw | $T/small13.j.cave.raw
+EXPECT_EXIT | 0 | small13-frame-cave-byte-identical
+RUN | cmp | $T/small13.c.cave.receipt.txt | $T/small13.j.cave.receipt.txt
+EXPECT_EXIT | 0 | small13-receipt-cave-identical
+RUN | grep | -q | that cell is taken | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-that-cell-is-taken
+RUN | grep | -q | too many agents | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-too-many-agents
+RUN | grep | -q | slot out of range | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-slot-out-of-range
+RUN | grep | -q | already in that slot | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-already-in-that-slot
+RUN | grep | -q | another agent is in the way | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-another-agent-is-in-the-way
+RUN | grep | -q | a wall is in the way | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-a-wall-is-in-the-way
+RUN | grep | -q | that cell is a wall | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-that-cell-is-a-wall
+RUN | grep | -q | bad name | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-bad-name
+RUN | grep | -q | bad page name | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-bad-page-name
+RUN | grep | -q | name already used | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-name-already-used
+RUN | grep | -q | no such agent | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-no-such-agent
+RUN | grep | -q | one step only | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-one-step-only
+RUN | grep | -q | missing arguments | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-missing-arguments
+RUN | grep | -q | unknown verb | $T/small11.c.l
+EXPECT_EXIT | 0 | small-fuzz-reaches-refusal-unknown-verb
+
+CASE    | pet
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_pet.c
+EXPECT_EXIT | 0 | pet-c-op-builds-without-warnings
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_pet_fuzz | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_pet_fuzz.c
+EXPECT_EXIT | 0 | pet-fuzz-generator-builds-without-warnings
+RUN | $T/hai_pet_fuzz | 1 | 3000 | $T/pet1.script
+EXPECT_EXIT | 0 | pet1-script-generated
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet1.c.l | run | $T/pet1.script | $T/pet1.c.s
+EXPECT_EXIT | 0 | pet1-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet1.j.l | run | $T/pet1.script | $T/pet1.j.s
+EXPECT_EXIT | 0 | pet1-js-runs-the-script
+RUN | cmp | $T/pet1.c.l | $T/pet1.j.l
+EXPECT_EXIT | 0 | pet1-ledgers-byte-identical
+RUN | cmp | $T/pet1.c.s | $T/pet1.j.s
+EXPECT_EXIT | 0 | pet1-end-state-byte-identical
+RUN | $T/hai_pet_fuzz | 2 | 3000 | $T/pet2.script
+EXPECT_EXIT | 0 | pet2-script-generated
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet2.c.l | run | $T/pet2.script | $T/pet2.c.s
+EXPECT_EXIT | 0 | pet2-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet2.j.l | run | $T/pet2.script | $T/pet2.j.s
+EXPECT_EXIT | 0 | pet2-js-runs-the-script
+RUN | cmp | $T/pet2.c.l | $T/pet2.j.l
+EXPECT_EXIT | 0 | pet2-ledgers-byte-identical
+RUN | cmp | $T/pet2.c.s | $T/pet2.j.s
+EXPECT_EXIT | 0 | pet2-end-state-byte-identical
+RUN | $T/hai_pet_fuzz | 3 | 3000 | $T/pet3.script
+EXPECT_EXIT | 0 | pet3-script-generated
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet3.c.l | run | $T/pet3.script | $T/pet3.c.s
+EXPECT_EXIT | 0 | pet3-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet3.j.l | run | $T/pet3.script | $T/pet3.j.s
+EXPECT_EXIT | 0 | pet3-js-runs-the-script
+RUN | cmp | $T/pet3.c.l | $T/pet3.j.l
+EXPECT_EXIT | 0 | pet3-ledgers-byte-identical
+RUN | cmp | $T/pet3.c.s | $T/pet3.j.s
+EXPECT_EXIT | 0 | pet3-end-state-byte-identical
+RUN | $T/hai_pet_fuzz | 4 | 3000 | $T/pet4.script
+EXPECT_EXIT | 0 | pet4-script-generated
+RUN | $T/hai_pet | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet4.c.l | run | $T/pet4.script | $T/pet4.c.s
+EXPECT_EXIT | 0 | pet4-c-runs-the-script
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/pet.js | /home/no/Desktop/github/work/#.hai/harnecient-hai/pet/data | $T/pet4.j.l | run | $T/pet4.script | $T/pet4.j.s
+EXPECT_EXIT | 0 | pet4-js-runs-the-script
+RUN | cmp | $T/pet4.c.l | $T/pet4.j.l
+EXPECT_EXIT | 0 | pet4-ledgers-byte-identical
+RUN | cmp | $T/pet4.c.s | $T/pet4.j.s
+EXPECT_EXIT | 0 | pet4-end-state-byte-identical
+RUN | grep | -q | missing arguments | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-missing-arguments
+RUN | grep | -q | bad name | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-bad-name
+RUN | grep | -q | name already used | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-name-already-used
+RUN | grep | -q | too many pets | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-too-many-pets
+RUN | grep | -q | no such body type | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-no-such-body-type
+RUN | grep | -q | no such pet | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-no-such-pet
+RUN | grep | -q | bad item name | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-bad-item-name
+RUN | grep | -q | count must be 1..99 | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-count-must-be-1..99
+RUN | grep | -q | inventory full | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-inventory-full
+RUN | grep | -q | minutes must be 1..100000 | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-minutes-must-be-1..100000
+RUN | grep | -q | this body cannot use that item | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-this-body-cannot-use-that-item
+RUN | grep | -q | unknown need | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-unknown-need
+RUN | grep | -q | holds none of that item | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-holds-none-of-that-item
+RUN | grep | -q | weight must be 0..40 tenths | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-weight-must-be-0..40-tenths
+RUN | grep | -q | unknown verb | $T/pet1.c.l
+EXPECT_EXIT | 0 | pet-fuzz-reaches-refusal-unknown-verb

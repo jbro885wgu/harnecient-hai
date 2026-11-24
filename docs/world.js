@@ -6,11 +6,23 @@
  * Exit 0 ok, 3 refused (a REFUSED row is appended), 2 usage. NOT here: permissions and the real-folder sandbox (not built). */
 (function (root) {
   'use strict';
-  var COLS = 16, ROWS = 10, CELL = 32, MAXA = 32;
+  /* the numbers come from docs/world.rules.pdl (node: env HAI_RULES; browser: HaiWorld.setRules(text)), the same file ops/hai_world.c reads */
+  var COLS = 0, ROWS = 0, CELL = 0, MAXA = 0, NAMEMAX = 0, WALLS = [];
+  function setRules(text) {
+    var c = 0, r = 0, ce = 0, ma = 0, nm = 0, walls = [], lines = String(text).split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].replace(/[\r\n]+$/, ''); if (!line || line[0] === '#') continue;
+      var f = line.split('|').slice(0, 5).map(function (x) { return x.trim(); });
+      if (f.length >= 3 && f[0] === 'RULE') { var v = parseInt(f[2], 10) || 0; if (f[1] === 'cols') c = v; else if (f[1] === 'rows') r = v; else if (f[1] === 'cell') ce = v; else if (f[1] === 'max_agents') ma = v; else if (f[1] === 'name_max') nm = v; }
+      else if (f.length >= 4 && f[0] === 'WALL' && walls.length < 64) walls.push({ page: f[1].slice(0, 19), x: parseInt(f[2], 10) || 0, y: parseInt(f[3], 10) || 0 });
+    }
+    if (c < 3 || c > 64 || r < 3 || r > 64 || ce < 4 || ce > 64 || ma < 1 || ma > 32 || nm < 1 || nm > 19) throw new Error('the rules file has a missing or out of range number');
+    COLS = c; ROWS = r; CELL = ce; MAXA = ma; NAMEMAX = nm; WALLS = walls;
+  }
   var PAL = [[230, 90, 90], [240, 170, 60], [235, 220, 80], [110, 200, 110], [80, 200, 220], [100, 140, 240], [180, 120, 230], [240, 130, 190]];
   function atoi(s) { var n = parseInt(s, 10); return isNaN(n) ? 0 : n; }
-  function validName(s) { if (s.length < 1 || s.length > 16) return false; for (var i = 0; i < s.length; i++) { var c = s[i]; if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c === '_' || c === '-')) return false; } return true; }
-  function isWall(page, x, y) { if (x < 1 || y < 1 || x > COLS - 2 || y > ROWS - 2) return true; if (page === 'home' && y === 4 && (x === 7 || x === 8)) return true; return false; }
+  function validName(s) { if (s.length < 1 || s.length > NAMEMAX) return false; for (var i = 0; i < s.length; i++) { var c = s[i]; if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c === '_' || c === '-')) return false; } return true; }
+  function isWall(page, x, y) { if (x < 1 || y < 1 || x > COLS - 2 || y > ROWS - 2) return true; for (var i = 0; i < WALLS.length; i++) if (WALLS[i].x === x && WALLS[i].y === y && WALLS[i].page === page) return true; return false; }
   /* like the C split: at most max fields; the field after the last bar kept is cut at its next bar */
   function split(line, max) { var out = [], p = 0; while (out.length < max) { var q = line.indexOf('|', p); if (q < 0) { out.push(line.slice(p)); break; } out.push(line.slice(p, q)); p = q + 1; } return out; }
   function newWorld() { return { a: [] }; }
@@ -87,7 +99,7 @@
     }
     return fr;
   }
-  var api = { apply: apply, replay: replay, newWorld: newWorld, find: find, dump: dump, pages: pages, frame: frame, COLS: COLS, ROWS: ROWS, CELL: CELL };
+  var api = { setRules: setRules, apply: apply, replay: replay, newWorld: newWorld, find: find, dump: dump, pages: pages, frame: frame };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.HaiWorld = api;
 
   /* ---- command line, the same as the C op ---- */
@@ -95,6 +107,8 @@
     var fs = require('fs'), argv = process.argv.slice(2), out = function (s) { process.stdout.write(s); };
     if (argv.length < 2) { process.stderr.write('usage: world.js do|dump|frame|pages <ledger> ...\n'); process.exit(2); }
     var cmd = argv[0], ledger = argv[1], w = newWorld();
+    if (!process.env.HAI_RULES) { process.stderr.write('no rules file: set HAI_RULES to docs/world.rules.pdl\n'); process.exit(2); }
+    try { setRules(fs.readFileSync(process.env.HAI_RULES, 'utf8')); } catch (e) { process.stderr.write(e.code ? 'cannot read the rules file ' + process.env.HAI_RULES + '\n' : e.message + '\n'); process.exit(2); }
     var read = function () { try { return fs.readFileSync(ledger, 'utf8'); } catch (e) { return ''; } };
     if (cmd === 'do') {
       if (argv.length < 3) { process.stderr.write('usage: world.js do <ledger> VERB args...\n'); process.exit(2); }
@@ -104,6 +118,19 @@
       var why = apply(w, verb, f);
       if (why) { fs.appendFileSync(ledger, 'REFUSED|' + verb + '|' + (f.length ? f[0] : '-') + '|' + why + '\n'); out('REFUSED ' + verb + ': ' + why + '\n'); process.exit(3); }
       fs.appendFileSync(ledger, verb + (f.length ? '|' + f.join('|') : '') + '\n'); out('ok ' + verb + '\n'); process.exit(0);
+    }
+    if (cmd === 'run') {
+      if (argv.length < 3) { process.stderr.write('usage: world.js run <ledger> <script>\n'); process.exit(2); }
+      var sc; try { sc = fs.readFileSync(argv[2], 'utf8'); } catch (e) { process.stderr.write('cannot read the script\n'); process.exit(2); }
+      replay(w, read()); var lo = '', nok = 0, nref = 0, sl = sc.split('\n');
+      for (var si = 0; si < sl.length; si++) {
+        var ln = sl[si].replace(/[\r\n]+$/, ''); if (!ln || ln[0] === '#') continue;
+        var sf = split(ln, 8), sv = sf[0], sa = sf.slice(1), sw = apply(w, sv, sa);
+        if (sw) { lo += 'REFUSED|' + sv + '|' + (sa.length ? sa[0] : '-') + '|' + sw + '\n'; nref++; } else { lo += ln + '\n'; nok++; }
+      }
+      fs.appendFileSync(ledger, lo); out('ran ok=' + nok + ' refused=' + nref + '\n');
+      if (argv.length > 3) fs.writeFileSync(argv[3], w.a.map(function (a) { return a.name; }).join(' ') + '\n' + dump(w));
+      process.exit(0);
     }
     replay(w, read());
     if (cmd === 'master') { out((w.a.length ? w.a[0].name : 'none') + '\n'); process.exit(0); }
