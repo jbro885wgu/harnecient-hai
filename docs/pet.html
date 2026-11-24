@@ -112,7 +112,7 @@ table{width:100%;border-collapse:collapse;font:12px/1.4 ui-monospace,monospace}t
       pt.appendChild(li);
     });
     var lg = $('log'), last = rows.slice(-14); lg.innerHTML = last.map(function (r) { return '<tr' + (r.why ? ' class="ref"' : '') + '><td>' + (r.l === 'w' ? 'world' : 'pet') + '</td><td>' + r.t.replace(/</g, '&lt;') + '</td><td>' + (r.why ? 'refused: ' + r.why : 'ok') + '</td></tr>'; }).join('');
-    $('addr').textContent = location.protocol === 'file:' ? '' : location.host + location.pathname;
+    $('addr').textContent = (location.protocol === 'file:' || /^(localhost|127\.|\[::1\])/.test(location.hostname)) ? '' : location.host + location.pathname;
   }
   function doRow(layer, verb, args, okMsg) { var why = act(layer, verb, args); say(why ? 'refused: ' + why : okMsg || 'ok ' + verb, !!why); render(); return why; }
   /* events */
