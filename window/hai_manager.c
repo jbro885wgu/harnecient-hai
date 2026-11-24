@@ -152,8 +152,8 @@ static void publish(const char *pkg) {
     }
     FILE *o = fopen(tmp, "w");
     if (!o) return;
-    char stamp[32]; time_t now = time(NULL); strftime(stamp, sizeof stamp, "%H:%M:%S", localtime(&now));
-    fprintf(o, "stamp=%s\n%s\n", stamp, state);
+    /* no clock in this file: a value that changes every second made the window rebuild every second, and a click landing mid-rebuild left the centre panel blank (owner 2026-11-23, the grey square) */
+    fprintf(o, "%s\n", state);
     int shown = nrows < ROWMAX ? nrows : ROWMAX;
     fprintf(o, "turns=%d\n", nturns);
     for (int i = 0; i < shown; i++) {
@@ -167,7 +167,7 @@ static void publish(const char *pkg) {
     {   /* layout flags (preferences), and the Bank view: everything the active agent knows, from the core's own replay */
         char act0[64]; hai_agent_active(pkg, act0, sizeof act0);
         fprintf(o, "left_open=%d\nright_open=%d\nbank_on=%d\nviz_on=%d\nchat_on=%d\nwhy_on=%d\n", pl, pr, pbank == 1, pbank == 2 || pbank == 3, pbank == 0, show_why);
-        fprintf(o, "left_closed=%d\nleft_cls=%s\n", !pl, pl ? "hai-left-on" : "hai-left-off");   /* the sidebar element must always exist (the layout trigger), so closing it only narrows it */
+        fprintf(o, "left_closed=%d\nleft_cls=%s\n", !pl, (pl || pr) ? "hai-left-on" : "hai-left-off");   /* the sidebar element must always exist (the layout trigger), so closing it only narrows it */
         fprintf(o, "pad_cls=%s\n", pl && pr ? "pad-lr" : pl ? "pad-l" : pr ? "pad-r" : "pad-none");
         fprintf(o, "tg_left_cls=%s\ntg_right_cls=%s\ntg_bank_cls=%s\ntg_viz_cls=%s\ntg_why_cls=%s\n", pl ? "hai-on" : "hai-off", pr ? "hai-on" : "hai-off", pbank == 1 ? "hai-on" : "hai-off", pbank == 2 || pbank == 3 ? "hai-on" : "hai-off", show_why ? "hai-on" : "hai-off");
         char dd[1200], lg[1300]; hai_data_of(pkg, act0, dd, sizeof dd); hai_active_ledger(pkg, lg, sizeof lg);
@@ -294,6 +294,12 @@ static void publish(const char *pkg) {
         }
     }
     fclose(o);
+    /* publish only on a real change: the renderer re-reads the file whenever it is replaced, so an identical rewrite is a needless rebuild */
+    {   FILE *a = fopen(tmp, "rb"), *b = fopen(ui, "rb"); int same = (a && b);
+        while (same) { int x = fgetc(a), y = fgetc(b); if (x != y) same = 0; else if (x == EOF) break; }
+        if (a) fclose(a); if (b) fclose(b);
+        if (same) { remove(tmp); return; }
+    }
     rename(tmp, ui);
 }
 

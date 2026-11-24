@@ -4,7 +4,7 @@
      sender hai_send. Shared khtpm_core_render.+x, zero renderer C. RULES: no angle brackets inside comments. -->
 <window label="hai-cli" class="hai database-window" vars="state/ui.txt">
   <module id="manager" src="bin/hai_manager"/>
-  <page name="main" class="hai-cols">
+  <page name="main">
     <tabbar id="toolbar" class="tab-bar">
       <tab id="tg-left" class="tab rp-tb ${tg_left_cls}" label="Sessions" onclick="'${PKG}/bin/hai_session' 'TOGGLE left'"/>
       <tab id="tg-right" class="tab rp-tb ${tg_right_cls}" label="Agents" onclick="'${PKG}/bin/hai_session' 'TOGGLE right'"/>
@@ -14,6 +14,16 @@
     </tabbar>
     <sidebar id="sidebar" class="hai-left ${left_cls}">
       <item id="side-open" class="rp-menu-row" label="[+]" show="${left_closed}" action="'${PKG}/bin/hai_session' 'TOGGLE left'"/>
+      <text label="agents" class="hb-quiet ov-title theme-3" show="${right_open}"/>
+      <item id="agents-min" class="ov-min hb-slot skin-bar theme-3" label="_" show="${right_open}" action="'${PKG}/bin/hai_session' 'TOGGLE right'"/>
+      <repeat count="${agents_count}" bind="agent">
+        <item id="a${agent.#}" class="${agent.cls}" label="${agent.label}" show="${right_open}" action="'${PKG}/bin/hai_session' 'AGENT ${agent.name}'"/>
+      </repeat>
+      <text label="new agent" class="hb-quiet ov-title theme-3" show="${right_open}"/>
+      <item id="na-plain" class="rp-menu-row" label="+ plain" show="${right_open}" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO plain'"/>
+      <item id="na-curious" class="rp-menu-row" label="+ curious" show="${right_open}" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO curious'"/>
+      <item id="na-terse" class="rp-menu-row" label="+ terse" show="${right_open}" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO terse'"/>
+      <item id="na-scholar" class="rp-menu-row" label="+ scholar" show="${right_open}" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO scholar'"/>
       <text label="sessions" class="hb-quiet ov-title theme-3" show="${left_open}"/>
       <item id="side-min" class="ov-min hb-slot skin-bar theme-3" label="_" show="${left_open}" action="'${PKG}/bin/hai_session' 'TOGGLE left'"/>
       <item id="new" class="rp-menu-row" label="+ New Session" show="${left_open}" action="'${PKG}/bin/hai_session' 'NEW'"/>
@@ -27,7 +37,7 @@
       </scrolllist>
     </sidebar>
     <panel id="detail" class="hai-mid">
-      <text label="agent: ${agent}   ${state}   turns: ${turns}   ${stamp}" class="block-title"/>
+      <text label="agent: ${agent}   ${state}   turns: ${turns}" class="block-title"/>
       <text label="Type a line + Enter to chat. Teach: /teach w = meaning  /alias w = concept  /say w = text  /mark w  /forget w  /pack lyfedesk  /grade 0..4.  /bank  /chat" class="quiet" show="${chat_on}"/>
       <scrolllist show="${chat_on}">
         <repeat count="${rows_count}" bind="row">
@@ -47,18 +57,6 @@
         </repeat>
       </scrolllist>
       <cli_io id="composer" target_id="composer" rows="2" class="composer-text" label="&gt; " action="'${PKG}/bin/hai_send'"/>
-    </panel>
-    <panel id="agents" class="hai-right" show="${right_open}">
-      <text label="agents" class="hb-quiet ov-title theme-3"/>
-      <item id="agents-min" class="ov-min hb-slot skin-bar theme-3" label="_" action="'${PKG}/bin/hai_session' 'TOGGLE right'"/>
-      <repeat count="${agents_count}" bind="agent">
-        <item id="a${agent.#}" class="${agent.cls}" label="${agent.label}" action="'${PKG}/bin/hai_session' 'AGENT ${agent.name}'"/>
-      </repeat>
-      <text label="new agent" class="hb-quiet ov-title theme-3"/>
-      <item id="na-plain" class="rp-menu-row" label="+ plain" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO plain'"/>
-      <item id="na-curious" class="rp-menu-row" label="+ curious" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO curious'"/>
-      <item id="na-terse" class="rp-menu-row" label="+ terse" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO terse'"/>
-      <item id="na-scholar" class="rp-menu-row" label="+ scholar" action="'${PKG}/bin/hai_session' 'NEWAGENT_AUTO scholar'"/>
     </panel>
     <footer id="statusbar" class="pchq-footer">
       <text label="bars" class="quiet"/>
