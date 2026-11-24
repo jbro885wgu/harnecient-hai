@@ -44,6 +44,14 @@
       if (at(w, a.page, nx, ny)) return 'another agent is in the way';
       a.x = nx; a.y = ny; return null;
     }
+    if (verb === 'REORDER') {
+      if (nf < 2) return 'missing arguments';
+      var from = -1; for (var q = 0; q < w.a.length; q++) if (w.a[q].name === f[0]) from = q;
+      if (from < 0) return 'no such agent';
+      var to = atoi(f[1]); if (to < 1 || to > w.a.length) return 'slot out of range';
+      to--; if (to === from) return 'already in that slot';
+      var t = w.a.splice(from, 1)[0]; w.a.splice(to, 0, t); return null;
+    }
     return 'unknown verb';
   }
   function replay(w, text) {
@@ -98,6 +106,8 @@
       fs.appendFileSync(ledger, verb + (f.length ? '|' + f.join('|') : '') + '\n'); out('ok ' + verb + '\n'); process.exit(0);
     }
     replay(w, read());
+    if (cmd === 'master') { out((w.a.length ? w.a[0].name : 'none') + '\n'); process.exit(0); }
+    if (cmd === 'party') { out(w.a.map(function (a) { return a.name; }).join(' ') + '\n'); process.exit(0); }
     if (cmd === 'dump') { out(dump(w)); process.exit(0); }
     if (cmd === 'pages') { out(pages(w)); process.exit(0); }
     if (cmd === 'frame') {

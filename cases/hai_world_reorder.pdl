@@ -1,0 +1,208 @@
+# hai_world_reorder (2026-11-24): REORDER (the party order is the role, slot 1 = master; book 27) in the C op and in docs/world.js. Expected text recorded once from the C op, literal here; ledgers must be byte-identical.
+RESULTS | ../results/hai_world_reorder.txt
+ENV | LC_ALL | C
+
+CASE    | reorder
+SCRATCH |
+RUN | gcc | -std=gnu11 | -Wall | -Wextra | -Werror | -O2 | -o | $T/hai_world | /home/no/Desktop/github/work/#.hai/harnecient-hai/ops/hai_world.c
+EXPECT_EXIT | 0 | c-op-builds-without-warnings
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | hai | home | 3 | 3
+EXPECT_EXIT | 0 | c-s01-do-SPAWN-hai-exit
+EXPECT_OUT_IS | ok SPAWN | c-s01-do-SPAWN-hai-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | hai | home | 3 | 3
+EXPECT_EXIT | 0 | j-s01-do-SPAWN-hai-exit
+EXPECT_OUT_IS | ok SPAWN | j-s01-do-SPAWN-hai-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | prof | home | 5 | 3
+EXPECT_EXIT | 0 | c-s02-do-SPAWN-prof-exit
+EXPECT_OUT_IS | ok SPAWN | c-s02-do-SPAWN-prof-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | prof | home | 5 | 3
+EXPECT_EXIT | 0 | j-s02-do-SPAWN-prof-exit
+EXPECT_OUT_IS | ok SPAWN | j-s02-do-SPAWN-prof-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | bolt | home | 9 | 6
+EXPECT_EXIT | 0 | c-s03-do-SPAWN-bolt-exit
+EXPECT_OUT_IS | ok SPAWN | c-s03-do-SPAWN-bolt-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | bolt | home | 9 | 6
+EXPECT_EXIT | 0 | j-s03-do-SPAWN-bolt-exit
+EXPECT_OUT_IS | ok SPAWN | j-s03-do-SPAWN-bolt-words
+RUN | $T/hai_world | master | $T/c.ledger
+EXPECT_EXIT | 0 | c-s04-master-exit
+EXPECT_OUT_IS | hai | c-s04-master-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | master | $T/js.ledger
+EXPECT_EXIT | 0 | j-s04-master-exit
+EXPECT_OUT_IS | hai | j-s04-master-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | bolt | 1
+EXPECT_EXIT | 0 | c-s05-do-REORDER-bolt-exit
+EXPECT_OUT_IS | ok REORDER | c-s05-do-REORDER-bolt-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | bolt | 1
+EXPECT_EXIT | 0 | j-s05-do-REORDER-bolt-exit
+EXPECT_OUT_IS | ok REORDER | j-s05-do-REORDER-bolt-words
+RUN | $T/hai_world | master | $T/c.ledger
+EXPECT_EXIT | 0 | c-s06-master-exit
+EXPECT_OUT_IS | bolt | c-s06-master-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | master | $T/js.ledger
+EXPECT_EXIT | 0 | j-s06-master-exit
+EXPECT_OUT_IS | bolt | j-s06-master-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | bolt | 1
+EXPECT_EXIT | 3 | c-s07-do-REORDER-bolt-exit
+EXPECT_OUT_IS | REFUSED REORDER: already in that slot | c-s07-do-REORDER-bolt-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | bolt | 1
+EXPECT_EXIT | 3 | j-s07-do-REORDER-bolt-exit
+EXPECT_OUT_IS | REFUSED REORDER: already in that slot | j-s07-do-REORDER-bolt-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | hai | 9
+EXPECT_EXIT | 3 | c-s08-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: slot out of range | c-s08-do-REORDER-hai-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | hai | 9
+EXPECT_EXIT | 3 | j-s08-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: slot out of range | j-s08-do-REORDER-hai-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | hai | 0
+EXPECT_EXIT | 3 | c-s09-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: slot out of range | c-s09-do-REORDER-hai-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | hai | 0
+EXPECT_EXIT | 3 | j-s09-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: slot out of range | j-s09-do-REORDER-hai-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | nobody | 1
+EXPECT_EXIT | 3 | c-s10-do-REORDER-nobody-exit
+EXPECT_OUT_IS | REFUSED REORDER: no such agent | c-s10-do-REORDER-nobody-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | nobody | 1
+EXPECT_EXIT | 3 | j-s10-do-REORDER-nobody-exit
+EXPECT_OUT_IS | REFUSED REORDER: no such agent | j-s10-do-REORDER-nobody-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | hai
+EXPECT_EXIT | 3 | c-s11-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: missing arguments | c-s11-do-REORDER-hai-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | hai
+EXPECT_EXIT | 3 | j-s11-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: missing arguments | j-s11-do-REORDER-hai-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | bolt | 3
+EXPECT_EXIT | 0 | c-s12-do-REORDER-bolt-exit
+EXPECT_OUT_IS | ok REORDER | c-s12-do-REORDER-bolt-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | bolt | 3
+EXPECT_EXIT | 0 | j-s12-do-REORDER-bolt-exit
+EXPECT_OUT_IS | ok REORDER | j-s12-do-REORDER-bolt-words
+RUN | $T/hai_world | master | $T/c.ledger
+EXPECT_EXIT | 0 | c-s13-master-exit
+EXPECT_OUT_IS | hai | c-s13-master-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | master | $T/js.ledger
+EXPECT_EXIT | 0 | j-s13-master-exit
+EXPECT_OUT_IS | hai | j-s13-master-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s14-party-exit
+EXPECT_OUT_IS | hai prof bolt | c-s14-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s14-party-exit
+EXPECT_OUT_IS | hai prof bolt | j-s14-party-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | prof | 1
+EXPECT_EXIT | 0 | c-s15-do-REORDER-prof-exit
+EXPECT_OUT_IS | ok REORDER | c-s15-do-REORDER-prof-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | prof | 1
+EXPECT_EXIT | 0 | j-s15-do-REORDER-prof-exit
+EXPECT_OUT_IS | ok REORDER | j-s15-do-REORDER-prof-words
+RUN | $T/hai_world | master | $T/c.ledger
+EXPECT_EXIT | 0 | c-s16-master-exit
+EXPECT_OUT_IS | prof | c-s16-master-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | master | $T/js.ledger
+EXPECT_EXIT | 0 | j-s16-master-exit
+EXPECT_OUT_IS | prof | j-s16-master-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s17-party-exit
+EXPECT_OUT_IS | prof hai bolt | c-s17-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s17-party-exit
+EXPECT_OUT_IS | prof hai bolt | j-s17-party-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | hai | 2
+EXPECT_EXIT | 3 | c-s18-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: already in that slot | c-s18-do-REORDER-hai-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | hai | 2
+EXPECT_EXIT | 3 | j-s18-do-REORDER-hai-exit
+EXPECT_OUT_IS | REFUSED REORDER: already in that slot | j-s18-do-REORDER-hai-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s19-party-exit
+EXPECT_OUT_IS | prof hai bolt | c-s19-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s19-party-exit
+EXPECT_OUT_IS | prof hai bolt | j-s19-party-words
+RUN | $T/hai_world | do | $T/c.ledger | SPAWN | fox | home | 12 | 7
+EXPECT_EXIT | 0 | c-s20-do-SPAWN-fox-exit
+EXPECT_OUT_IS | ok SPAWN | c-s20-do-SPAWN-fox-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | SPAWN | fox | home | 12 | 7
+EXPECT_EXIT | 0 | j-s20-do-SPAWN-fox-exit
+EXPECT_OUT_IS | ok SPAWN | j-s20-do-SPAWN-fox-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | fox | 2
+EXPECT_EXIT | 0 | c-s21-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | c-s21-do-REORDER-fox-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | fox | 2
+EXPECT_EXIT | 0 | j-s21-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | j-s21-do-REORDER-fox-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s22-party-exit
+EXPECT_OUT_IS | prof fox hai bolt | c-s22-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s22-party-exit
+EXPECT_OUT_IS | prof fox hai bolt | j-s22-party-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | bolt | 3
+EXPECT_EXIT | 0 | c-s23-do-REORDER-bolt-exit
+EXPECT_OUT_IS | ok REORDER | c-s23-do-REORDER-bolt-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | bolt | 3
+EXPECT_EXIT | 0 | j-s23-do-REORDER-bolt-exit
+EXPECT_OUT_IS | ok REORDER | j-s23-do-REORDER-bolt-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s24-party-exit
+EXPECT_OUT_IS | prof fox bolt hai | c-s24-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s24-party-exit
+EXPECT_OUT_IS | prof fox bolt hai | j-s24-party-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | fox | 4
+EXPECT_EXIT | 0 | c-s25-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | c-s25-do-REORDER-fox-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | fox | 4
+EXPECT_EXIT | 0 | j-s25-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | j-s25-do-REORDER-fox-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s26-party-exit
+EXPECT_OUT_IS | prof bolt hai fox | c-s26-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s26-party-exit
+EXPECT_OUT_IS | prof bolt hai fox | j-s26-party-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | fox | 1
+EXPECT_EXIT | 0 | c-s27-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | c-s27-do-REORDER-fox-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | fox | 1
+EXPECT_EXIT | 0 | j-s27-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | j-s27-do-REORDER-fox-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s28-party-exit
+EXPECT_OUT_IS | fox prof bolt hai | c-s28-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s28-party-exit
+EXPECT_OUT_IS | fox prof bolt hai | j-s28-party-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | fox | 3
+EXPECT_EXIT | 0 | c-s29-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | c-s29-do-REORDER-fox-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | fox | 3
+EXPECT_EXIT | 0 | j-s29-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | j-s29-do-REORDER-fox-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s30-party-exit
+EXPECT_OUT_IS | prof bolt fox hai | c-s30-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s30-party-exit
+EXPECT_OUT_IS | prof bolt fox hai | j-s30-party-words
+RUN | $T/hai_world | do | $T/c.ledger | REORDER | fox | 2
+EXPECT_EXIT | 0 | c-s31-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | c-s31-do-REORDER-fox-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | do | $T/js.ledger | REORDER | fox | 2
+EXPECT_EXIT | 0 | j-s31-do-REORDER-fox-exit
+EXPECT_OUT_IS | ok REORDER | j-s31-do-REORDER-fox-words
+RUN | $T/hai_world | party | $T/c.ledger
+EXPECT_EXIT | 0 | c-s32-party-exit
+EXPECT_OUT_IS | prof fox bolt hai | c-s32-party-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | party | $T/js.ledger
+EXPECT_EXIT | 0 | j-s32-party-exit
+EXPECT_OUT_IS | prof fox bolt hai | j-s32-party-words
+RUN | $T/hai_world | master | $T/c.ledger
+EXPECT_EXIT | 0 | c-s33-master-exit
+EXPECT_OUT_IS | prof | c-s33-master-words
+RUN | node | /home/no/Desktop/github/work/#.hai/harnecient-hai/docs/world.js | master | $T/js.ledger
+EXPECT_EXIT | 0 | j-s33-master-exit
+EXPECT_OUT_IS | prof | j-s33-master-words
+RUN | cmp | $T/c.ledger | $T/js.ledger
+EXPECT_EXIT | 0 | the-two-ledgers-are-byte-identical

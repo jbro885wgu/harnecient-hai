@@ -4,6 +4,7 @@
  *   SPAWN|name|page|x|y        an agent appears on a page (the cell must be free)
  *   MOVE|name|dx|dy            one step (dx, dy in -1..1, not both 0); a wall or another agent refuses it
  *   TELEPORT|name|page|x|y     the only way to change page
+ *   REORDER|name|slot          move an agent to a 1-based slot of the party; slot 1 is the MASTER (the role is the order); `hai_world master <ledger>` prints it, `hai_world party <ledger>` prints the whole order on one line
  *   REFUSED|verb|name|reason   written when a verb was not allowed; it changes nothing (kept so a refusal can be shown and audited)
  *
  * Rules (each can fail in case hai_world): names are [a-z0-9_-], 1 to 16 characters and unique; cells 1..14 by 1..8 are floor, the border is wall, page "home" has a wall block at
@@ -72,6 +73,17 @@ static const char *apply(world_t *w, const char *verb, char **f, int nf) {
         if (at(w, a->page, nx, ny)) return "another agent is in the way";
         a->x = nx; a->y = ny; return NULL;
     }
+    if (strcmp(verb, "REORDER") == 0) { /* the party order is the role: slot 1 is the master (book 27) */
+        if (nf < 2) return "missing arguments";
+        int from = -1; for (int i = 0; i < w->n; i++) if (strcmp(w->a[i].name, f[0]) == 0) from = i;
+        if (from < 0) return "no such agent";
+        int to = atoi(f[1]); if (to < 1 || to > w->n) return "slot out of range";
+        to--; if (to == from) return "already in that slot";
+        agent_t t = w->a[from];
+        if (to < from) for (int i = from; i > to; i--) w->a[i] = w->a[i - 1];
+        else for (int i = from; i < to; i++) w->a[i] = w->a[i + 1];
+        w->a[to] = t; return NULL;
+    }
     return "unknown verb";
 }
 static int split(char *line, char **f, int max) { int n = 0; char *p = line; while (n < max) { f[n++] = p; char *q = strchr(p, '|'); if (!q) break; *q = 0; p = q + 1; } return n; }
@@ -111,6 +123,8 @@ int main(int argc, char **argv) {
         printf("ok %s\n", verb); return 0;
     }
     replay(ledger, &w);
+    if (strcmp(cmd, "master") == 0) { if (w.n < 1) { printf("none\n"); return 0; } printf("%s\n", w.a[0].name); return 0; }
+    if (strcmp(cmd, "party") == 0) { for (int i = 0; i < w.n; i++) printf("%s%s", i ? " " : "", w.a[i].name); printf("\n"); return 0; }
     if (strcmp(cmd, "dump") == 0) { for (int i = 0; i < w.n; i++) printf("%s %s %d %d\n", w.a[i].name, w.a[i].page, w.a[i].x, w.a[i].y); return 0; }
     if (strcmp(cmd, "pages") == 0) {
         printf("home\n");
